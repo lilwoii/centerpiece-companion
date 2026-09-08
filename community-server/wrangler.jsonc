@@ -1,0 +1,23 @@
+{
+  "name": "centerpiece-community",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "centerpiece-community",
+      "database_id": "96edca4d-2933-40c7-b2a2-76ad912863c0"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/5 * * * *"
+    ]
+  },
+  "vars": {
+    "PUBLIC_ORIGIN": "https://centerpiece-community.community-server.workers.dev",
+    "DISCORD_CLIENT_ID": "1486218048095649933",
+    "DISCORD_OWNER_ID": "399065450555899905"
+  }
+}

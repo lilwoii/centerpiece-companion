@@ -1,0 +1,9 @@
+const WebSocket=require('ws');
+class TwitchChat{
+ constructor(){this.socket=null;this.state={connected:false,message:''};}
+ async connect(username,channel,token){if(!/^[a-z0-9_]{1,25}$/i.test(username)||!/^[a-z0-9_]{1,25}$/i.test(channel)||typeof token!=='string'||! /^(oauth:)?[a-zA-Z0-9]{15,256}$/.test(token))throw Error('Enter a Twitch username, channel and user access token.');this.close();username=username.toLowerCase();channel=channel.toLowerCase();const socket=new WebSocket('wss://irc-ws.chat.twitch.tv:443',{maxPayload:65536,handshakeTimeout:8000});this.socket=socket;
+  return new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>finish(Error('Twitch did not confirm the channel. Check your token and channel.')),10000);const finish=error=>{if(done)return;done=true;clearTimeout(timer);if(error){socket.close();reject(error);}else resolve(true);};socket.on('open',()=>{socket.send('PASS oauth:'+token.replace(/^oauth:/,''));socket.send('NICK '+username);socket.send('JOIN #'+channel);token='';});socket.on('message',buffer=>{for(const line of buffer.toString('utf8').split('\r\n')){if(line.startsWith('PING ')){socket.send('PONG '+line.slice(5));continue;}if(line.includes(' 366 '+username+' #'+channel)){this.state={connected:true,message:'Waiting for messages…',channel};finish();}if(/authentication failed|Improperly formatted auth/i.test(line)){finish(Error('Twitch rejected the token. Create a token with chat:read access.'));}const m=line.match(/^:([a-zA-Z0-9_]+)![^ ]+ PRIVMSG #[a-zA-Z0-9_]+ :(.*)$/);if(m&&this.socket===socket)this.state.message=(m[1]+': '+m[2]).slice(0,200);}});socket.on('error',()=>finish(Error('Twitch connection failed.')));socket.on('close',()=>{if(this.socket===socket){this.state.connected=false;this.socket=null;}finish(Error('Twitch connection closed.'));});});
+ }
+ close(){const s=this.socket;this.socket=null;s?.close();this.state={connected:false,message:''};}
+}
+module.exports={TwitchChat};

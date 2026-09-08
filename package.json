@@ -1,0 +1,74 @@
+{
+  "name": "centerpiece-companion",
+  "version": "0.3.0-preview.1",
+  "description": "Unofficial local companion for Finalmouse Centerpiece Pro",
+  "main": "src/main.cjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/plugins.test.cjs tests/desk.test.cjs tests/community.test.cjs",
+    "check": "node --check src/main.cjs && node --check src/media.cjs && node --check src/device.cjs && node --check src/renderer.js",
+    "package": "node scripts/package.cjs",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9",
+    "node-hid": "3.4.0",
+    "obs-websocket-js": "5.0.8",
+    "protobufjs": "8.8.0",
+    "sharp": "0.35.4",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "electron": "41.10.7",
+    "electron-builder": "26.15.3",
+    "simple-icons": "16.30.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lilwoii/centerpiece-companion.git"
+  },
+  "build": {
+    "appId": "community.centerpiece.companion",
+    "productName": "Centerpiece Companion",
+    "directories": {
+      "output": "../CenterpieceCommunity-Installer"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "README.md",
+      "COMMUNITY-PREVIEW.md",
+      "PRIVACY.md",
+      "LICENSE",
+      "PLUGIN-GUIDE.md",
+      "!**/hardware-backup/**",
+      "!**/diagnostics/**",
+      "!**/verification/**"
+    ],
+    "asar": false,
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/community.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "lilwoii",
+        "repo": "centerpiece-companion"
+      }
+    ]
+  },
+  "author": "lilwoii",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

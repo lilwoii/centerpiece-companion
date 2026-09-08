@@ -1,0 +1,11 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src"],
+  "locale": "en-US",
+  "ownership": { "Select/Listbox": "native" },
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Scrollbar", "Toast"],
+  "requiredCommands": ["unit", "check"],
+  "commands": { "unit": "npm test", "check": "npm run check" },
+  "evidence": { "failurePaths": "tests/desktop-verify.cjs" }
+}

@@ -13,5 +13,5 @@ class VirtualHID extends EventEmitter{
 }
 function devices(){if(cached)return cached;cached=JSON.parse(execFileSync(process.execPath,[worker,'--list'],{env:environment(),windowsHide:true,timeout:8000,maxBuffer:200000,encoding:'utf8'}));return cached;}
 function devicesAsync(){return new Promise((resolve,reject)=>{const id=++sequence;const timer=setTimeout(()=>{pending.delete(id);reject(Error('USB discovery timed out.'));},8000);pending.set(id,{resolve:value=>{cached=value;resolve(value);},reject,timer});send({op:'devices',id});});}
-function shutdown(){const p=child;child=null;for(const h of handles.values())h.closed=true;handles.clear();for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('App closed.'));}pending.clear();p?.disconnect();}
+function shutdown(){const p=child;child=null;cached=null;for(const h of handles.values())h.closed=true;handles.clear();for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('App closed.'));}pending.clear();if(!p||p.exitCode!=null)return Promise.resolve();return new Promise(resolve=>{p.once('exit',resolve);if(p.connected)p.disconnect();});}
 module.exports={HID:VirtualHID,devices,devicesAsync,shutdown};

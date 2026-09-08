@@ -1,3 +1,29 @@
+; Used by both installation and uninstallation. Never kill a USB transfer.
+!macro customCheckAppRunning
+  ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
+  ${If} $R0 == 0
+    IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 companion_wait
+    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --quit'
+    companion_wait:
+    StrCpy $R1 0
+    ${Do}
+      Sleep 500
+      ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
+      ${If} $R0 == 603
+        ${ExitDo}
+      ${EndIf}
+      IntOp $R1 $R1 + 1
+      ${If} $R1 >= 120
+        MessageBox MB_OK|MB_ICONEXCLAMATION "The companion has not finished releasing the keyboard. Setup will stop without forcing it closed. Quit the companion from its tray menu, then retry." /SD IDOK
+        Abort
+      ${EndIf}
+    ${Loop}
+  ${ElseIf} $R0 != 603
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Setup could not check whether the companion is running. Close it from its tray menu and retry." /SD IDOK
+    Abort
+  ${EndIf}
+!macroend
+
 !ifndef BUILD_UNINSTALLER
 !include nsDialogs.nsh
 !include FileFunc.nsh

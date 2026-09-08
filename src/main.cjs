@@ -107,6 +107,7 @@ function handle(name, fn) {
 }
 
 if (!app.requestSingleInstanceLock()) app.quit();
+else if(process.argv.includes('--quit')) app.quit();
 else {
   function diagnostics(){
     const directory=path.join(__dirname,'../diagnostics');fs.mkdirSync(directory,{recursive:true});
@@ -201,7 +202,13 @@ else {
     if(!process.argv.includes('--verify'))community.refresh().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))twitch.restore().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{monitor.start();}catch(e){state.deviceError=e.message;}
-    if(state.strip){try{desk.locks=await desk.system.request('locks');if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);await desk.live.sample();send();await syncAppearance();}catch(e){state.error=e.message;send();}}
+    if(state.strip){
+      try{desk.locks=await desk.system.request('locks');}catch(e){state.error=e.message;}
+      if(widgetShortcutReady)try{await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);}catch(e){state.error='Widget shortcut: '+e.message;}
+      try{const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);}catch(e){state.error=e.message;}
+      try{await desk.live.sample();}catch(e){state.error=e.message;}
+      try{send();await syncAppearance();}catch(e){state.error=e.message;}send();
+    }
     if (process.argv.includes('--smoke')) {
       console.log(JSON.stringify({ ready: true, keyboard: !!state.device.keyboard, display: !!state.device.display, spotify: !!state.media.available }));
       app.quit(); return;
@@ -218,5 +225,11 @@ else {
     }
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', event => {if(quitting)return;event.preventDefault();quitting = true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);globalShortcut.unregisterAll();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();(async()=>{const start=Date.now();while(strip.updating&&Date.now()-start<2500)await new Promise(r=>setTimeout(r,40));try{await strip.close();}catch{}require('./hid.cjs').shutdown();app.quit();})();});
+  app.on('before-quit', require('./shutdown.cjs').shutdownGate(async()=>{
+    quitting=true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);
+    globalShortcut.unregisterAll();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();
+    // Drain queued display work and the current transfer before restoring the overlay.
+    await displayTasks.run(()=>strip.close());
+    await require('./hid.cjs').shutdown();
+  },()=>app.quit(),error=>{state.error='Keyboard cleanup did not finish. Please retry Quit from the tray menu.';send();}));
 }

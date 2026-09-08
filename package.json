@@ -1,12 +1,12 @@
 {
   "name": "centerpiece-companion",
-  "version": "0.3.0-preview.5",
+  "version": "0.3.0-preview.6",
   "description": "Unofficial local companion for Finalmouse Centerpiece Pro",
   "main": "src/main.cjs",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/plugins.test.cjs tests/desk.test.cjs tests/community.test.cjs tests/signin-regression.test.cjs tests/twitch-auth.test.cjs tests/widget-cycle.test.cjs",
+    "test": "node --test tests/plugins.test.cjs tests/desk.test.cjs tests/community.test.cjs tests/signin-regression.test.cjs tests/twitch-auth.test.cjs tests/widget-cycle.test.cjs tests/update-storage.test.cjs",
     "check": "node --check src/main.cjs && node --check src/media.cjs && node --check src/device.cjs && node --check src/renderer.js",
     "package": "node scripts/package.cjs",
     "dist": "electron-builder --win nsis --x64 --publish never"
@@ -55,9 +55,10 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "include": "build/installer.nsh"
     },
     "publish": [
       {

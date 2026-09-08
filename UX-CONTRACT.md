@@ -29,3 +29,5 @@ Assignment writes validate in the main process and distinguish saved local state
 Window controls use the shared header on every page. Close hides to tray; minimize uses the Windows taskbar; maximize toggles restore. The tray menu owns explicit Quit and optional Start with Windows. Renderer access is limited to these named actions.
 
 Discord browser approval runs independently of desktop actions. Sign in changes to Cancel sign-in while pending, with recovery status on the Community page. Update checks become available immediately after the installed updater initializes.
+
+Saved Discord sessions restore at startup from Windows-encrypted local storage. Active sessions renew within their 30-day expiry window. Invalid submission fields do not spend the submission allowance; failures retain form text and show a plain-language error with a retry interval for rate limits.

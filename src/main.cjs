@@ -196,6 +196,7 @@ else {
     try { state.device = await inspectDevice(true); } catch (error) { state.deviceError = error.message; }
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{state.strip=strip.connect();}catch(error){state.error=error.message;}
     await refresh();
+    if(!process.argv.includes('--verify'))community.refresh().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{monitor.start();}catch(e){state.deviceError=e.message;}
     if(state.strip){try{desk.locks=await desk.system.request('locks');const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);await desk.live.sample();send();await syncAppearance();}catch(e){state.error=e.message;send();}}
     if (process.argv.includes('--smoke')) {

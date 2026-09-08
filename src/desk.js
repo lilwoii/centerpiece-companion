@@ -2,7 +2,7 @@ let deskCurrent, draft, selectedPosition=0, selectedPlugin='spotify', keymap, se
 const el=id=>document.getElementById(id);
 function option(value,text){const o=document.createElement('option');o.value=value;o.textContent=text;return o;}
 function announce(message,error=false){el('desk-feedback').textContent=message;el('desk-feedback').classList.toggle('error',error);}
-async function task(button,fn){if(deskBusy)return;deskBusy=true;button.disabled=true;button.setAttribute('aria-busy','true');announce('Working…');try{await fn();}catch(e){announce(e.message,true);}finally{deskBusy=false;button.removeAttribute('aria-busy');button.disabled=false;}}
+async function task(button,fn){if(deskBusy)return;deskBusy=true;button.disabled=true;button.setAttribute('aria-busy','true');announce('Working…');try{await fn();}catch(e){announce(e.message.replace(/^Error invoking remote method '[^']+': (?:Error: )?/,''),true);}finally{deskBusy=false;button.removeAttribute('aria-busy');button.disabled=false;}}
 function route(){const page=['library','keyboard','media','connections'].includes(location.hash.slice(1))?location.hash.slice(1):'library';document.querySelectorAll('[data-page]').forEach(s=>s.hidden=s.dataset.page!==page);document.querySelectorAll('.sidebar a').forEach(a=>{if(a.hash==='#'+page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});const h=document.querySelector(`[data-page="${page}"] h1`);document.title=h.textContent+' · Centerpiece Companion';h.focus();}
 window.addEventListener('hashchange',route);route();
 function drawSlots(){

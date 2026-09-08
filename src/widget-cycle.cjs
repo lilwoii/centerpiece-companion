@@ -1,4 +1,4 @@
-const types=['spotify','clock','weather','cpu','gpu','mic','twitch','text','follow','off'];
+const types=['spotify','clock','weather','cpu','gpu','mic','twitch','text','off'];
 function nextWidget(type){return types[(types.indexOf(type)+1)%types.length];}
 class WidgetCycle{
  constructor(workspace,apply,changed){Object.assign(this,{workspace,apply,changed});this.timer=null;this.lastPress=0;}

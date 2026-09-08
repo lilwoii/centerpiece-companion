@@ -34,10 +34,12 @@ Saved Discord sessions restore at startup from Windows-encrypted local storage. 
 
 Twitch uses the public-client device approval flow with chat:read only. A channel name or Twitch URL and Connect with Twitch replace all manual token inputs. Approval is cancellable without blocking the desktop. Tokens stay encrypted on this PC, restore at startup, validate hourly and renew as needed. Disconnect clears local credentials and attempts revocation. Browser approval URLs are restricted to Twitch activation.
 
-L1 + / cycles screen widgets in the tray through Spotify, clock, weather, CPU, GPU, microphone, Twitch, custom text, follow selection and off. Every press saves its selection; display writes coalesce after a 60 ms pause. Layer-one slash emits Ctrl+Alt+F12, is backed up and read back on setup, and is reserved in the editor. Restore companion setup restores its previous mapping. The companion must remain running in the tray for live widget switching.
+L1 + / cycles screen widgets in the tray through Spotify, clock, weather, CPU, GPU, microphone, Twitch, custom text and off. Every press saves its selection; display writes coalesce after a 60 ms pause. Layer-one slash emits Ctrl+Alt+F12, is backed up and read back on setup, and is reserved in the editor. Restore companion setup restores its previous mapping. The companion must remain running in the tray for live widget switching.
 
 Interactive installation and update installation show a locations page for the app folder and future update-download folder. Update downloads and their installer temporary files use a dedicated subfolder on the chosen local drive. Personal settings remain per Windows user in AppData. Windows itself still requires system-drive free space. Silent installations use a sibling update folder.
 
 Holding L1 highlights both P and physical slash using the custom L1 color, or the Caps Lock indicator color when no custom color is selected. Earlier F24 widget bindings migrate to F12 without replacing the original-key backup.
 
 Widget cycling updates only the visible screen state in the spare overlay slot. It does not rebuild or display the other navigation/Caps/L1 images. Cached states refresh their widget content when selected, while retaining instant selection and Caps feedback.
+
+Follow selection is an explicit Screen widgets choice and is excluded from L1 + / cycling, so keyboard widget cycling never enables plugin-linked widget changes.

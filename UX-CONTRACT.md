@@ -31,3 +31,5 @@ Window controls use the shared header on every page. Close hides to tray; minimi
 Discord browser approval runs independently of desktop actions. Sign in changes to Cancel sign-in while pending, with recovery status on the Community page. Update checks become available immediately after the installed updater initializes.
 
 Saved Discord sessions restore at startup from Windows-encrypted local storage. Active sessions renew within their 30-day expiry window. Invalid submission fields do not spend the submission allowance; failures retain form text and show a plain-language error with a retry interval for rate limits.
+
+Twitch uses the public-client device approval flow with chat:read only. A channel name or Twitch URL and Connect with Twitch replace all manual token inputs. Approval is cancellable without blocking the desktop. Tokens stay encrypted on this PC, restore at startup, validate hourly and renew as needed. Disconnect clears local credentials and attempts revocation. Browser approval URLs are restricted to Twitch activation.

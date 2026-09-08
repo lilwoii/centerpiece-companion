@@ -171,3 +171,5 @@ Contributions and feedback are welcome. Developers can read the [plugin guide](P
 Original project code is available under the [MIT license](LICENSE). Service names and logos belong to their respective owners. Weather data is provided by [Open-Meteo](https://open-meteo.com/) with attribution under CC BY 4.0.
 
 **Sharing with other owners? Send them the [public download page](https://github.com/lilwoii/centerpiece-companion/releases), not your personal app-data folder.**
+
+If Windows denies access to your selected update folder, the app asks you to choose another writable folder on your preferred drive and remembers that choice for your Windows account. Cancel leaves the current app installed.

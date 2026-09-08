@@ -27,3 +27,5 @@ Route title is Page · Centerpiece Companion. Navigation focuses the destination
 
 Assignment writes validate in the main process and distinguish saved local state from hardware upload failures. Actions run only on explicit activation. OBS credentials remain session-only. Keymap writes require matching device identity and a fresh unchanged snapshot, preserve L1/L1+P, create backups, and read back saves. All four navigation highlights and Caps/L1 states are preloaded; arrow presses perform no uploads. No raw typing is logged.
 Window controls use the shared header on every page. Close hides to tray; minimize uses the Windows taskbar; maximize toggles restore. The tray menu owns explicit Quit and optional Start with Windows. Renderer access is limited to these named actions.
+
+Discord browser approval runs independently of desktop actions. Sign in changes to Cancel sign-in while pending, with recovery status on the Community page. Update checks become available immediately after the installed updater initializes.

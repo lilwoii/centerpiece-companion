@@ -13,6 +13,7 @@ class Updates extends EventEmitter{
   u.on('download-progress',p=>this.set('downloading',`Downloading update · ${Math.round(p.percent)}%`));
   u.on('update-downloaded',()=>this.set('ready','Update ready · restart to install'));
   u.on('error',()=>this.set('error','Update check failed. Your current version is still available.'));
+  this.set('idle','Check for a newer community release.');
  }
  set(status,message){this.state={status,message};this.emit('change');}
  async check(){if(!this.updater)return this.state;await this.updater.checkForUpdates().catch(()=>{});return this.state;}

@@ -18,7 +18,7 @@ function updateNavigation(){
  navigation.plugins=[{id:'strip',name:'Keyboard strip',actions:desk.config.slots.map((s,i)=>({id:['previous','toggle','next','fourth'][i],label:s?`${desk.view().catalog.find(p=>p.id===s.plugin).name} · ${desk.view().catalog.find(p=>p.id===s.plugin).actions.find(a=>a.id===s.action).label}`:'Empty position'}))}];
  navigation.category=0;state.navigation=navigation.selection();
 }
-async function syncAppearance(){if(!state.strip||strip.updating||strip.watching)return;const key=JSON.stringify(desk.config);if(key===appliedAppearance)return;await strip.apply(desk.config,desk.locks);appliedAppearance=key;}
+async function syncAppearance(){return displayTasks.run(async()=>{if(!state.strip)return;const key=JSON.stringify(desk.config);if(key===appliedAppearance)return;await strip.apply(desk.config,desk.locks);appliedAppearance=key;});}
 async function runSlot(index){if(executing){state.error='A plugin action is already running.';send();return state;}executing=true;leaveMode();try{await desk.run(index);state.error='';state.feedback='Plugin action sent.';}catch(e){state.error=e.message;}finally{executing=false;}deskState();send();return state;}
 
 const media = new MediaBridge();
@@ -27,6 +27,7 @@ const state = { media: { available: false, message: 'Connecting to Spotify…' }
 const navigation = new PluginNavigation(state.plugins);
 state.navigation = navigation.selection();
 const strip = new StripController(hardwareDirectory);
+const displayTasks=new(require('./display-tasks.cjs').DisplayTasks)(strip);
 state.strip = false;
 let modeTimeout;
 const modeKeys = ['Left', 'Right', 'Up', 'Down', 'Return', 'Escape'];
@@ -142,7 +143,8 @@ else {
     handle('window-control',action=>{if(action==='minimize')win.minimize();else if(action==='maximize'){win.isMaximized()?win.unmaximize():win.maximize();}else if(action==='close')win.close();else throw Error('Unknown window control');return{maximized:win.isMaximized()};});
     const windowState=()=>win.webContents.send('window-state',{maximized:win.isMaximized()});win.on('maximize',windowState);win.on('unmaximize',windowState);
     handle('community-refresh',async()=>{await community.refresh();send();return state;});
-    handle('community-login',async()=>{await community.login();send();return state;});
+    handle('community-login',async()=>{if(community.state.signingIn)return state;community.state.signingIn=true;community.state.error='';send();community.login().catch(e=>{community.state.error=e.message;}).finally(()=>{community.state.signingIn=false;send();});return state;});
+    handle('community-cancel-login',()=>{community.close();send();return state;});
     handle('community-logout',async()=>{await community.logout();send();return state;});
     handle('community-submit',async input=>{await community.submit(input);send();return state;});
     handle('community-review',async(id,status)=>{await community.review(id,status);send();return state;});
@@ -153,7 +155,7 @@ else {
     handle('update-install',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the keyboard display update to finish.');await strip.close();state.strip=false;updates.install();});
     handle('action', (plugin, action) => perform(plugin, action));
     handle('plugin-mode', () => { enterMode(); return state; });
-    handle('save-desk', async config=>{leaveMode();try{if(strip.updating)throw Error('Display update in progress. Wait for it to finish.');while(strip.watching)await new Promise(r=>setTimeout(r,40));if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'fahrenheit'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
+    handle('save-desk', async config=>{leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'fahrenheit'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
     handle('run-slot', index=>runSlot(index));
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});
     handle('pick-app',()=>desk.pick());
@@ -202,7 +204,7 @@ else {
     }
     if(!process.argv.includes('--verify')){setTimeout(()=>updates.check(),10000).unref();setInterval(()=>updates.check(),6*3600000).unref();}
     timer = setInterval(refresh, 1800);
-    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(async()=>{if(!state.strip||quitting||displayBusy)return;displayBusy=true;try{await strip.reconcile();await strip.refreshLive();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}},500);
+    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(async()=>{if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.reconcile();if(!displayTasks.paused)await strip.refreshLive();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}},500);
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
     if (process.argv.includes('--verify')) {

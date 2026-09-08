@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
   communityRefresh:()=>ipcRenderer.invoke('community-refresh'),
   communityLogin:()=>ipcRenderer.invoke('community-login'),
+  communityCancelLogin:()=>ipcRenderer.invoke('community-cancel-login'),
   communityLogout:()=>ipcRenderer.invoke('community-logout'),
   communitySubmit:input=>ipcRenderer.invoke('community-submit',input),
   communityReview:(id,status)=>ipcRenderer.invoke('community-review',id,status),

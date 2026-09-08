@@ -10,9 +10,9 @@ class KeymapEditor{
  async use(fn){if(this.busy)throw Error('Keyboard edit in progress.');this.busy=true;let s;try{s=new Studio();return await fn(s);}finally{s?.close();this.busy=false;}}
  async read(){return this.use(async s=>{const m=(await s.request({keymap:{getKeymap:true}})).keymap?.getKeymap;if(!m||m.layers.some(l=>l.bindings.length!==68))throw Error('This editor requires the 68-key Centerpiece layout.');this.snapshot=m;this.serial=s.serial;return{layout:require('./layout.json'),layers:m.layers.map(l=>({id:l.id||0,keys:l.bindings.map((b,i)=>({position:i,name:physical[i],binding:b,label:label(b)}))})),choices};});}
  async change(layerId,position,value,mods,swapPosition){
-  if(![0,1].includes(layerId)||!Number.isInteger(position)||position<0||position>67||position===63||(layerId===1&&position===26))throw Error('This key is reserved for layer and plugin navigation.');
+  if(![0,1].includes(layerId)||!Number.isInteger(position)||position<0||position>67||position===63||(layerId===1&&[26,55].includes(position)))throw Error('This key is reserved for layer and plugin navigation.');
   if(!this.snapshot)throw Error('Read the keyboard before editing.');
-  if(swapPosition!==null&&(!Number.isInteger(swapPosition)||swapPosition<0||swapPosition>67||swapPosition===63||(layerId===1&&swapPosition===26)||swapPosition===position))throw Error('Choose a different, unreserved key to swap.');
+  if(swapPosition!==null&&(!Number.isInteger(swapPosition)||swapPosition<0||swapPosition>67||swapPosition===63||(layerId===1&&[26,55].includes(swapPosition))||swapPosition===position))throw Error('Choose a different, unreserved key to swap.');
   if(swapPosition===null&&(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>7))throw Error('Choose a supported key and modifiers.');
   return this.use(async s=>{
    if(s.serial!==this.serial)throw Error('A different keyboard is connected. Read its bindings first.');

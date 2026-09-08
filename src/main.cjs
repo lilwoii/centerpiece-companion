@@ -4,7 +4,7 @@ const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
 const { pathToFileURL } = require('node:url');
-const languages=require('./languages.cjs');const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch;
+const languages=require('./languages.cjs');const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,widgetCycle,widgetShortcutReady=false;
 const { MediaBridge } = require('./media.cjs');
 const { inspectDevice } = require('./device.cjs');
 const plugins = require('./plugins/index.cjs');
@@ -117,7 +117,7 @@ else {
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
-    desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);try{desk.language=await languages.map(desk.config.languageId);}catch{desk.language=await languages.map('qwerty');}deskState();updateNavigation();
+    desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await syncAppearance();state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();strip.setLayer(false);state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});try{desk.language=await languages.map(desk.config.languageId);}catch{desk.language=await languages.map('qwerty');}deskState();updateNavigation();
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Use Reconnect keyboard.';send();});
     monitor.on('layer',active=>{state.layer=active;if(state.strip)strip.setLayer(active);send();});
@@ -160,7 +160,7 @@ else {
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});
     handle('pick-app',()=>desk.pick());
     let telemetryBusy=false;handle('read-telemetry',async()=>{if(telemetryBusy)throw Error('Reading keyboard settings.');telemetryBusy=true;try{state.telemetry=await require('./telemetry.cjs').readTelemetry();send();return state;}finally{telemetryBusy=false;}});
-    handle('reconnect-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the current display update.');monitor.close();try{await strip.close();}catch{}state.strip=false;require('./hid.cjs').shutdown();state.device=await inspectDevice(true);state.strip=strip.connect();appliedAppearance='';send();if(state.strip){await syncAppearance();monitor.start();}state.error='';state.feedback=state.strip?'Keyboard reconnected.':'Connect the keyboard and retry.';send();return state;});
+    handle('reconnect-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the current display update.');monitor.close();try{await strip.close();}catch{}state.strip=false;require('./hid.cjs').shutdown();state.device=await inspectDevice(true);state.strip=strip.connect();appliedAppearance='';send();if(state.strip){if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);await syncAppearance();monitor.start();}state.error='';state.feedback=state.strip?'Keyboard reconnected.':'Connect the keyboard and retry.';send();return state;});
     handle('read-keymap',()=>desk.editor.read());
     handle('list-languages',()=>languages.list());
     handle('set-language',async id=>{const language=await languages.map(id);desk.save({...desk.config,languageId:id});desk.language=language;appliedAppearance='';send();await syncAppearance();send();return state;});
@@ -172,7 +172,7 @@ else {
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
-    handle('setup-keyboard',async()=>{if(state.strip)return state;await require('./setup.cjs').setup(hardwareDirectory);state.strip=strip.connect();await desk.live.sample();send();await syncAppearance();monitor.start();state.feedback='Keyboard setup complete. Your original plugin key is backed up on this PC.';send();return state;});
+    handle('setup-keyboard',async()=>{if(state.strip)return state;await require('./setup.cjs').setup(hardwareDirectory);if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);state.strip=strip.connect();await desk.live.sample();send();await syncAppearance();monitor.start();state.feedback='Keyboard setup complete. Your original plugin key is backed up on this PC.';send();return state;});
     handle('restore-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the display update to finish.');await strip.close();state.strip=false;await require('./setup.cjs').restore(hardwareDirectory);state.feedback='Original plugin key and overlay restored. Your other remaps remain.';send();return state;});
     handle('change-key',async data=>{await desk.editor.change(data.layer,data.position,data.value,data.mods,data.swap);const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);send();appliedAppearance='';await syncAppearance();return keys;});
     handle('connect-obs',async (password,port)=>{try{await desk.connectObs(password,port);state.error='';state.feedback='OBS connected. Password stays in memory until the app closes.';}catch(e){state.error=e.message;}send();return state;});
@@ -193,6 +193,7 @@ else {
     });
     try { const config = JSON.parse(fs.readFileSync(configPath(), 'utf8')); if (config.shortcuts === true && !process.argv.includes('--verify')) setShortcuts(true, false); } catch {}
     await win.loadFile(path.join(__dirname, 'index.html'));
+    if(!(widgetShortcutReady=globalShortcut.register('Control+Alt+F24',()=>{try{widgetCycle.press();}catch(e){state.error=e.message;send();}})))state.error='The widget shortcut is in use by another app.';
     if (!globalShortcut.register('Control+Alt+P', enterMode)) state.error = 'L1+P’s companion signal is in use. Use the Enter plugin mode button instead.';
     try { state.device = await inspectDevice(true); } catch (error) { state.deviceError = error.message; }
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{state.strip=strip.connect();}catch(error){state.error=error.message;}
@@ -200,7 +201,7 @@ else {
     if(!process.argv.includes('--verify'))community.refresh().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))twitch.restore().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{monitor.start();}catch(e){state.deviceError=e.message;}
-    if(state.strip){try{desk.locks=await desk.system.request('locks');const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);await desk.live.sample();send();await syncAppearance();}catch(e){state.error=e.message;send();}}
+    if(state.strip){try{desk.locks=await desk.system.request('locks');if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);await desk.live.sample();send();await syncAppearance();}catch(e){state.error=e.message;send();}}
     if (process.argv.includes('--smoke')) {
       console.log(JSON.stringify({ ready: true, keyboard: !!state.device.keyboard, display: !!state.device.display, spotify: !!state.media.available }));
       app.quit(); return;
@@ -217,5 +218,5 @@ else {
     }
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', event => {if(quitting)return;event.preventDefault();quitting = true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);globalShortcut.unregisterAll();community?.close();twitch?.close();monitor.close();media.close();desk?.close();(async()=>{const start=Date.now();while(strip.updating&&Date.now()-start<2500)await new Promise(r=>setTimeout(r,40));try{await strip.close();}catch{}require('./hid.cjs').shutdown();app.quit();})();});
+  app.on('before-quit', event => {if(quitting)return;event.preventDefault();quitting = true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);globalShortcut.unregisterAll();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();(async()=>{const start=Date.now();while(strip.updating&&Date.now()-start<2500)await new Promise(r=>setTimeout(r,40));try{await strip.close();}catch{}require('./hid.cjs').shutdown();app.quit();})();});
 }

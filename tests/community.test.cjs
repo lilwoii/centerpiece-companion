@@ -16,8 +16,8 @@ test('L1 transitions are immediate for analog and rapid-trigger reports',()=>{
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/keyboard-monitor.cjs'),'utf8'),box);
  const monitor=new box.module.exports.KeyboardMonitor(),changes=[];monitor.on('layer',value=>changes.push(value));monitor.start();
  for(const[type,length]of [[1,6],[3,8]])for(const pressed of [1,1,0]){const packet=Buffer.alloc(64);packet.set([4,length,type,59,pressed]);handle.emit('data',packet);}
- assert.deepEqual(changes,[true,false,true,false]);
- handle.emit('data',Buffer.from([4,6,1,59,1,0,0,0]));handle.emit('data',Buffer.from([4,6,1,18,1,0,0,0]));assert.equal(monitor.layer,false);monitor.close();
+ assert.deepEqual(changes,[true,false,true,false]);handle.emit('data',Buffer.from([4,6,1,59,1,0,0,0]));for(const position of [26,55])for(const pressed of [1,0]){handle.emit('data',Buffer.from([4,6,1,require('../src/hardware-codes.json')[position],pressed,0,0,0]));assert.equal(monitor.layer,true);}handle.emit('data',Buffer.from([4,6,1,59,0,0,0,0]));assert.equal(monitor.layer,false);
+ handle.emit('data',Buffer.from([4,6,1,59,1,0,0,0]));handle.emit('data',Buffer.from([4,6,1,require('../src/hardware-codes.json')[33],1,0,0,0]));assert.equal(monitor.layer,false);monitor.close();
 });
 test('USB clients share one reader and closing a settings client leaves monitoring alive',()=>{
  const fs=require('node:fs'),vm=require('node:vm'),{EventEmitter}=require('node:events');let opened=0,closed=0,native;const messages=[];const fakeProcess=new EventEmitter();Object.assign(fakeProcess,{argv:[],connected:true,send:m=>messages.push(m),exit:()=>{}});

@@ -6,8 +6,9 @@ class KeyboardMonitor extends EventEmitter{
   this.handle.on('data',raw=>{if(raw.length<8||raw[0]!==4||!((raw[1]===6&&[1,2].includes(raw[2]))||(raw[1]===8&&raw[2]===3&&raw.length>=10)))return;this.lastReportAt=Date.now();const position=hardwareCodes.indexOf(raw[3]),pressed=raw[4]!==0;
    // Raw positions are used only for L1 state or an explicitly armed editor selection.
    // These are selected-sensor reports, not a complete multi-key pressed set.
-   // A different sensor or a release ends the transient L1 hint.
-   const layer=position===63&&pressed;if(this.layer!==layer){this.layer=layer;this.layerChanges++;this.emit('layer',layer);}
+   // P and slash belong to the L1 chord, so their reports must not hide its hint.
+   // An L1 release or an unrelated sensor clears the hint.
+   const layer=position===63?pressed:[26,55].includes(position)?this.layer:false;if(this.layer!==layer){this.layer=layer;this.layerChanges++;this.emit('layer',layer);}
    if(pressed&&position>=0&&position<68&&Date.now()<this.captureUntil){this.captureUntil=0;this.emit('selected',position);}
   });this.handle.on('error',()=>{this.close();this.emit('disconnected');});const tick=()=>{try{const packet=Buffer.alloc(64);packet[0]=3;packet[1]=2;packet[2]=240;packet[3]=29;this.handle?.write([...packet]);}catch{this.close();}};tick();this.timer=setInterval(tick,2500);
  }

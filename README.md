@@ -183,3 +183,5 @@ Saved key mappings remain on the keyboard, but live Spotify data, widgets and co
 Future releases install through **Check for updates → Download update → Restart & update**. Installation runs quietly and preserves locations and personal settings. Existing users do not need to download or run a separate installer manually.
 
 Spotify track changes are checked at a short interval while Spotify is connected, and changed track details trigger a display refresh without waiting for the regular display timer. Requests remain serialized; Windows media reporting and USB transfer time can still add delay.
+
+Typing in the custom text field selects **Custom text** automatically. Click **Apply screen widget** to save and display it. Widget-only edits update the visible frame directly. Live refreshes use firmware upload acknowledgements; the full preview readback remains part of initial display setup.

@@ -88,7 +88,7 @@ async function refresh() {
   polling = true;const previousTrack=trackKey(state.media);
   try { state.media = await media.request('status');state.media.receivedAt=Date.now(); }
   catch (error) { state.media = { available: false, message: error.message }; }
-  finally { polling = false; send();if(previousTrack!==trackKey(state.media))await refreshStrip(false); }
+  finally { polling = false; send();if(previousTrack!==trackKey(state.media))void refreshStrip(false); }
 }
 async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}
 async function perform(plugin, action) {
@@ -164,6 +164,7 @@ else {
     handle('update-install',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the keyboard display update to finish.');await strip.close();state.strip=false;updates.install();});
     handle('action', (plugin, action) => perform(plugin, action));
     handle('plugin-mode', () => { enterMode(); return state; });
+    handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
     handle('save-desk', async config=>{leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'fahrenheit'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
     handle('run-slot', index=>runSlot(index));
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});

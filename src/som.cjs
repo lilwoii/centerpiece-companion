@@ -55,10 +55,11 @@ class Som {
       this.send(32);
     }, 20000);
   }
-  async uploadOverlay(slot, bytes, name = 'Companion strip') {
+  async uploadOverlay(slot, bytes, name = 'Companion strip', verify = true) {
     if (!Number.isInteger(slot)||slot<1||slot>10 || bytes.length > 8*1024*1024 || bytes.subarray(0,8).toString('hex') !== '89504e470d0a1a0a') throw new Error('Invalid overlay PNG');
     const manifest = Buffer.from(JSON.stringify({slot, fileName:name, fileExtension:'png', fileSize:bytes.length, fileID:randomUUID()}));
     await this.transfer(1, manifest); await this.transfer(4, bytes);
+    if(!verify)return; // Live frames retain both firmware acknowledgements; setup verifies full previews.
     const readback = await this.readOverlay(slot);
     if (!readback) throw new Error('Overlay preview was empty after upload.');
     // OVERLAY_GET returns a half-resolution preview, not the original PNG.

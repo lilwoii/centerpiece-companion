@@ -4,6 +4,8 @@ const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
 const { pathToFileURL } = require('node:url');
+const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll;
+const {Startup,openCompanion,hideCompanion}=require('./startup.cjs');let startup,refreshTray=()=>{};
 const {XpanelSkins}=require('./xpanel-skins.cjs');let xpanelSkins;
 const languages=require('./languages.cjs');const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,widgetCycle,widgetShortcutReady=false;
 const { MediaBridge } = require('./media.cjs');
@@ -83,11 +85,12 @@ function setShortcuts(enabled, persist = true) {
 }
 async function refresh() {
   if (polling || executing || quitting) return;
-  polling = true;
+  polling = true;const previousTrack=trackKey(state.media);
   try { state.media = await media.request('status');state.media.receivedAt=Date.now(); }
   catch (error) { state.media = { available: false, message: error.message }; }
-  finally { polling = false; send(); }
+  finally { polling = false; send();if(previousTrack!==trackKey(state.media))await refreshStrip(false); }
 }
+async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}
 async function perform(plugin, action) {
   if (executing) return { ok: false, error: 'A control is already in progress.' };
   executing = true; state.error = ''; send();
@@ -114,34 +117,36 @@ else {
     const directory=path.join(__dirname,'../diagnostics');fs.mkdirSync(directory,{recursive:true});
       fs.writeFileSync(path.join(directory,'state.json'),JSON.stringify({strip:state.strip,navigation:state.navigation,error:state.error,deviceError:state.deviceError,expectedSlot:strip.lastSlot,layer:state.layer,monitor:monitor.status(),updating:strip.updating,cacheKeys:[...strip.cache.keys()],observedSlot:strip.lastObservedSlot,desired:strip.desired,media:{available:state.media.available,status:state.media.status,position:state.media.position,duration:state.media.duration,receivedAt:state.media.receivedAt},pluginBinding:desk?.editor.snapshot?.layers.find(l=>l.id===1)?.bindings[26]},null,2));
   }
-  app.on('second-instance', (_event,args) => { if(args.includes('--diagnostics')){diagnostics();return;} if(args.includes('--quit')){app.quit();return;} if (win) { win.show(); win.restore(); win.focus(); } });
+  app.on('second-instance', (_event,args) => { if(args.includes('--diagnostics')){diagnostics();return;} if(args.includes('--quit')){app.quit();return;} if(args.includes('--background'))return;if (win) openCompanion(win); });
   app.whenReady().then(async () => {
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
-    xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
+    startup=new Startup(app,process.execPath);state.startup=startup.read();xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
     desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});try{desk.language=await languages.map(desk.config.languageId);}catch{desk.language=await languages.map('qwerty');}deskState();updateNavigation();
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Use Reconnect keyboard.';send();});
     monitor.on('layer',active=>{state.layer=active;if(state.strip)strip.setLayer(active);send();});
     monitor.on('selected',position=>{if(win?.isFocused())win.webContents.send('selected-key',position);});
     win = new BrowserWindow({ icon:path.join(__dirname,'assets/community.png'), width: 1320, height: 920, minWidth: 560, minHeight: 600, show: !process.argv.includes('--background') && !process.argv.includes('--verify') && !process.argv.includes('--smoke'), backgroundColor: '#11151d', title: 'Centerpiece Companion', autoHideMenuBar: true,
-      frame:false, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+      frame:false, skipTaskbar:process.argv.includes('--background'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
       win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
       if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke')){
         tray=new Tray(path.join(__dirname,'assets/community.ico'));
         tray.setToolTip('Centerpiece Companion — keyboard controls running');
-        const open=()=>{win.show();win.restore();win.focus();};
-        const refreshMenu=()=>tray.setContextMenu(Menu.buildFromTemplate([
+        const open=()=>openCompanion(win);
+        refreshTray=()=>tray.setContextMenu(Menu.buildFromTemplate([
           {label:'Open companion',click:open},
-          {label:'Start with Windows',type:'checkbox',checked:app.getLoginItemSettings({path:process.execPath,args:['--background']}).openAtLogin,enabled:app.isPackaged,click:item=>{app.setLoginItemSettings({openAtLogin:item.checked,path:process.execPath,args:['--background']});refreshMenu();}},
+          {label:'Start with Windows',type:'checkbox',checked:state.startup.enabled,enabled:state.startup.available,click:item=>{try{state.startup=startup.set(item.checked);}catch(e){state.error=e.message;}refreshTray();send();}},
           {type:'separator'},
           {label:'Quit companion (stops live controls)',click:()=>app.quit()}
-        ]));refreshMenu();tray.on('double-click',open);
-        win.on('close',event=>{if(!quitting){event.preventDefault();win.hide();monitor.capture(false);}});
+        ]));refreshTray();tray.on('double-click',open);
+        win.on('close',event=>{if(!quitting){event.preventDefault();hideCompanion(win);monitor.capture(false);}});
       }
     win.webContents.on('will-navigate', event => event.preventDefault());
     win.on('blur',()=>monitor.capture(false));
     handle('get-state', () => state);
+    handle('set-startup',enabled=>{state.startup=startup.set(enabled);refreshTray();send();return state;});
+    win.on('focus',()=>{state.startup=startup.read();refreshTray();send();});
     handle('window-control',action=>{if(action==='minimize')win.minimize();else if(action==='maximize'){win.isMaximized()?win.unmaximize():win.maximize();}else if(action==='close')win.close();else throw Error('Unknown window control');return{maximized:win.isMaximized()};});
     const windowState=()=>win.webContents.send('window-state',{maximized:win.isMaximized()});win.on('maximize',windowState);win.on('unmaximize',windowState);
     handle('xpanel-refresh',async()=>{await xpanelSkins.refresh();send();return xpanelSkins.state;});
@@ -217,8 +222,8 @@ else {
       app.quit(); return;
     }
     if(!process.argv.includes('--verify')){setTimeout(()=>updates.check(),10000).unref();setInterval(()=>updates.check(),6*3600000).unref();}
-    timer = setInterval(refresh, 1800);
-    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(async()=>{if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.reconcile();if(!displayTasks.paused)await strip.refreshLive();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}},500);
+    mediaPoll=new MediaPoll(refresh,()=>state.media);mediaPoll.start();
+    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(()=>refreshStrip(),500);
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
     if (process.argv.includes('--verify')) {
@@ -230,7 +235,7 @@ else {
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', require('./shutdown.cjs').shutdownGate(async()=>{
     quitting=true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);
-    globalShortcut.unregisterAll();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();
+    globalShortcut.unregisterAll();mediaPoll?.close();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();
     // Drain queued display work and the current transfer before restoring the overlay.
     await displayTasks.run(()=>strip.close());
     await require('./hid.cjs').shutdown();

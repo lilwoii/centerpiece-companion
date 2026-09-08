@@ -173,3 +173,13 @@ Original project code is available under the [MIT license](LICENSE). Service nam
 **Sharing with other owners? Send them the [public download page](https://github.com/lilwoii/centerpiece-companion/releases), not your personal app-data folder.**
 
 If Windows denies access to your selected update folder, the app asks you to choose another writable folder on your preferred drive and remembers that choice for your Windows account. Cancel leaves the current app installed.
+
+### Quiet automatic startup
+
+Enable **Start with Windows** in the app’s left sidebar (or its tray menu). When you sign in to Windows, the companion starts in the system tray with no window or taskbar button, loads saved settings, and runs live widgets and plugin controls. Spotify itself must be playing for live track information. Double-click the tray icon to open the app. Uncheck the setting to stop automatic startup.
+
+Saved key mappings remain on the keyboard, but live Spotify data, widgets and companion plugin actions require the background app. Closing the window keeps it running; **Quit companion** stops live controls.
+
+Future releases install through **Check for updates → Download update → Restart & update**. Installation runs quietly and preserves locations and personal settings. Existing users do not need to download or run a separate installer manually.
+
+Spotify track changes are checked at a short interval while Spotify is connected, and changed track details trigger a display refresh without waiting for the regular display timer. Requests remain serialized; Windows media reporting and USB transfer time can still add delay.

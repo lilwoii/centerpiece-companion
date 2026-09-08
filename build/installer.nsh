@@ -117,6 +117,9 @@ FunctionEnd
 
 !macro customInstall
   ${If} $UpdateRoot == ""
+    ReadINIStr $UpdateRoot "$INSTDIR\install-locations.ini" "Storage" "UpdateRoot"
+  ${EndIf}
+  ${If} $UpdateRoot == ""
     StrCpy $UpdateRoot "$INSTDIR-updates"
   ${EndIf}
   FileOpen $0 "$INSTDIR\install-locations.ini" w

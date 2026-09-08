@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  setStartup:enabled=>ipcRenderer.invoke('set-startup',enabled),
   xpanelRefresh:()=>ipcRenderer.invoke('xpanel-refresh'),
   xpanelDownload:id=>ipcRenderer.invoke('xpanel-download',id),
   communityRefresh:()=>ipcRenderer.invoke('community-refresh'),

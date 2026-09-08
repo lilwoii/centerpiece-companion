@@ -77,3 +77,7 @@ Mapping: colors.* → matching :root variables → shared controls and text; typ
 
 The owner explicitly superseded the earlier one-screen brief with a logo library and keyboard editing. Brand logos use their identification colors, with white/light authorized-style variants for monochrome marks on the dark background. Generic tools have their own icons. Labels distinguish launchers and configured shortcuts from native integration. No runtime palette token changed.
 Window chrome is owned by the shared header and window-ui.js: a draggable dark surface excluding interactive controls, yellow minimize, green maximize/restore and red close-to-tray. Each color also has a distinct symbol and accessible name. Tray Quit stops live controls; Windows startup is opt-in.
+
+## Community skin gallery
+
+Use the existing dark surfaces and typography for a responsive preview grid, with original creator credits and clear download buttons. Keep XPANEL catalog listings visibly separate from owner-reviewed submissions. Native search, shared status messages and 24-item progressive disclosure keep all 69 entries accessible without a long initial image load.

@@ -1,0 +1,12 @@
+let xpanelItems=[],xpanelSignature='',skinPageSize=24;
+function renderXpanel(value){if(!value)return;const signature=JSON.stringify(value);if(signature===xpanelSignature)return;xpanelSignature=signature;xpanelItems=value.items||[];el('xpanel-status').textContent=value.error?'Showing saved catalog. '+value.error:'Public XPANEL catalog · '+xpanelItems.length+' skins · downloads stay with the original host.';drawXpanel();}
+function drawXpanel(){const query=el('skin-search').value.trim().toLocaleLowerCase(),items=xpanelItems.filter(s=>(s.title+' '+s.creator).toLocaleLowerCase().includes(query));const grid=el('xpanel-grid');grid.replaceChildren();for(const skin of items.slice(0,skinPageSize)){const card=node('article',undefined,'skin-card'),img=node('img');img.src=skin.thumbnail;img.alt='Preview of '+skin.title;img.loading='lazy';img.referrerPolicy='no-referrer';img.addEventListener('error',()=>{img.hidden=true;},{once:true});const content=node('div',undefined,'skin-card-body'),download=node('button','Download skin','button');download.setAttribute('aria-label','Download '+skin.title);download.addEventListener('click',()=>task(download,async()=>{await window.companion.xpanelDownload(skin.id);announce('Download opened in your browser. Use XPANEL to install the skin.');}));content.append(node('p','XPANEL community','eyebrow'),node('h3',skin.title),node('p','By '+skin.creator,'note'),download);card.append(img,content);grid.append(card);}el('skin-results').textContent=items.length?`Showing ${Math.min(skinPageSize,items.length)} of ${items.length} skins`:'No skins match your search.';el('skin-more').hidden=items.length<=skinPageSize;}
+el('skin-search').addEventListener('input',()=>{skinPageSize=24;drawXpanel();});
+bind('skin-clear',()=>{el('skin-search').value='';skinPageSize=24;drawXpanel();el('skin-search').focus();announce('Search cleared.');});
+bind('skin-more',()=>{skinPageSize+=24;drawXpanel();announce(el('skin-results').textContent);});
+bind('xpanel-refresh',async()=>{const result=await window.companion.xpanelRefresh();renderXpanel(result);announce(result.error||'XPANEL catalog refreshed.',!!result.error);});
+window.companion.subscribe(s=>renderXpanel(s.xpanelSkins));window.companion.getState().then(s=>renderXpanel(s.xpanelSkins)).catch(()=>{});
+
+for(const id of ['skin-clear','skin-more','xpanel-refresh'])el(id).disabled=false;
+
+el('submit-skin').addEventListener('click',()=>{el('request-kind').value='skin';el('request-kind').dispatchEvent(new Event('change'));});

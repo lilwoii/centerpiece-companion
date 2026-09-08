@@ -32,7 +32,7 @@ Your settings remain in your Windows account even if the app is installed on ano
 | **Keyboard editor** | Click a physical key or press it to select it; change bindings, swap keys, choose display layouts and configure a Caps Lock color indicator. |
 | **Connections** | Configure your own Twitch, local OBS, weather and optional sensor connections. |
 | **Feature requests** | Sign in with Discord, post ideas with timestamps and choose a display-name color. |
-| **Community skins** | Browse owner-approved skin links or submit your own link for review. |
+| **Community skins** | Browse the public XPANEL catalog with previews and official downloads, plus owner-approved skin links. |
 | **Background operation** | Keep controls running in the tray, optionally start with Windows, and update from inside the installed app. |
 
 The catalog includes Spotify, YouTube, Twitch, OBS, Discord, Steam, Kick, Streamlabs, voice tools and more. **A catalog logo does not mean a full native integration:** some entries launch a website or app, while others send a shortcut you configure in that service. Elgato/Stream Deck plugin packages cannot be imported directly.
@@ -133,7 +133,9 @@ Open **Feature requests → Sign in with Discord**, approve in your browser, the
 
 To submit a skin, choose **Submit a skin link**, provide an HTTPS download link and confirm that you created it or have permission to share it. Approved links appear in **Community skins** with creator credit. Review does not guarantee acceptance.
 
-This preview does **not** mirror XPANEL's full skin catalog or install community skin files automatically. Skin links open in your browser; use the appropriate supported workflow to install a downloaded skin.
+**Community skins → XPANEL community** includes all 69 skins in the public catalog at release, with creator credits and preview images. Search by skin or creator, use **Show more skins** to browse the entire list, and **Refresh XPANEL** to fetch new listings. The bundled catalog remains available if refresh fails; preview images require internet access. **Download skin** opens the original XPANEL download in your browser. Install downloaded skins using XPANEL; the companion does not automatically install files or change your current skin.
+
+File uploads are not enabled. Submit an HTTPS download link for owner review; file hosting remains with its original provider.
 
 ## Tray, updates and removal
 

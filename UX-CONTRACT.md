@@ -43,3 +43,5 @@ Holding L1 highlights both P and physical slash using the custom L1 color, or th
 Widget cycling updates only the visible screen state in the spare overlay slot. It does not rebuild or display the other navigation/Caps/L1 images. Cached states refresh their widget content when selected, while retaining instant selection and Caps feedback.
 
 Follow selection is an explicit Screen widgets choice and is excluded from L1 + / cycling, so keyboard widget cycling never enables plugin-linked widget changes.
+
+The Community skins gallery uses shared native search/buttons and status feedback. XPANEL listings are kept separate from owner-approved submissions and retain creator attribution. Search covers the whole catalog; Show more reveals 24 additional entries. Refresh failures retain the saved catalog and report the error. Downloads are explicit and restricted to known official hosts. Only thumbnail images may load from the XPANEL asset origin; remote scripts and navigation remain blocked. File submissions remain HTTPS links until the owner enables shared storage.

@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  xpanelRefresh:()=>ipcRenderer.invoke('xpanel-refresh'),
+  xpanelDownload:id=>ipcRenderer.invoke('xpanel-download',id),
   communityRefresh:()=>ipcRenderer.invoke('community-refresh'),
   communityLogin:()=>ipcRenderer.invoke('community-login'),
   communityCancelLogin:()=>ipcRenderer.invoke('community-cancel-login'),

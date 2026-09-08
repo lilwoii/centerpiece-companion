@@ -4,6 +4,7 @@ const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
 const { pathToFileURL } = require('node:url');
+const {XpanelSkins}=require('./xpanel-skins.cjs');let xpanelSkins;
 const languages=require('./languages.cjs');const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,widgetCycle,widgetShortcutReady=false;
 const { MediaBridge } = require('./media.cjs');
 const { inspectDevice } = require('./device.cjs');
@@ -54,7 +55,7 @@ const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 
 function send() {
   deskState();
-  if(twitch&&desk)desk.chat.state.auth=twitch.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
+  if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
   if(desk)strip.setData({live:desk.live.state,media:state.media,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,language:desk.language});
   if(state.strip)try{strip.show(state.navigation);}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;}
   if (win && !win.isDestroyed()) win.webContents.send('state', state);
@@ -117,7 +118,7 @@ else {
   app.whenReady().then(async () => {
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
-    community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
+    xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
     desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});try{desk.language=await languages.map(desk.config.languageId);}catch{desk.language=await languages.map('qwerty');}deskState();updateNavigation();
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Use Reconnect keyboard.';send();});
@@ -143,6 +144,8 @@ else {
     handle('get-state', () => state);
     handle('window-control',action=>{if(action==='minimize')win.minimize();else if(action==='maximize'){win.isMaximized()?win.unmaximize():win.maximize();}else if(action==='close')win.close();else throw Error('Unknown window control');return{maximized:win.isMaximized()};});
     const windowState=()=>win.webContents.send('window-state',{maximized:win.isMaximized()});win.on('maximize',windowState);win.on('unmaximize',windowState);
+    handle('xpanel-refresh',async()=>{await xpanelSkins.refresh();send();return xpanelSkins.state;});
+    handle('xpanel-download',id=>xpanelSkins.download(id));
     handle('community-refresh',async()=>{await community.refresh();send();return state;});
     handle('community-login',async()=>{if(community.state.signingIn)return state;community.state.signingIn=true;community.state.error='';send();community.login().catch(e=>{community.state.error=e.message;}).finally(()=>{community.state.signingIn=false;send();});return state;});
     handle('community-cancel-login',()=>{community.close();send();return state;});
@@ -199,7 +202,7 @@ else {
     try { state.device = await inspectDevice(true); } catch (error) { state.deviceError = error.message; }
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{state.strip=strip.connect();}catch(error){state.error=error.message;}
     await refresh();
-    if(!process.argv.includes('--verify'))community.refresh().then(send).catch(()=>{});
+    if(!process.argv.includes('--verify')){community.refresh().then(send).catch(()=>{});xpanelSkins.refresh().then(send).catch(()=>{});}
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))twitch.restore().then(send).catch(()=>{});
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{monitor.start();}catch(e){state.deviceError=e.message;}
     if(state.strip){

@@ -53,7 +53,7 @@ function hotkeyCodes(value){
  const special={SPACE:32,ENTER:13,ESC:27,TAB:9,UP:38,DOWN:40,LEFT:37,RIGHT:39,HOME:36,END:35,DELETE:46,INSERT:45};
  let key=special[final];if(/^[A-Z0-9]$/.test(final))key=final.charCodeAt(0);if(/^F([1-9]|1[0-9]|2[0-4])$/.test(final))key=111+Number(final.slice(1));
  if(!key||(!codes.length&&!/^F/.test(final)))throw Error('Use a modifier with a key, or F1–F24.');
- if(codes.includes(17)&&codes.includes(18)&&key===80)throw Error('L1+P uses this shortcut. Choose another.');
+ if(codes.includes(17)&&codes.includes(18)&&[80,123].includes(key))throw Error('A keyboard navigation shortcut uses this combination. Choose another.');
  return [...codes,key];
 }
 function validateSlot(slot){

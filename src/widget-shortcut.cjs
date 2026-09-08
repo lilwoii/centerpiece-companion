@@ -1,5 +1,6 @@
 const fs=require('node:fs'),path=require('node:path');const{Studio}=require('./studio.cjs');
-const binding={behaviorId:50397,param1:0x05070073}; // Ctrl+Alt+F24, emitted by physical L1 + /.
+const binding={behaviorId:50397,param1:0x05070045}; // Ctrl+Alt+F12, emitted by physical L1 + /.
+const legacyBinding={behaviorId:50397,param1:0x05070073};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 async function widgetShortcut(directory,restore=false){
  let manifest=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));
@@ -14,12 +15,14 @@ async function widgetShortcut(directory,restore=false){
  if(layer?.bindings.length!==68)throw Error('L1 + / requires the 68-key Centerpiece Pro layout.');
  const current=layer.bindings[55],desired=restore?prior.original:binding;
  if(same(current,desired))return true;
- if(prior&&!same(current,restore?binding:prior.original))throw Error('L1 + / changed outside the companion; its current mapping was preserved.');
+ const owned=same(current,binding)||same(current,legacyBinding);
+ if(prior&&!owned&&!same(current,prior.original))throw Error('L1 + / changed outside the companion; its current mapping was preserved.');
  if(!prior)fs.writeFileSync(file,JSON.stringify({serial:s.serial,original:current,installed:binding,createdAt:new Date().toISOString()},null,2));
  editAttempted=true;
  if((await s.request({keymap:{setLayerBinding:{layerId:1,keyPosition:55,binding:desired}}})).keymap.setLayerBinding!==0)throw Error('Keyboard rejected the widget shortcut.');
  saveAttempted=true;const saved=(await s.request({keymap:{saveChanges:true}})).keymap.saveChanges;if(!saved||saved.err)throw Error('Keyboard did not save the widget shortcut.');
- layer.bindings[55]=desired;const after=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;if(!same(map,after))throw Error('Widget shortcut readback differed. Reconnect before retrying.');return true;
+ layer.bindings[55]=desired;const after=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;if(!same(map,after))throw Error('Widget shortcut readback differed. Reconnect before retrying.');
+ if(!restore&&prior)fs.writeFileSync(file,JSON.stringify({...prior,installed:binding},null,2));return true;
  }catch(e){if(editAttempted&&!saveAttempted)await s.request({keymap:{discardChanges:true}}).catch(()=>{});throw e;}finally{s.close();}
 }
 module.exports={widgetShortcut,binding};

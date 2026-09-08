@@ -32,7 +32,7 @@ test('an in-flight display query cannot toggle off a newer navigation selection'
  cache.config={};cache.som={selectSlot:slot=>calls.push(slot),currentSlot:()=>new Promise(resolve=>responses.push(resolve))};cache.cache.set('nav:previous',6);cache.cache.set('nav:toggle',7);cache.show({active:true,id:'previous'});cache.selectionAt=0;
  const query=cache.reconcile();cache.show({active:true,id:'toggle'});responses[0](6);await query;assert.deepEqual(calls,[6,7]);
 });
-test('L1 hint adds only P and leaves native function-layer labels untouched',()=>{
- const{configuredSVG}=require('../src/strip.cjs');const svg=configuredSVG('idle',{slots:[null,null,null,null],indicator:{enabled:false,on:'#ffee00'},widget:{type:'off'}},{caps:false,layer:true});assert.match(svg,/>P<\/text>/);assert.doesNotMatch(svg,/Right Alt|Left Ctrl|>F1<|>Windows</);
+test('L1 hint adds P and slash and leaves native function-layer labels untouched',()=>{
+ const{configuredSVG}=require('../src/strip.cjs');const svg=configuredSVG('idle',{slots:[null,null,null,null],indicator:{enabled:false,on:'#ffee00'},widget:{type:'off'}},{caps:false,layer:true});assert.match(svg,/>P<\/text>/);assert.match(svg,/>\/<\/text>/);assert.equal((svg.match(/fill-opacity=".65"/g)||[]).length,2);assert.doesNotMatch(svg,/Right Alt|Left Ctrl|>F1<|>Windows</);
 });
 test('plugin selection takes priority over a delayed L1 sensor release',()=>{const{DisplayCache}=require('../src/display-cache.cjs'),cache=new DisplayCache('.',()=>''),calls=[];cache.config={};cache.som={selectSlot:n=>calls.push(n)};cache.cache.set('layer:0',4);cache.cache.set('nav:previous',6);cache.cache.set('nav:toggle',7);cache.setLayer(true);cache.show({active:true,id:'previous'});cache.show({active:true,id:'toggle'});assert.deepEqual(calls,[4,6,7]);});

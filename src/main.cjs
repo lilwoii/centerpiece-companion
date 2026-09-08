@@ -194,7 +194,7 @@ else {
     });
     try { const config = JSON.parse(fs.readFileSync(configPath(), 'utf8')); if (config.shortcuts === true && !process.argv.includes('--verify')) setShortcuts(true, false); } catch {}
     await win.loadFile(path.join(__dirname, 'index.html'));
-    if(!(widgetShortcutReady=globalShortcut.register('Control+Alt+F24',()=>{try{widgetCycle.press();}catch(e){state.error=e.message;send();}})))state.error='The widget shortcut is in use by another app.';
+    if(!(widgetShortcutReady=globalShortcut.register('Control+Alt+F12',()=>{try{widgetCycle.press();}catch(e){state.error=e.message;send();}})))state.error='The widget shortcut is in use by another app.';
     if (!globalShortcut.register('Control+Alt+P', enterMode)) state.error = 'L1+P’s companion signal is in use. Use the Enter plugin mode button instead.';
     try { state.device = await inspectDevice(true); } catch (error) { state.deviceError = error.message; }
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))try{state.strip=strip.connect();}catch(error){state.error=error.message;}

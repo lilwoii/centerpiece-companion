@@ -16,8 +16,9 @@ const { PluginNavigation } = require('./navigation.cjs');
 const { StripController } = require('./strip.cjs');
 const { Workspace } = require('./workspace.cjs');
 const{KeyboardMonitor}=require('./keyboard-monitor.cjs');const monitor=new KeyboardMonitor();const hardwareDirectory=path.join(app.getPath('userData'),'hardware');let liveTimer,liveBusy=false;
+let profiles,profileTimer,profilePollBusy=false;
 let desk, lockTimer, lockBusy=false, appliedAppearance='';
-function deskState(){if(desk)state.desk=desk.view();}
+function deskState(){if(desk)state.desk=desk.view();if(profiles)state.profiles=profiles.view();}
 function updateNavigation(){
  navigation.plugins=[{id:'strip',name:'Keyboard strip',actions:desk.config.slots.map((s,i)=>({id:['previous','toggle','next','fourth'][i],label:s?`${desk.view().catalog.find(p=>p.id===s.plugin).name} · ${desk.view().catalog.find(p=>p.id===s.plugin).actions.find(a=>a.id===s.action).label}`:'Empty position'}))}];
  navigation.category=0;state.navigation=navigation.selection();
@@ -59,7 +60,7 @@ const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 function send() {
   deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
-  if(desk)strip.setData({live:desk.live.state,media:state.media,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,language:desk.language});
+  if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,language:desk.language});
   if(state.strip)try{strip.show(state.navigation);}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;}
   if (win && !win.isDestroyed()) win.webContents.send('state', state);
 }
@@ -124,6 +125,11 @@ else {
     session.defaultSession.setPermissionCheckHandler(() => false);
     startup=new Startup(app,process.execPath);state.startup=startup.read();xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
     desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});try{desk.language=await languages.map(desk.config.languageId);}catch{desk.language=await languages.map('qwerty');}deskState();updateNavigation();
+    const autoAllowed=()=>!quitting&&!win?.isFocused()&&!navigation.active&&!executing&&!displayBusy&&!displayTasks.paused;
+    profiles=new(require('./profiles.cjs').Profiles)(app.getPath('userData'),desk,async(config,automatic)=>{
+      if(automatic&&!autoAllowed())return false;
+      leaveMode();widgetCycle.close();desk.save(config);state.profileRevision=(state.profileRevision||0)+1;state.widgetRevision=(state.widgetRevision||0)+1;updateNavigation();send();appliedAppearance='';await syncAppearance();send();return true;
+    },autoAllowed);
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Use Reconnect keyboard.';send();});
     monitor.on('layer',active=>{state.layer=active;if(state.strip)strip.setLayer(active);send();});
@@ -165,6 +171,10 @@ else {
     handle('update-install',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the keyboard display update to finish.');await strip.close();state.strip=false;updates.install();});
     handle('action', (plugin, action) => perform(plugin, action));
     handle('plugin-mode', () => { enterMode(); return state; });
+    handle('save-widget-order',(order,weatherMotion)=>{if(typeof weatherMotion!=='boolean')throw Error('Choose a weather animation setting.');desk.save({...desk.config,widgetOrder:order,weatherMotion});if(strip.config)strip.config.weatherMotion=weatherMotion;send();return state;});
+    handle('timer-command',async(action,minutes)=>{if(action==='start'){desk.save({...desk.config,timerMinutes:minutes});}desk.countdown.command(action,desk.config.timerMinutes);send();await refreshStrip(false);return state;});
+    handle('profile-action',async(action,input={})=>{if(!input||typeof input!=='object')throw Error('Invalid profile request');if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='remove')profiles.remove(input.id);else if(action==='enable')profiles.enable(input.enabled);else if(action==='load')await profiles.load(input.id);else throw Error('Unknown profile action');send();return state;});
+    handle('pick-profile-app',async()=>{const result=await dialog.showOpenDialog(win,{title:'Choose an app for this profile',properties:['openFile'],filters:[{name:'Windows app',extensions:['exe']}]});return result.canceled?'':path.win32.basename(result.filePaths[0]).toLowerCase();});
     handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
     handle('save-desk', async config=>{leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'fahrenheit'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
     handle('run-slot', index=>runSlot(index));
@@ -182,7 +192,7 @@ else {
     handle('set-weather',async(location,unit)=>{const next={...desk.config,weather:{location,unit}};desk.save(next);await desk.live.weather(true);send();return state;});
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
-    handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
+    handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
     handle('setup-keyboard',async()=>{if(state.strip)return state;await require('./setup.cjs').setup(hardwareDirectory);if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);state.strip=strip.connect();await desk.live.sample();send();await syncAppearance();monitor.start();state.feedback='Keyboard setup complete. Your original plugin key is backed up on this PC.';send();return state;});
     handle('restore-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the display update to finish.');await strip.close();state.strip=false;await require('./setup.cjs').restore(hardwareDirectory);state.feedback='Original plugin key and overlay restored. Your other remaps remain.';send();return state;});
     handle('change-key',async data=>{await desk.editor.change(data.layer,data.position,data.value,data.mods,data.swap);const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);send();appliedAppearance='';await syncAppearance();return keys;});
@@ -225,9 +235,10 @@ else {
     }
     if(!process.argv.includes('--verify')){setTimeout(()=>updates.check(),10000).unref();setInterval(()=>updates.check(),6*3600000).unref();}
     mediaPoll=new MediaPoll(refresh,()=>state.media);mediaPoll.start();
-    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(()=>refreshStrip(),500);
-    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
+    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(()=>{if(desk.countdown.view().running)send();if(strip.data)strip.data.timer=desk.countdown.view();refreshStrip();},500);
+    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();await desk.sampleObs();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
+    if(!process.argv.includes('--verify'))profileTimer=setInterval(async()=>{if(profilePollBusy||!profiles.data.enabled||!autoAllowed())return;profilePollBusy=true;try{const foreground=await desk.system.request('foreground-app');if(foreground&&!['centerpiece companion.exe','electron.exe'].includes(foreground.toLowerCase()))await profiles.tick(foreground);send();}catch(e){profiles.error='Could not read the active app. '+e.message;send();}finally{profilePollBusy=false;}},1000);
     if (process.argv.includes('--verify')) {
       try { await require('../tests/desktop-verify.cjs')({ win, state, media }); }
       catch (error) { console.error(error); process.exitCode = 1; }
@@ -236,7 +247,7 @@ else {
   });
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', require('./shutdown.cjs').shutdownGate(async()=>{
-    quitting=true;clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);
+    quitting=true;clearInterval(profileTimer);clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);
     globalShortcut.unregisterAll();mediaPoll?.close();community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();
     // Drain queued display work and the current transfer before restoring the overlay.
     await displayTasks.run(()=>strip.close());

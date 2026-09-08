@@ -48,7 +48,7 @@ Body uses Segoe UI; headings use Bahnschrift with Segoe UI fallback; shortcuts u
 
 ## Layout
 
-Seven pages share a left sidebar: Plugin library, Keyboard editor, Screen widgets, Media controls, Connections, Feature requests and Community skins. Content scrolls naturally; the sidebar owns its own bounded scrollbar and becomes wrapped navigation below 740px. Four assignment controls sit beside a slim strip preview. Existing slate tokens and local fonts remain unchanged.
+Eight pages share a left sidebar: Plugin library, Keyboard editor, Screen widgets, Profiles, Media controls, Connections, Feature requests and Community skins. Content scrolls naturally; the sidebar owns its own bounded scrollbar and becomes wrapped navigation below 740px. Four assignment controls sit beside a slim strip preview. Existing slate tokens and local fonts remain unchanged.
 
 ## Elevation & Depth
 
@@ -83,3 +83,7 @@ Window chrome is owned by the shared header and window-ui.js: a draggable dark s
 Use the existing dark surfaces and typography for a responsive preview grid, with original creator credits and clear download buttons. Keep XPANEL catalog listings visibly separate from owner-reviewed submissions. Native search, shared status messages and 24-item progressive disclosure keep all 69 entries accessible without a long initial image load.
 
 The sidebar footer exposes Start with Windows as a native checkbox with a short status description. It uses existing text and accent tokens, is accessible from every page, and shares its setting with the tray menu.
+
+## Profiles and live widgets
+
+Profiles reuse native selects, text inputs and shared buttons on a dedicated page. Widget rotation uses compact checkbox rows with named move-up/down buttons, preserving keyboard focus after reordering. Weather preview motion is subtle and stops under reduced motion; hardware animation is separately optional. The removal confirmation uses a native dialog with focus containment, Cancel first, a danger action and persistent failure feedback. No design tokens changed.

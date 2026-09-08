@@ -1,4 +1,5 @@
 const entries=[
+ ['timer','Countdown timer','Widgets',null,null],
  ['weather','Local weather','Widgets',null,null],
  ['clock','Local time','Widgets',null,null],
  ['cpu','CPU monitor','Widgets',null,null],
@@ -36,6 +37,7 @@ const entries=[
 const action=(id,label)=>({id,label});
 const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon:icon||id,url,actions:[
  ...(['weather','clock','cpu','gpu'].includes(id)?[action('display','Show live reading')]:[]),
+ ...(id==='timer'?[action('start','Start new timer'),action('toggle','Pause / resume timer'),action('reset','Reset timer')]:[]),
  ...(id==='mic'?[action('mute','Mute / unmute microphone')]:[]),
  ...(id==='spotify'?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track')]:[]),
  ...(id==='obs'?[action('record','Start / stop recording'),action('replay','Save replay buffer'),action('scene','Switch scene'),action('mute','Mute / unmute input')]:[]),

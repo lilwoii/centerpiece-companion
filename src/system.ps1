@@ -4,6 +4,9 @@ using System; using System.Runtime.InteropServices; using System.Threading;
 public class CompanionInput {
  [DllImport("user32.dll")] public static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
  [DllImport("user32.dll")] public static extern short GetKeyState(int key);
+ [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+ [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
+ public static string ForegroundApp(){uint id;GetWindowThreadProcessId(GetForegroundWindow(),out id);if(id==0)return "";try{using(var p=System.Diagnostics.Process.GetProcessById((int)id)){return p.ProcessName+".exe";}}catch{return "";}}
  public static volatile bool Caps;
  static bool down; static IntPtr hook; static Hook callback=OnKey;
  delegate IntPtr Hook(int code, IntPtr message, IntPtr data);
@@ -27,6 +30,7 @@ while($null -ne ($line=[Console]::ReadLine())){
  try{
   $r=$line|ConvertFrom-Json
   if($r.action -eq 'locks'){ $result=@{caps=[CompanionInput]::Caps} }
+  elseif($r.action -eq 'foreground-app'){ $result=[CompanionInput]::ForegroundApp() }
   elseif($r.action -eq 'mic-status' -or $r.action -eq 'mic-toggle'){ $result=@{muted=[CompanionAudio]::Mute($r.action -eq 'mic-toggle')} }
   elseif($r.action -eq 'windows-location'){
    Add-Type -AssemblyName System.Runtime.WindowsRuntime

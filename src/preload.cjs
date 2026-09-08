@@ -1,5 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  saveWidgetOrder:(order,motion)=>ipcRenderer.invoke('save-widget-order',order,motion),
+  timerCommand:(action,minutes)=>ipcRenderer.invoke('timer-command',action,minutes),
+  profileAction:(action,input)=>ipcRenderer.invoke('profile-action',action,input),
+  pickProfileApp:()=>ipcRenderer.invoke('pick-profile-app'),
   saveWidget:widget=>ipcRenderer.invoke('save-widget',widget),
   setStartup:enabled=>ipcRenderer.invoke('set-startup',enabled),
   xpanelRefresh:()=>ipcRenderer.invoke('xpanel-refresh'),

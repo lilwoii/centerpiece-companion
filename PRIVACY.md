@@ -19,3 +19,8 @@ The companion's own session is encrypted with Windows-backed Electron secure sto
 Closing the window keeps local keyboard and live-plugin processing running in the tray. Quit from the tray to stop it. Start with Windows is optional and can be disabled in that menu. Updates contact this project's GitHub releases; downloads and restarting to install require user actions.
 
 The skin gallery fetches the public registry and preview images from assets.freethinkerportal.com. Official downloads are resolved through marketplace-upload.ashkon.workers.dev and opened from the approved XPANEL asset/storage hosts. These providers receive normal connection metadata, including your IP address. Search stays in the app. No XPANEL account credentials are requested, and skin files are not rehosted by the companion.
+
+
+## Optional automatic profiles
+
+When enabled, automatic profiles read the executable name of the foreground Windows app locally. The companion does not collect window titles, browsing history or typed text, and does not send foreground app names to a server. Saved profiles and app links stay in `profiles.json` in your Windows user data folder. Profile snapshots exclude account connections, keyboard remaps and skins. App-launch slots can contain local app paths. Automatic switching is off until you enable it.

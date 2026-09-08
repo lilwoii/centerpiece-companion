@@ -185,3 +185,15 @@ Future releases install through **Check for updates → Download update → Rest
 Spotify track changes are checked at a short interval while Spotify is connected, and changed track details trigger a display refresh without waiting for the regular display timer. Requests remain serialized; Windows media reporting and USB transfer time can still add delay.
 
 Typing in the custom text field selects **Custom text** automatically. Click **Apply screen widget** to save and display it. Widget-only edits update the visible frame directly. Live refreshes use firmware upload acknowledgements; the full preview readback remains part of initial display setup.
+
+
+## Profiles, favorite widgets and timers
+
+- **Screen widgets → Your widget rotation:** check the widgets you want, move them up/down, then save. **L1 + /** cycles only that ordered list. Existing users keep the previous order until they customize it. Follow selected plugin remains a separate choice.
+- **Profiles:** save the current applied plugin slots and widget settings under a name. Load manually, or link a profile to an executable such as `obs64.exe`. Choose app can find the executable for you; Task Manager → Details also shows its name.
+- **Automatic switching:** opt in on Profiles. Your current setup becomes the default for unmatched apps. Switching waits for a stable foreground app and pauses while editing in the companion or navigating plugins. Disabling keeps the current layout. Load default setup restores the captured default.
+- **Countdown timer:** choose 1–180 minutes in Screen widgets, start/pause/reset, and choose Show timer on keyboard. Timer controls are also available in Plugin library. It runs while the companion is in the tray; quitting resets it. Completion displays Time up without sending messages or starting other actions.
+- **OBS status widget:** connect OBS in Connections, then choose the OBS display widget. It shows recording/on-air state and elapsed time. When both are active, streaming status takes priority. It never starts streaming by itself.
+- **Animated weather:** clouds drift, sunlight pulses, and rain/snow move in gentle steps. Disable keyboard animation in Your widget rotation if preferred. Desktop previews follow Windows reduced-motion preferences. Hardware motion depends on display transfer speed.
+
+Profiles retain display choices only; connections, keyboard skin, remaps, colors and display-area geometry remain unchanged. Save edits in their original pages before capturing a profile. Automatic profile switching needs the companion running in the tray, just like live widgets.

@@ -61,3 +61,19 @@ main{max-width:1120px;margin:auto;padding:28px 36px}.page-heading,.section-headi
 .startup-option{display:flex;flex-direction:row;min-height:44px;align-items:center;gap:8px;color:var(--ink);font-size:13px;cursor:pointer}.startup-option input{width:16px;height:16px;margin:0;accent-color:var(--primary);flex:none}#startup-status{font-size:12px;line-height:1.5}
 
 @media(max-width:740px){.sidebar-foot{display:block;padding-top:0;margin-top:0}.sidebar-foot>kbd,.sidebar-foot>p:not(#startup-status){display:none}.sidebar-foot .startup-option{min-height:44px}#startup-status{margin:0}}
+
+/* Profiles and widget rotation use the shared form and button system. */
+.feature-section{margin-top:var(--space)}
+.widget-favorites{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.favorite-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:7px;padding:8px}
+.favorite-row label{display:flex;flex-direction:row;align-items:center;gap:8px;flex:1;min-width:0}
+.favorite-row input{width:auto;margin:0}.favorite-row .button{padding:6px 10px;min-width:36px}
+#profiles-status{min-height:2.8em}#profile-app{font-family:var(--font-mono)}
+dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:min(520px,calc(100vw - 32px))}dialog::backdrop{background:#0009}.button.danger{border-color:var(--error);color:var(--error)}
+.widget-art{width:64px;height:64px;object-fit:cover;border-radius:5px;flex-shrink:0}
+.widget-preview .weather-motion{display:inline-block;font-size:42px;line-height:1.2;color:var(--muted);position:relative;animation:cloud-drift 6s ease-in-out infinite}
+.weather-motion.sun{color:#f7c948;animation:sun-shine 4s ease-in-out infinite}.weather-motion.storm{color:#ffd75b;animation:sun-shine 5s ease-in-out infinite}
+.weather-motion.rain::after,.weather-motion.snow::after{content:'╱ ╱ ╱';position:absolute;left:3px;top:34px;font-size:14px;color:#69b8ff;animation:weather-fall 2s linear infinite}.weather-motion.snow::after{content:'• · •';color:var(--ink);animation-duration:3s}
+@keyframes cloud-drift{50%{transform:translateX(3px)}}@keyframes sun-shine{50%{opacity:.65;filter:brightness(1.2)}}@keyframes weather-fall{from{transform:translateY(-2px);opacity:.4}to{transform:translateY(4px);opacity:1}}
+@media(max-width:740px){.widget-favorites{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.weather-motion,.weather-motion::after{animation:none!important}}

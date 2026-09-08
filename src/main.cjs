@@ -4,6 +4,7 @@ const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
 const { pathToFileURL } = require('node:url');
+const {PlaybackClock}=require('./playback-clock.cjs');const playbackClock=new PlaybackClock();
 const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll;
 const {Startup,openCompanion,hideCompanion}=require('./startup.cjs');let startup,refreshTray=()=>{};
 const {XpanelSkins}=require('./xpanel-skins.cjs');let xpanelSkins;
@@ -86,8 +87,8 @@ function setShortcuts(enabled, persist = true) {
 async function refresh() {
   if (polling || executing || quitting) return;
   polling = true;const previousTrack=trackKey(state.media);
-  try { state.media = await media.request('status');state.media.receivedAt=Date.now(); }
-  catch (error) { state.media = { available: false, message: error.message }; }
+  try { state.media = playbackClock.update(await media.request('status'));state.media.receivedAt=Date.now(); }
+  catch (error) { state.media = playbackClock.update({ available: false, message: error.message }); }
   finally { polling = false; send();if(previousTrack!==trackKey(state.media))void refreshStrip(false); }
 }
 async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}

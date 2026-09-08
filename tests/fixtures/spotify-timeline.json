@@ -1,0 +1,272 @@
+[
+  {
+    "at": 0,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 1.0
+  },
+  {
+    "at": 354,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 2.0
+  },
+  {
+    "at": 661,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 2.0
+  },
+  {
+    "at": 982,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 2.0
+  },
+  {
+    "at": 1291,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 3.0
+  },
+  {
+    "at": 1622,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 3.0
+  },
+  {
+    "at": 1935,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 3.0
+  },
+  {
+    "at": 2249,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 4.0
+  },
+  {
+    "at": 2559,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 4.0
+  },
+  {
+    "at": 2879,
+    "raw": 0.0,
+    "source": -1497,
+    "oldPosition": 4.0
+  },
+  {
+    "at": 3208,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 4.507
+  },
+  {
+    "at": 3524,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 5.507
+  },
+  {
+    "at": 3834,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 5.507
+  },
+  {
+    "at": 4156,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 5.507
+  },
+  {
+    "at": 4475,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 5.507
+  },
+  {
+    "at": 4801,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 6.507
+  },
+  {
+    "at": 5122,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 6.507
+  },
+  {
+    "at": 5430,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 6.507
+  },
+  {
+    "at": 5735,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 7.507
+  },
+  {
+    "at": 6049,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 7.507
+  },
+  {
+    "at": 6366,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 7.507
+  },
+  {
+    "at": 6693,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 8.507
+  },
+  {
+    "at": 7015,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 8.507
+  },
+  {
+    "at": 7322,
+    "raw": 4.507,
+    "source": 3009,
+    "oldPosition": 8.507
+  },
+  {
+    "at": 7645,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 9.012
+  },
+  {
+    "at": 7967,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 9.012
+  },
+  {
+    "at": 8295,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 10.012
+  },
+  {
+    "at": 8608,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 10.012
+  },
+  {
+    "at": 8917,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 10.012
+  },
+  {
+    "at": 9225,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 11.012
+  },
+  {
+    "at": 9541,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 11.012
+  },
+  {
+    "at": 9867,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 11.012
+  },
+  {
+    "at": 10186,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 12.012
+  },
+  {
+    "at": 10500,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 12.012
+  },
+  {
+    "at": 10814,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 12.012
+  },
+  {
+    "at": 11131,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 13.012
+  },
+  {
+    "at": 11449,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 13.012
+  },
+  {
+    "at": 11768,
+    "raw": 9.012,
+    "source": 7515,
+    "oldPosition": 13.012
+  },
+  {
+    "at": 12082,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 13.527
+  },
+  {
+    "at": 12389,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 13.527
+  },
+  {
+    "at": 12694,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 14.527
+  },
+  {
+    "at": 13006,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 14.527
+  },
+  {
+    "at": 13342,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 14.527
+  },
+  {
+    "at": 13652,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 15.527
+  },
+  {
+    "at": 13968,
+    "raw": 13.527,
+    "source": 12030,
+    "oldPosition": 15.527
+  }
+]

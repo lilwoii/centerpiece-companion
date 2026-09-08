@@ -39,8 +39,9 @@ while ($null -ne ($line = [Console]::ReadLine())) {
       }}catch{$art=''}}
       $result = @{
         available=$true; title=$props.Title; artist=$props.Artist; album=$props.AlbumTitle
-        status=$playback.PlaybackStatus.ToString(); position=([Math]::Min($timeline.EndTime.TotalSeconds, $timeline.Position.TotalSeconds + $(if($playback.PlaybackStatus.ToString() -eq 'Playing'){[Math]::Max(0,([DateTimeOffset]::Now-$timeline.LastUpdatedTime).TotalSeconds)}else{0})))
+        status=$playback.PlaybackStatus.ToString(); position=$timeline.Position.TotalSeconds
         duration=$timeline.EndTime.TotalSeconds
+        rawPosition=$timeline.Position.TotalSeconds; timelineUpdatedAt=$timeline.LastUpdatedTime.ToUnixTimeMilliseconds()
         art=$art
         controls=@{ toggle=$playback.Controls.IsPlayPauseToggleEnabled; next=$playback.Controls.IsNextEnabled; previous=$playback.Controls.IsPreviousEnabled }
       }

@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path');const{Som}=require('./som.cjs');const{Studio}=require('./studio.cjs');
 const binding={behaviorId:50397,param1:0x05070013};
 async function setup(directory){fs.mkdirSync(directory,{recursive:true});const file=path.join(directory,'hardware.json');const prior=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):null;const s=new Studio();let som;try{
- if((await s.request({keymap:{checkUnsavedChanges:true}})).keymap.checkUnsavedChanges)throw Error('Save or discard XPANEL edits before setup.');const map=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;
+ await require('./studio-response.cjs').requireCleanSetup(s);const map=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;
  const base=map.layers.find(l=>(l.id||0)===0),layer=map.layers.find(l=>l.id===1);if(base?.bindings.length!==68||layer?.bindings.length!==68||base.bindings[63].param1!==1)throw Error('This release supports the 68-key Centerpiece Pro layout.');
  som=new Som();if(prior&&prior.serial!==som.serial)throw Error('The saved setup belongs to a different keyboard. Use a separate Windows user profile for this keyboard.');
  if(prior?.verified&&!prior.restored)return prior;

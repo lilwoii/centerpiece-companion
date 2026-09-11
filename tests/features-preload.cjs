@@ -10,6 +10,8 @@ function value(){state.desk.config=workspace.config;state.desk.timer=timer.view(
 function changed(){const current=value();for(const listener of listeners)listener(current);return current;}
 const methods=Object.fromEntries([...fs.readFileSync(path.join(__dirname,'../src/preload.cjs'),'utf8').matchAll(/^\s+(\w+):/gm)].map(m=>[m[1],async()=>value()]));
 Object.assign(methods,{
+ checkSetup:async()=>{state.setupReport={format:1,readOnly:true,appVersion:'test',pendingSamples:[true,true,true],classification:'pending_reported_consistently'};return changed();},
+ copySetupReport:async()=>true,
  setStripVisible:async enabled=>{workspace.config=workspace.validate({...workspace.config,stripEnabled:enabled});state.feedback=enabled?'Plugin strip shown.':'Plugin strip hidden.';return changed();},
  getState:async()=>value(),subscribe:callback=>{listeners.push(callback);return()=>{};},subscribeKey:()=>()=>{},subscribeWindow:()=>()=>{},
  saveWidget:async widget=>{workspace.config=workspace.validate({...workspace.config,widget});state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget saved and displayed.';return changed();},

@@ -79,3 +79,5 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 @media(prefers-reduced-motion:reduce){.weather-motion,.weather-motion::after{animation:none!important}}
 
 .library-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.strip-visibility[aria-checked="true"]{color:var(--success);border-color:var(--success)}.strip-visibility[aria-checked="false"]{color:var(--error);border-color:var(--error)}.strip-visibility::before{content:'●';margin-right:8px}
+
+.setup-report-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:var(--muted);max-height:300px;overflow:auto}.device-setup{color:var(--primary)!important}

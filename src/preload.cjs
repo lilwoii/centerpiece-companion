@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('companion', {
   connectTwitch: channel => ipcRenderer.invoke('connect-twitch',channel),
   cancelTwitch:()=>ipcRenderer.invoke('cancel-twitch'),
   disconnectService: name => ipcRenderer.invoke('disconnect-service',name),
+  checkSetup:()=>ipcRenderer.invoke('check-setup'),
+  copySetupReport:()=>ipcRenderer.invoke('copy-setup-report'),
   setupKeyboard: () => ipcRenderer.invoke('setup-keyboard'),
   restoreKeyboard: () => ipcRenderer.invoke('restore-keyboard'),
   changeKey: data => ipcRenderer.invoke('change-key',data),

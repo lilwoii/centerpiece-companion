@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, session, shell, dialog, safeStorage, Tray, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, session, shell, dialog, safeStorage, Tray, Menu, clipboard } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
@@ -17,6 +17,7 @@ const { StripController } = require('./strip.cjs');
 const { Workspace } = require('./workspace.cjs');
 const{KeyboardMonitor}=require('./keyboard-monitor.cjs');const monitor=new KeyboardMonitor();const hardwareDirectory=path.join(app.getPath('userData'),'hardware');let liveTimer,liveBusy=false;
 let profiles,profileTimer,profilePollBusy=false;
+let setupBusy=false;
 let desk, lockTimer, lockBusy=false, appliedAppearance='';
 function deskState(){if(desk)state.desk=desk.view();if(profiles)state.profiles=profiles.view();}
 function updateNavigation(){
@@ -59,7 +60,7 @@ function enterMode() {
 const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 
 function send() {
-  deskState();
+  state.keyboardReady=!!(state.strip&&appliedAppearance);deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
   if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,language:desk.language});
   if(state.strip)try{strip.show(state.navigation);}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;}
@@ -195,7 +196,9 @@ else {
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
-    handle('setup-keyboard',async()=>{if(state.strip)return state;await require('./setup.cjs').setup(hardwareDirectory);if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);state.strip=strip.connect();await desk.live.sample();send();await syncAppearance();monitor.start();state.feedback='Keyboard setup complete. Your original plugin key is backed up on this PC.';send();return state;});
+    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));send();return state;}finally{setupBusy=false;}});
+    handle('copy-setup-report',()=>{if(!state.setupReport)throw Error('Run Check setup first.');clipboard.writeText(JSON.stringify(state.setupReport,null,2));return true;});
+    handle('setup-keyboard',async()=>{if(setupBusy)throw Error('Wait for the setup check to finish.');if(state.strip)return state;setupBusy=true;try{await require('./setup.cjs').setup(hardwareDirectory);if(widgetShortcutReady)await require('./widget-shortcut.cjs').widgetShortcut(hardwareDirectory);state.strip=strip.connect();await desk.live.sample();send();await syncAppearance();monitor.start();state.error='';state.feedback='Keyboard setup complete. Your original plugin key is backed up on this PC.';send();return state;}finally{setupBusy=false;}});
     handle('restore-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the display update to finish.');await strip.close();state.strip=false;await require('./setup.cjs').restore(hardwareDirectory);state.feedback='Original plugin key and overlay restored. Your other remaps remain.';send();return state;});
     handle('change-key',async data=>{await desk.editor.change(data.layer,data.position,data.value,data.mods,data.swap);const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);send();appliedAppearance='';await syncAppearance();return keys;});
     handle('connect-obs',async (password,port)=>{try{await desk.connectObs(password,port);state.error='';state.feedback='OBS connected. Password stays in memory until the app closes.';}catch(e){state.error=e.message;}send();return state;});

@@ -1,5 +1,12 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  '0.3.0-preview.21': Object.freeze([
+    'First launch automatically sets up a connected, unconfigured Centerpiece keyboard.',
+    'Setup uses free display slots and leaves existing XPANEL overlays untouched.',
+    'Full display storage now explains exactly how many empty slots are needed.',
+    'Setup errors show the latest blocker, and pending settings open a review before saving.',
+    'An orange Update available indicator makes new releases easier to spot.'
+  ]),
   '0.3.0-preview.20': Object.freeze([
     'First launch automatically sets up a connected, unconfigured Centerpiece keyboard.',
     'Setup now uses free display slots and leaves your existing XPANEL overlays untouched.',

@@ -46,7 +46,12 @@ async function overlayCheck(som, prior) {
     if (bytes && !prior?.ownedSlots?.includes(slot)) preservedSlots.push(slot);
     else ownedSlots.push(slot);
   }
-  if (ownedSlots.length < 2) throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `Only ${ownedSlots.length} display ${ownedSlots.length === 1 ? 'slot is' : 'slots are'} available. Companion needs at least two empty slots among 2–10. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Keep copies of your overlays, then use XPANEL to free two slots and retry setup.`, {stage:'check_display_slots'});
+  if (ownedSlots.length < 2) {
+    const instruction = ownedSlots.length === 0
+      ? 'Display slots are full. Two empty overlay slots are needed.'
+      : 'One more empty display slot is needed; one is already available.';
+    throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `${instruction} Companion needs two available slots among 2–10 so it can update the display without overwriting the active frame. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Use Check setup → Copy setup report for help making space safely.`, {stage:'check_display_slots'});
+  }
   return {ownedSlots, preservedSlots};
 }
 function changed() { return keyboardError('KEYBOARD_CONFIGURATION_CHANGED', 'The keyboard configuration changed while setup was being reviewed. Nothing was saved. Close other keyboard editors and prepare setup again.'); }

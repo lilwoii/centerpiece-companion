@@ -88,7 +88,15 @@ test('an overlay added while reviewing stops setup before shortcuts or save',asy
 test('insufficient overlay space names occupied slots and leaves the keyboard untouched',async t=>{
   const {x,directory,deps}=fixture(t,{pending:true});x.occupied=[2,3,4,5,6,7,8,9];
   await assert.rejects(()=>startSetup(directory,{},deps),error=>{
-    assert.equal(error.code,'KEYBOARD_OVERLAY_SPACE_REQUIRED');assert.match(error.message,/Only 1 display slot is available/);assert.match(error.message,/2, 3, 4, 5, 6, 7, 8, 9/);assert.equal(error.writesAttempted,false);return true;
+    assert.equal(error.code,'KEYBOARD_OVERLAY_SPACE_REQUIRED');assert.match(error.message,/One more empty display slot is needed/);assert.match(error.message,/one is already available/);assert.match(error.message,/2, 3, 4, 5, 6, 7, 8, 9/);assert.equal(error.writesAttempted,false);return true;
+  });
+  assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
+});
+
+test('full overlay storage asks for two slots, not one, without changing the keyboard',async t=>{
+  const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];
+  await assert.rejects(()=>startSetup(directory,{},deps),error=>{
+    assert.equal(error.code,'KEYBOARD_OVERLAY_SPACE_REQUIRED');assert.match(error.message,/Display slots are full\. Two empty overlay slots are needed/);assert.match(error.message,/Check setup → Copy setup report/);assert.doesNotMatch(error.message,/remove.*XPANEL|delete.*XPANEL/i);assert.equal(error.writesAttempted,false);return true;
   });
   assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
 });

@@ -197,3 +197,7 @@ Typing in the custom text field selects **Custom text** automatically. Click **A
 - **Animated weather:** clouds drift, sunlight pulses, and rain/snow move in gentle steps. Disable keyboard animation in Your widget rotation if preferred. Desktop previews follow Windows reduced-motion preferences. Hardware motion depends on display transfer speed.
 
 Profiles retain display choices only; connections, keyboard skin, remaps, colors and display-area geometry remain unchanged. Save edits in their original pages before capturing a profile. Automatic profile switching needs the companion running in the tray, just like live widgets.
+
+## Widget-only display
+
+In Plugin library, use **Plugin strip · On/Off** beside the option count. Green means on; red means off. Turning it off hides the four plugin positions and L1+P hint while keeping screen widgets, Caps Lock indication and L1+/ widget switching. Assignments stay saved. L1+P plugin navigation is disabled until the strip is turned back on. This is a global local preference and profile switching preserves it.

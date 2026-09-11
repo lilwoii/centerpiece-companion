@@ -43,6 +43,7 @@ function leaveMode() {
 }
 function armModeTimeout() { clearTimeout(modeTimeout); modeTimeout = setTimeout(leaveMode, 45000); }
 function enterMode() {
+  if(desk?.config.stripEnabled===false){state.feedback='Plugin strip is off. Enable it in Plugin library to navigate plugins.';send();return;}
   // DisplayCache keeps the desired state and selects its cached frame after an upload.
   if (navigation.active) { leaveMode(); return; }
   for (const key of modeKeys) {
@@ -171,6 +172,7 @@ else {
     handle('update-install',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the keyboard display update to finish.');await strip.close();state.strip=false;updates.install();});
     handle('action', (plugin, action) => perform(plugin, action));
     handle('plugin-mode', () => { enterMode(); return state; });
+    handle('set-strip-visible',async enabled=>{if(typeof enabled!=='boolean')throw Error('Invalid plugin strip setting');leaveMode();desk.save({...desk.config,stripEnabled:enabled});try{appliedAppearance='';await syncAppearance();state.error='';state.feedback=(enabled?'Plugin strip shown.':'Plugin strip hidden. Screen widgets stay visible.')+(!state.strip?' Saved; reconnect the keyboard to apply.':'');}catch(e){state.error='Setting saved, but the display could not update. Reconnect the keyboard and retry. '+e.message;}send();return state;});
     handle('save-widget-order',(order,weatherMotion)=>{if(typeof weatherMotion!=='boolean')throw Error('Choose a weather animation setting.');desk.save({...desk.config,widgetOrder:order,weatherMotion});if(strip.config)strip.config.weatherMotion=weatherMotion;send();return state;});
     handle('timer-command',async(action,minutes)=>{if(action==='start'){desk.save({...desk.config,timerMinutes:minutes});}desk.countdown.command(action,desk.config.timerMinutes);send();await refreshStrip(false);return state;});
     handle('profile-action',async(action,input={})=>{if(!input||typeof input!=='object')throw Error('Invalid profile request');if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='remove')profiles.remove(input.id);else if(action==='enable')profiles.enable(input.enabled);else if(action==='load')await profiles.load(input.id);else throw Error('Unknown profile action');send();return state;});

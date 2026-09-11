@@ -77,3 +77,5 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 @keyframes cloud-drift{50%{transform:translateX(3px)}}@keyframes sun-shine{50%{opacity:.65;filter:brightness(1.2)}}@keyframes weather-fall{from{transform:translateY(-2px);opacity:.4}to{transform:translateY(4px);opacity:1}}
 @media(max-width:740px){.widget-favorites{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.weather-motion,.weather-motion::after{animation:none!important}}
+
+.library-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.strip-visibility[aria-checked="true"]{color:var(--success);border-color:var(--success)}.strip-visibility[aria-checked="false"]{color:var(--error);border-color:var(--error)}.strip-visibility::before{content:'●';margin-right:8px}

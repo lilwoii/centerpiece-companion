@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  setStripVisible:enabled=>ipcRenderer.invoke('set-strip-visible',enabled),
   saveWidgetOrder:(order,motion)=>ipcRenderer.invoke('save-widget-order',order,motion),
   timerCommand:(action,minutes)=>ipcRenderer.invoke('timer-command',action,minutes),
   profileAction:(action,input)=>ipcRenderer.invoke('profile-action',action,input),

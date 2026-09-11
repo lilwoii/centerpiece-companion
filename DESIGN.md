@@ -13,6 +13,7 @@ colors:
   tint: "#252f40"
   error: "#ff9aa8"
   success: "#8ad8b1"
+  attention: "#ffb45b"
 typography:
   body:
     fontFamily: "Segoe UI, sans-serif"
@@ -91,3 +92,7 @@ Profiles reuse native selects, text inputs and shared buttons on a dedicated pag
 ## Release changes notice
 
 A compact, nonmodal notice at the top of the shared content area uses the existing surface, primary border, typography and native button recipes. Its bold New update changes heading, small version label and plain bullet list explain the installed release. A quiet X dismisses that version locally. The notice remains in normal document flow, never covers controls, and does not steal focus when the app opens from the tray. Closing restores keyboard focus to the active page heading. No design tokens or window behavior changed.
+
+## Available update status
+
+The shared header shows an orange Update available label with version or retry details beside Download update. Downloaded releases use Update ready and Restart & update. This attention color identifies a next step rather than an error; downloading uses the existing primary color, and failures use the existing error color. Text always accompanies color. Runtime `--attention` owns `#ffb45b`, mirrored by `colors.attention` above; the header status and named update-attention button variant consume it. Native button focus, pressed and disabled treatments remain shared. The header wraps at narrower window sizes, retains full messages and never animates or flashes to demand attention.

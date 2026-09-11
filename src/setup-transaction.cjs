@@ -39,11 +39,15 @@ function identity(s, som, prior, widgetPrior) {
   if (prior && (prior.serial !== som.serial || prior.keyboardSerial && prior.keyboardSerial !== s.serial) || widgetPrior && widgetPrior.serial !== s.serial) throw keyboardError('KEYBOARD_BACKUP_MISMATCH', 'The saved setup belongs to a different keyboard. No settings were changed.');
 }
 async function overlayCheck(som, prior) {
+  const ownedSlots = [], preservedSlots = [];
   for (const slot of slots) {
     let bytes;
     try { bytes = await som.readOverlay(slot); } catch (e) { e.stage = `read_overlay_${slot}`; throw e; }
-    if (bytes && !prior?.ownedSlots?.includes(slot)) throw keyboardError('KEYBOARD_OVERLAY_OCCUPIED', `Display slot ${slot} already contains an overlay. Setup preserves existing overlays and needs slots 2–10 available.`, {stage: `read_overlay_${slot}`});
+    if (bytes && !prior?.ownedSlots?.includes(slot)) preservedSlots.push(slot);
+    else ownedSlots.push(slot);
   }
+  if (ownedSlots.length < 2) throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `Only ${ownedSlots.length} display ${ownedSlots.length === 1 ? 'slot is' : 'slots are'} available. Companion needs at least two empty slots among 2–10. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Keep copies of your overlays, then use XPANEL to free two slots and retry setup.`, {stage:'check_display_slots'});
+  return {ownedSlots, preservedSlots};
 }
 function changed() { return keyboardError('KEYBOARD_CONFIGURATION_CHANGED', 'The keyboard configuration changed while setup was being reviewed. Nothing was saved. Close other keyboard editors and prepare setup again.'); }
 function decorate(error, stage, writesAttempted) {
@@ -73,12 +77,12 @@ async function prepareSetup(directory, options = {}, deps = {}) {
     stage = 'read_pending_status'; const pending = await pendingChanges(s);
     if (pending && !options.reviewPending) throw keyboardError('KEYBOARD_PENDING_CHANGES', 'The keyboard reports pending configuration changes. This does not prove XPANEL has unsaved edits. Choose Review current settings to back up and keep the current configuration, or use Check setup for details.');
     stage = 'read_layout'; const physicalLayouts = await layouts(s);
-    stage = 'check_display_slots'; await overlayCheck(som, prior);
+    stage = 'check_display_slots'; const overlaySlots = await overlayCheck(som, prior);
     const originalSlot = await som.currentSlot();
     if (!Number.isInteger(originalSlot) || originalSlot < 0 || originalSlot > 10) throw keyboardError('KEYBOARD_DISPLAY_SLOT_INVALID', 'The display returned an invalid active slot. No settings were changed.');
     stage = 'verify_snapshot';
     if (!sameKeymap(map, await keymap(s)) || !sameLayout(physicalLayouts, await layouts(s)) || pending !== await pendingChanges(s)) throw changed();
-    return {id: randomUUID(), createdAt: Date.now(), pending, includeWidget, map, physicalLayouts, prior, widgetPrior, serial: som.serial, keyboardSerial: s.serial, originalSlot};
+    return {id: randomUUID(), createdAt: Date.now(), pending, includeWidget, map, physicalLayouts, prior, widgetPrior, serial: som.serial, keyboardSerial: s.serial, originalSlot, ...overlaySlots};
   } catch (e) { throw decorate(e, stage, false); } finally { s?.close(); som?.close(); }
 }
 
@@ -94,16 +98,18 @@ async function commitSetup(directory, plan, options = {}, deps = {}) {
     if (JSON.stringify(record(directory,'hardware.json')) !== JSON.stringify(plan.prior) || JSON.stringify(record(directory,'widget-shortcut.json')) !== JSON.stringify(plan.widgetPrior)) throw changed();
     stage = 'verify_snapshot';
     if (!sameKeymap(plan.map, await keymap(s)) || !sameLayout(plan.physicalLayouts, await layouts(s)) || plan.pending !== await pendingChanges(s)) throw changed();
-    stage = 'check_display_slots'; await overlayCheck(som, plan.prior);
+    stage = 'check_display_slots';
+    const overlaySlots = await overlayCheck(som, plan.prior);
+    if (JSON.stringify(overlaySlots.ownedSlots) !== JSON.stringify(plan.ownedSlots) || JSON.stringify(overlaySlots.preservedSlots) !== JSON.stringify(plan.preservedSlots)) throw changed();
     stage = 'verify_snapshot';
     if (!sameKeymap(plan.map, await keymap(s)) || !sameLayout(plan.physicalLayouts, await layouts(s)) || plan.pending !== await pendingChanges(s)) throw changed();
     stage = 'write_local_backup';
     fs.mkdirSync(directory, {recursive:true});
     // Unique immutable checkpoint includes active state, never credentials. It
     // exists before the first device mutation, including on a failed retry.
-    fs.writeFileSync(path.join(directory, `setup-checkpoint-${plan.id}.json`), JSON.stringify({format:1, createdAt:new Date().toISOString(), keyboardSerial:s.serial, serial:som.serial, pending:plan.pending, map:plan.map, physicalLayouts:plan.physicalLayouts},null,2), {flag:'wx'});
+    fs.writeFileSync(path.join(directory, `setup-checkpoint-${plan.id}.json`), JSON.stringify({format:1, createdAt:new Date().toISOString(), keyboardSerial:s.serial, serial:som.serial, pending:plan.pending, map:plan.map, physicalLayouts:plan.physicalLayouts, ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots},null,2), {flag:'wx'});
     const layer = checkMap(plan.map);
-    const backup = plan.prior || {serial:som.serial, keyboardSerial:s.serial, originalSlot:plan.originalSlot, originalBinding:layer.bindings[26], layerId:1, keyPosition:26, ownedSlots:slots, createdAt:new Date().toISOString()};
+    const backup = {...(plan.prior || {serial:som.serial, keyboardSerial:s.serial, originalSlot:plan.originalSlot, originalBinding:layer.bindings[26], layerId:1, keyPosition:26, createdAt:new Date().toISOString()}), ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots};
     if (!plan.prior && !fs.existsSync(path.join(directory,'keymap-original.json'))) fs.writeFileSync(path.join(directory,'keymap-original.json'), JSON.stringify(plan.map,null,2), {flag:'wx'});
     writeRecord(path.join(directory,'hardware.json'), {...backup,verified:false,setupInProgress:true});
     if (plan.includeWidget && !plan.widgetPrior) fs.writeFileSync(path.join(directory,'widget-shortcut.json'), JSON.stringify({serial:s.serial, original:layer.bindings[55], installed:widgetBinding, createdAt:new Date().toISOString()},null,2), {flag:'wx'});
@@ -134,4 +140,11 @@ async function setup(directory, options = {}, deps = {}) {
   const plan = await prepareSetup(directory, options, deps);
   return commitSetup(directory, plan, options, deps);
 }
-module.exports = {prepareSetup, commitSetup, setup, pluginBinding, widgetBinding};
+async function startSetup(directory, options = {}, deps = {}) {
+  // Detect pending status in the same read-only preflight. A status flag alone
+  // never authorizes a global save, and no failed mutation is automatically retried.
+  const plan = await prepareSetup(directory, {...options,reviewPending:true}, deps);
+  if (plan.pending) return {needsConfirmation:true,plan};
+  return {needsConfirmation:false,backup:await commitSetup(directory,plan,{},deps)};
+}
+module.exports = {prepareSetup, commitSetup, setup, startSetup, pluginBinding, widgetBinding};

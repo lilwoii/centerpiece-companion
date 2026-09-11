@@ -6,7 +6,7 @@ Free, unofficial Windows companion for the 68-key Centerpiece Pro. Original code
 
 Run the Windows installer from this project's GitHub Releases on Windows 10/11 x64. The location page lets you choose the app folder and future update-download folder on separate local drives. Updates use a dedicated subfolder there. Windows still requires some free space on its system drive; personal settings remain in your Windows account. No administrator account is required. The executable is unsigned. Close XPANEL before setup or binding edits, and save or discard its pending changes.
 
-Use the app's **Set up my keyboard** button. Setup backs up the original keymap in your Windows profile and reserves overlay slots 2–10. It stops if an unowned slot is occupied. Your installed keyboard skin remains in place.
+The first visible launch automatically sets up a connected, unconfigured keyboard. Pending keyboard settings open a review before saving the current configuration. Setup backs up the original keymap in your Windows profile and uses free overlay slots among 2–10, leaving existing overlays stored and untouched. At least two free slots are needed. **Set up my keyboard** remains available for manual retry; automatic setup never loops after a failure or canceled review. Your installed keyboard skin remains in place; Companion's overlay is active while running.
 
 Choose four logo slots. L1+P enters plugin mode; release L1, use Up/Down, then Enter. Escape exits, or wait 45 seconds. Existing XPANEL media bindings remain usable. Navigation uses preloaded states. Caps Lock exits plugin mode to show its indicator immediately.
 

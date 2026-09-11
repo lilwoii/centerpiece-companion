@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  --background:#11151d; --surface:#1c2430; --ink:#edf2fa; --muted:#a8b5c9; --primary:#9bb9ff; --hover:#bdd0ff; --border:#374457; --tint:#252f40; --error:#ff9aa8; --success:#8ad8b1;
+  --background:#11151d; --surface:#1c2430; --ink:#edf2fa; --muted:#a8b5c9; --primary:#9bb9ff; --hover:#bdd0ff; --border:#374457; --tint:#252f40; --error:#ff9aa8; --success:#8ad8b1; --attention:#ffb45b;
   --font-body:'Segoe UI',sans-serif; --font-display:'Bahnschrift','Segoe UI',sans-serif; --font-mono:'Cascadia Mono',Consolas,monospace;
   --radius:12px; --space:24px; --scrollbar-thumb:#63738c; --scrollbar-track:#11151d; --scrollbar-hover:#8294ad; --scrollbar-active:#9bb9ff;
 }
@@ -81,3 +81,14 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 .library-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.strip-visibility[aria-checked="true"]{color:var(--success);border-color:var(--success)}.strip-visibility[aria-checked="false"]{color:var(--error);border-color:var(--error)}.strip-visibility::before{content:'●';margin-right:8px}
 
 .setup-report-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:var(--muted);max-height:300px;overflow:auto}.device-setup{color:var(--primary)!important}
+
+/* Update attention is shared by the status and its native action button. */
+.header-status{min-width:0}.header-status small{min-width:0;overflow-wrap:anywhere}
+#update-action{min-width:158px}
+#update-status{line-height:1.4}
+.update-label,.update-detail{display:block}.update-label{font-size:13px;font-weight:700}.update-detail{font-size:11px;margin-top:2px;color:var(--muted)}
+.header-status .update-attention{color:var(--attention)}
+.header-status .button.update-attention{border-color:var(--attention)}
+.header-status .button.update-attention:hover:not(:disabled){border-color:var(--attention);background:var(--tint)}
+.header-status .update-progress{color:var(--primary)}.header-status .update-error{color:var(--error)}
+@media(forced-colors:active){.header-status .update-attention,.header-status .update-progress,.header-status .update-error{color:CanvasText}.header-status .button.update-attention{color:ButtonText;border-color:ButtonText}}

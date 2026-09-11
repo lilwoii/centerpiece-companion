@@ -40,13 +40,15 @@ The catalog includes Spotify, YouTube, Twitch, OBS, Discord, Steam, Kick, Stream
 ## Getting started
 
 1. Connect your Centerpiece Pro and wait for the companion to detect it.
-2. Save or discard any pending XPANEL edits, then **close XPANEL** before setup or keyboard edits.
-3. Click **Set up my keyboard** if the setup banner appears. Let setup finish before disconnecting the keyboard.
+2. Close XPANEL and other keyboard editors before setup or keyboard edits.
+3. On the first visible launch, setup starts automatically when an unconfigured keyboard is detected. If a review opens, read it and choose **Keep settings and set up** to save the current pending configuration. Let setup finish before disconnecting the keyboard. **Set up my keyboard** remains available for a manual retry after an error or canceled review.
 4. Open **Plugin library**, choose a position under **On your keyboard**, then choose a logo and an action. Complete any required action settings and apply the assignment. Repeat for up to four positions.
 5. Open **Screen widgets**, choose what to display above the Up arrow, and apply it. Configure its connection first if needed.
 6. Try the shortcuts below. Closing the app window leaves the companion running in the tray.
 
-Setup saves a local backup, assigns the companion shortcuts and reserves overlay slots 2–10. It stops if a required slot contains an overlay it does not own. Your installed skin remains in place. Keep your local keyboard backup for restoration.
+Setup saves a local backup, assigns the companion shortcuts and uses available overlay slots among 2–10. Existing overlays are left stored and untouched; at least two free slots are needed. More free slots let Companion preload more controls for immediate switching. Companion displays its own overlay while running and restores the previous overlay selection when you quit. Your installed skin remains in place. Keep your local keyboard backup for restoration.
+
+Automatic setup makes one attempt on this PC. It does not repeatedly change the keyboard after an error, run from a hidden Windows startup, or replace a previous local setup. Live controls still need the companion running in the tray; enable **Start with Windows** if desired.
 
 ## Keyboard shortcuts
 
@@ -204,8 +206,12 @@ In Plugin library, use **Plugin strip · On/Off** beside the option count. Green
 
 ## Setup reports pending changes even though XPANEL shows none
 
-Update in the companion, then try **Set up my keyboard**. If pending configuration is the only blocker, choose **Review current settings**. Close XPANEL and other keyboard editors, review the explanation, then choose **Keep settings and set up**. This backs up the current keymap/layout locally and saves those current settings together with the companion shortcuts. It does not restore defaults or discard pending settings.
+Update in the companion, close XPANEL and other keyboard editors, then click **Set up my keyboard**. Setup automatically detects pending configuration and prepares recovery when the other checks pass. If recovery is needed, its confirmation opens immediately: review the explanation, then choose **Keep settings and set up**. This backs up the current keymap/layout locally and saves those current settings together with the companion shortcuts. It does not restore defaults or discard pending settings.
+
+If an older version reported **Display slot 2 already contains an overlay**, update and retry setup. Companion now works around occupied overlay slots rather than requiring every slot from 2–10 to be empty. If fewer than two slots are available, the error lists the occupied slots so you can choose what to free in XPANEL after keeping your own copies. An occupied overlay is separate from the keyboard's pending-settings flag.
 
 For a connection, layout, storage or readback error, use **Check setup → Copy setup report**. The report identifies the failed stage and available firmware error codes. See [the setup investigation](SETUP-INVESTIGATION.md) for confirmed defects and the firmware behavior that can produce a false pending flag.
 
 After an update, **New update changes** shows the release highlights. Close it with **X**; it stays dismissed for that version and returns with the next update.
+
+An orange **Update available** label and highlighted **Download update** button appear in the header when a newer release is found. Existing users can update directly to the latest release.

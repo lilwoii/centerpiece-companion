@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld('companion', {
   cancelSetupRecovery:()=>ipcRenderer.invoke('cancel-setup-recovery'),
   checkSetup:()=>ipcRenderer.invoke('check-setup'),
   copySetupReport:()=>ipcRenderer.invoke('copy-setup-report'),
+  subscribeSetupReview:callback=>{const listener=(_e,value)=>callback(value);ipcRenderer.on('automatic-setup-review',listener);return()=>ipcRenderer.removeListener('automatic-setup-review',listener);},
   setupKeyboard: () => ipcRenderer.invoke('setup-keyboard'),
   restoreKeyboard: () => ipcRenderer.invoke('restore-keyboard'),
   changeKey: data => ipcRenderer.invoke('change-key',data),

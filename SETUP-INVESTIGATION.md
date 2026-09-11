@@ -43,3 +43,15 @@ First-time recovery uses a reviewed snapshot and an explicit **Keep settings and
 The remaining pending flag is recorded separately after confirmed save/readback. A stable true flag does not cause an endless block or repeated write. Validation uses mocked device responses for recovery, cancellation, drift, sticky flags and partial failures; the customer's hardware outcome is still unverified.
 
 The user later confirmed that switching XPANEL profiles and restoring stock key mappings did not clear the error. A stock reload is compatible with the same layer-order initialization mismatch; this strengthens the hypothesis but still does not establish the exact Finalmouse firmware implementation. Preview 19 verification completed with 111 automated tests, plus isolated recovery and update-notice desktop checks.
+
+## Preview 20: affected user's report received
+
+The affected user's Preview 19 report now confirms three successful `pending_changes: true` replies, two successful and stable keymap reads, a supported stock L1 and plugin key, and a 68-key physical layout. Both keyboard and display interfaces are present. Firmware versions are keyboard `0.6.2-362dfdd` and display `1.3.1.0-eb8d5f6`. This is evidence of a consistently reported flag, not a failed connection or malformed response.
+
+The reported capacity is **two available layers with two defined layers**. It does not establish the spare-layer condition described above. The exact source of this keyboard's pending flag remains unconfirmed; the earlier upstream hypothesis must not be presented as its proven firmware cause.
+
+The decisive new failure is `KEYBOARD_OVERLAY_OCCUPIED`, at `read_overlay_2`, with `writesAttempted: false`. Preview 19's blanket requirement for empty slots 2–10 prevents recovery from reaching its confirmation. The accompanying XPANEL screenshot shows an existing overlay selection. The pending flag and overlay collision are separate conditions; stock keymap resets do not make stored overlays disappear.
+
+Preview 20 allocates genuinely available slots among 2–10 and leaves all unowned overlay data untouched. It requires two slots for an inactive upload buffer and an active frame; a larger pool preloads more states. Setup rechecks the allocation before any shortcut writes. The cache uploads only within the recorded pool and never overwrites the active frame during a live refresh. The previous overlay selection remains available on Quit. The display's preview-read command returns a half-resolution image, so exporting that preview and overwriting the source would not constitute a lossless backup; this fix does not do that.
+
+The desktop also makes the latest setup failure authoritative instead of keeping the older pending-settings warning or recovery button. Regression coverage recreates the reported two-layer, pending-flag, occupied-slot-2 combination with fake devices. This verifies the software path; successful operation on the affected user's physical keyboard still requires their follow-up after updating.

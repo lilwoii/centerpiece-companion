@@ -21,12 +21,22 @@ Object.assign(methods,{
  profileAction:async(action,input)=>{if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='enable')profiles.enable(input.enabled);else if(action==='load')await profiles.load(input.id);else if(action==='remove')profiles.remove(input.id);return changed();}
 });
 if(process.argv.includes('--setup-recovery-test')){
- let fail=false,confirmed=0,canceled=0;
+ let fail=false,confirmed=0,canceled=0,started=0;const setupReviews=[];methods.subscribeSetupReview=callback=>{setupReviews.push(callback);return()=>{};};
  state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',stage:'read_pending_status',canRecover:true,message:'The keyboard reports pending configuration changes.'};
+ methods.setupKeyboard=async()=>{started++;state.setupFailure=null;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};return changed();};
  methods.prepareSetupRecovery=async()=>({token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2});
- methods.cancelSetupRecovery=async()=>{canceled++;return true;};
- methods.confirmSetupRecovery=async token=>{if(token!=='test-review')throw Error('Wrong review');confirmed++;if(fail)throw Error('The current configuration changed. Nothing was saved.');state.strip=true;state.setupFailure=null;state.feedback='Keyboard setup complete.';return changed();};
- contextBridge.exposeInMainWorld('setupTest',{fail:value=>{fail=value;},counts:()=>({confirmed,canceled}),reset:()=>{state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',canRecover:true};return changed();}});
+ methods.cancelSetupRecovery=async()=>{canceled++;state.setupRecovery=null;changed();return true;};
+ methods.confirmSetupRecovery=async token=>{if(token!=='test-review')throw Error('Wrong review');confirmed++;state.setupRecovery=null;if(fail)throw Error('The current configuration changed. Nothing was saved.');state.strip=true;state.setupFailure=null;state.feedback='Keyboard setup complete.';return changed();};
+ contextBridge.exposeInMainWorld('setupTest',{fail:value=>{fail=value;},counts:()=>({confirmed,canceled,started}),automaticReview:()=>{state.setupRunning=false;state.setupFailure=null;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};changed();for(const callback of setupReviews)callback(state.setupRecovery);},running:enabled=>{state.setupRunning=enabled;changed();},rebroadcast:()=>changed(),reset:()=>{state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',canRecover:true};return changed();}});
+}
+if(process.argv.includes('--setup-feedback-test')){
+ let failureCode='KEYBOARD_OVERLAY_OCCUPIED';
+ const pending=()=>({code:'KEYBOARD_PENDING_CHANGES',stage:'read_pending_status',canRecover:true,message:'The keyboard reports pending configuration changes.'});
+ const reset=()=>{state.strip=false;state.setupFailure=pending();state.error=state.setupFailure.message;state.setupReport={format:1,readOnly:true,pendingSamples:[true,true,true],classification:'pending_reported_consistently'};return changed();};
+ methods.prepareSetupRecovery=async()=>{state.setupFailure={code:failureCode,stage:'read_overlay_2',canRecover:false,writesAttempted:false,message:failureCode==='KEYBOARD_OVERLAY_OCCUPIED'?'Display slot 2 already contains an overlay. Setup preserves existing overlays.':'The keyboard needs two free display slots. Existing overlays were preserved.'};state.error=state.setupFailure.message;throw Error("Error invoking remote method 'prepare-setup-recovery': Error: "+state.error);};
+ methods.checkSetup=async()=>{state.setupReport={format:1,readOnly:true,pendingSamples:[true,true,true],classification:'pending_reported_consistently',lastSetupFailure:state.setupFailure};return changed();};
+ contextBridge.exposeInMainWorld('setupFeedbackTest',{reset,code:code=>{failureCode=code;},rebroadcast:()=>changed(),clear:()=>{state.setupFailure=null;state.setupRecovery=null;state.error='';state.setupReport={format:1,readOnly:true,pendingSamples:[false,false,false],classification:'no_pending_reported'};return changed();}});
+ reset();
 }
 contextBridge.exposeInMainWorld('companion',methods);
 window.addEventListener('unload',()=>{for(const name of fs.readdirSync(directory))fs.unlinkSync(path.join(directory,name));fs.rmdirSync(directory);});

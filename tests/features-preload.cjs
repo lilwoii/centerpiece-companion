@@ -20,5 +20,13 @@ Object.assign(methods,{
  pickProfileApp:async()=>'obs64.exe',
  profileAction:async(action,input)=>{if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='enable')profiles.enable(input.enabled);else if(action==='load')await profiles.load(input.id);else if(action==='remove')profiles.remove(input.id);return changed();}
 });
+if(process.argv.includes('--setup-recovery-test')){
+ let fail=false,confirmed=0,canceled=0;
+ state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',stage:'read_pending_status',canRecover:true,message:'The keyboard reports pending configuration changes.'};
+ methods.prepareSetupRecovery=async()=>({token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2});
+ methods.cancelSetupRecovery=async()=>{canceled++;return true;};
+ methods.confirmSetupRecovery=async token=>{if(token!=='test-review')throw Error('Wrong review');confirmed++;if(fail)throw Error('The current configuration changed. Nothing was saved.');state.strip=true;state.setupFailure=null;state.feedback='Keyboard setup complete.';return changed();};
+ contextBridge.exposeInMainWorld('setupTest',{fail:value=>{fail=value;},counts:()=>({confirmed,canceled}),reset:()=>{state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',canRecover:true};return changed();}});
+}
 contextBridge.exposeInMainWorld('companion',methods);
 window.addEventListener('unload',()=>{for(const name of fs.readdirSync(directory))fs.unlinkSync(path.join(directory,name));fs.rmdirSync(directory);});

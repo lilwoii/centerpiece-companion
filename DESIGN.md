@@ -87,3 +87,7 @@ The sidebar footer exposes Start with Windows as a native checkbox with a short 
 ## Profiles and live widgets
 
 Profiles reuse native selects, text inputs and shared buttons on a dedicated page. Widget rotation uses compact checkbox rows with named move-up/down buttons, preserving keyboard focus after reordering. Weather preview motion is subtle and stops under reduced motion; hardware animation is separately optional. The removal confirmation uses a native dialog with focus containment, Cancel first, a danger action and persistent failure feedback. No design tokens changed.
+
+## Release changes notice
+
+A compact, nonmodal notice at the top of the shared content area uses the existing surface, primary border, typography and native button recipes. Its bold New update changes heading, small version label and plain bullet list explain the installed release. A quiet X dismisses that version locally. The notice remains in normal document flow, never covers controls, and does not steal focus when the app opens from the tray. Closing restores keyboard focus to the active page heading. No design tokens or window behavior changed.

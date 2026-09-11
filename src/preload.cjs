@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  dismissUpdateNotes:version=>ipcRenderer.invoke('dismiss-update-notes',version),
   setStripVisible:enabled=>ipcRenderer.invoke('set-strip-visible',enabled),
   saveWidgetOrder:(order,motion)=>ipcRenderer.invoke('save-widget-order',order,motion),
   timerCommand:(action,minutes)=>ipcRenderer.invoke('timer-command',action,minutes),
@@ -44,6 +45,9 @@ contextBridge.exposeInMainWorld('companion', {
   connectTwitch: channel => ipcRenderer.invoke('connect-twitch',channel),
   cancelTwitch:()=>ipcRenderer.invoke('cancel-twitch'),
   disconnectService: name => ipcRenderer.invoke('disconnect-service',name),
+  prepareSetupRecovery:()=>ipcRenderer.invoke('prepare-setup-recovery'),
+  confirmSetupRecovery:token=>ipcRenderer.invoke('confirm-setup-recovery',token),
+  cancelSetupRecovery:()=>ipcRenderer.invoke('cancel-setup-recovery'),
   checkSetup:()=>ipcRenderer.invoke('check-setup'),
   copySetupReport:()=>ipcRenderer.invoke('copy-setup-report'),
   setupKeyboard: () => ipcRenderer.invoke('setup-keyboard'),

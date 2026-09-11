@@ -16,11 +16,11 @@ test('legacy setup adds identity using read-only queries and verifies the existi
 test('identity and unsaved-change failures never send discard or other keymap mutations',async()=>{
  for(const scenario of ['identity','unsaved']){
   const requests=[];
-  class Studio{constructor(){this.serial=scenario==='identity'?'different':'keyboard';}close(){}async request(r){requests.push(r);return{keymap:{checkUnsavedChanges:true}};}}
-  const box={module:{exports:{}},require:n=>n==='node:fs'?{readFileSync:()=>JSON.stringify({verified:true,keyboardSerial:'keyboard'}),existsSync:()=>false}:n==='./studio.cjs'?{Studio}:require(n)};
+  class Studio{constructor(){this.serial=scenario==='identity'?'different':'keyboard';}close(){}async request(r){requests.push(r);if(r.keymap.getKeymap)return{keymap:{getKeymap:{layers:[{id:1,bindings:Array.from({length:68},()=>({behaviorId:56811}))}]}}};return{keymap:{checkUnsavedChanges:true}};}}
+  const box={module:{exports:{}},require:n=>n==='node:fs'?{readFileSync:()=>JSON.stringify({verified:true,keyboardSerial:'keyboard'}),existsSync:()=>false}:n==='./studio.cjs'?{Studio}:n.startsWith('./')?require(require('node:path').join(__dirname,'../src',n)):require(n)};
   vm.runInNewContext(fs.readFileSync(require.resolve('../src/widget-shortcut.cjs'),'utf8'),box);
   await assert.rejects(()=>box.module.exports.widgetShortcut('test'));
   assert.equal(requests.some(r=>r.keymap.discardChanges||r.keymap.setLayerBinding||r.keymap.saveChanges),false);
-  assert.equal(requests.length,scenario==='identity'?0:1);
+  assert.equal(requests.length,scenario==='identity'?0:2);
  }
 });

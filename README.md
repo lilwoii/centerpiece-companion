@@ -202,8 +202,10 @@ Profiles retain display choices only; connections, keyboard skin, remaps, colors
 
 In Plugin library, use **Plugin strip · On/Off** beside the option count. Green means on; red means off. Turning it off hides the four plugin positions and L1+P hint while keeping screen widgets, Caps Lock indication and L1+/ widget switching. Assignments stay saved. L1+P plugin navigation is disabled until the strip is turned back on. This is a global local preference and profile switching preserves it.
 
-## Setup blocked despite no edits in XPANEL
+## Setup reports pending changes even though XPANEL shows none
 
-If setup says the keyboard reports pending configuration changes, click **Check setup** beside the setup button (also in Connections), then **Copy setup report**. Share that report with the companion maintainer. It gathers versions, three pending-status samples and layout compatibility information without saving, discarding, resetting or changing keyboard settings. It excludes serial numbers, key assignments, account details and local paths; nothing is sent automatically.
+Update in the companion, then try **Set up my keyboard**. If pending configuration is the only blocker, choose **Review current settings**. Close XPANEL and other keyboard editors, review the explanation, then choose **Keep settings and set up**. This backs up the current keymap/layout locally and saves those current settings together with the companion shortcuts. It does not restore defaults or discard pending settings.
 
-The warning reports a keyboard protocol flag, not proof that you edited XPANEL. XPANEL can show no local edits while the firmware reports pending configuration. Do not repeatedly reinstall or factory-reset for this warning. See [the investigation](SETUP-INVESTIGATION.md) for verified findings and remaining uncertainty.
+For a connection, layout, storage or readback error, use **Check setup → Copy setup report**. The report identifies the failed stage and available firmware error codes. See [the setup investigation](SETUP-INVESTIGATION.md) for confirmed defects and the firmware behavior that can produce a false pending flag.
+
+After an update, **New update changes** shows the release highlights. Close it with **X**; it stays dismissed for that version and returns with the next update.

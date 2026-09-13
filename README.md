@@ -37,6 +37,20 @@ Your settings remain in your Windows account even if the app is installed on ano
 
 The catalog includes Spotify, YouTube, Twitch, OBS, Discord, Steam, Kick, Streamlabs, voice tools and more. **A catalog logo does not mean a full native integration:** some entries launch a website or app, while others send a shortcut you configure in that service. Elgato/Stream Deck plugin packages cannot be imported directly.
 
+## Create a keyboard skin
+
+1. Open **Skin Studio** and start with a Skin library design or import an image.
+2. Add layers, adjust their appearance and motion, select keys in the preview, and add named interactions.
+3. **Animate photo** separates a subject locally so you can move it independently. Review its edges; photo extraction is not perfect for every image. The first use downloads verified local photo tools.
+4. Save the design to a Companion space. **Test with my keys** tests the app preview; **Use on my keyboard** builds and applies a native skin after you choose a physical slot.
+5. For advanced editing, choose the purple **Unreal editor** button, then **Edit in Unreal**. Companion prepares an editable project and hosts Unreal's editor in the desktop window. Save your Unreal changes and choose **Build saved Unreal edits**.
+
+New native builds require **Unreal Engine 4.27** and compatible creator tools. The app detects an installed engine; Unreal itself is not bundled. After updates, missing Microsoft creator tools install automatically when Unreal 4.27 is present. Windows may ask for permission or a restart. If setup is declined, retry from Set up build tools; it will not prompt at every login. Already-built skins do not need the editor. Compatible Blueprints and materials run on the keyboard's existing runtime; new C++ runtime modules, arbitrary engine plugins and UE5-only functionality cannot be installed as a skin. Advanced Unreal changes stay in their Unreal project and do not become editable Studio layers.
+
+The keyboard has **five physical skin slots**. Companion spaces store editable designs on your PC; applying a design uses a physical slot. Your default is protected. Where a matching original file is available, Companion offers restoration; otherwise replacement explicitly explains that the old file cannot be recovered by the app. Save an original download before replacing a skin you want to keep.
+
+Skin Studio remains under development. Collection entries marked **Test skin** can be edited and previewed; their native support varies and is checked before building.
+
 ## Getting started
 
 1. Connect your Centerpiece Pro and wait for the companion to detect it.

@@ -29,7 +29,7 @@ function sameKeymap(a, b) { return JSON.stringify(normalizedKeymap(a)) === JSON.
 function setupFailure(error) {
   return {code: /^[A-Z][A-Z0-9_]{2,60}$/.test(error.code || '') ? error.code : 'KEYBOARD_SETUP_FAILED',
     message: error.message || 'Keyboard setup could not finish.', stage: error.stage || 'setup',
-    writesAttempted: !!error.writesAttempted, canRecover: error.code === 'KEYBOARD_PENDING_CHANGES' && !error.writesAttempted,
+    writesAttempted: !!error.writesAttempted, canRecover: ['KEYBOARD_PENDING_CHANGES','SETUP_REVIEW_REQUIRED'].includes(error.code) && !error.writesAttempted,
     ...(Number.isInteger(error.firmwareCode) ? {firmwareCode: error.firmwareCode} : {})};
 }
 module.exports = {keyboardError, assertBindingResult, assertSaveResult, sameBinding, sameKeymap, setupFailure};

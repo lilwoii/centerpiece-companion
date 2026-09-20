@@ -16,13 +16,13 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
 
 function fixture({ sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), start } = {}) {
   const events = [], handlers = {}, state = { device: {}, strip: false }, context = {
-    Promise, Error, state, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
+    Promise, Error, state,fs:{existsSync:()=>false},path:require("node:path"),leaveMode(){}, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
     quitting: false, automaticSetupSuspended: false, automaticCheckBusy: false, automaticSetupTimer: 1,
-    profileTimer: null, timer: null, stripTimer: null, lockTimer: null, liveTimer: null, modeTimeout: null,
+    connectionTimer:null,recoveryVerified:false,connectionRecovery:null,profileTimer: null, timer: null, stripTimer: null, lockTimer: null, liveTimer: null, modeTimeout: null,
     hardwareDirectory: 'test-only', widgetShortcutReady: true, appliedAppearance: '',
     clearInterval() { events.push('clear-timer'); }, clearTimeout() {},
     desk: { editor: { busy: false }, live: { sample }, close() { assert.equal(state.setupRunning, false); events.push('desk-close'); } },
-    strip: { connect() { events.push('connect'); return true; }, async close() { events.push('strip-close'); } },
+    strip: { detach(){events.push('detach');},connect() { events.push('connect'); return true; }, async close() { events.push('strip-close'); } },
     monitor: { start() { events.push('monitor-start'); }, close() { events.push('monitor-close'); } },
     media: { close() { events.push('media-close'); } }, mediaPoll: null, community: null, twitch: null, widgetCycle: null,
     globalShortcut: { unregisterAll() { events.push('unregister'); } },
@@ -40,9 +40,9 @@ function fixture({ sample = async () => {}, appearance = async () => {}, inspect
   vm.createContext(context);
   const suspension = section('function suspendAutomaticSetup()', '\nconst updateNotes');
   const operations = section('    const setupReview=plan=>', "    handle('restore-keyboard'");
-  const discovery = section('      async function tryAutomaticSetup()', '      if(!automaticSetupSuspended&&automaticSetup.canAttempt())');
-  const cleanup = section("    quitting=true;clearInterval(automaticSetupTimer);", "  },()=>app.quit(),error=>");
-  vm.runInContext(suspension + '\n' + operations + '\n' + discovery + '\nthis.lifecycle={setupOperation,tryAutomaticSetup,cleanup:async()=>{' + cleanup + '}};', context);
+  const discovery = ''; 
+  const cleanup = section("    quitting=true;clearInterval(connectionTimer);clearInterval(automaticSetupTimer);", "  },()=>app.quit(),error=>");
+  vm.runInContext(suspension + '\n' + operations + '\n' + discovery + '\nthis.lifecycle={setupOperation,recoverKeyboardConnection,cleanup:async()=>{' + cleanup + '}};', context);
   return { context, events, handlers, state, ...context.lifecycle };
 }
 
@@ -92,27 +92,7 @@ test('failed setup also releases the shutdown completion barrier', async () => {
   assert.ok(f.events.includes('hid-close'));
 });
 
-test('manual review cannot be replaced by automatic discovery already in progress', async () => {
-  const discovery = deferred(), f = fixture({ inspect: () => discovery.promise });
-  const automatic = f.tryAutomaticSetup();
-  await f.handlers['setup-keyboard']();
-  assert.equal(f.state.setupRecovery.token, 'review');
-  assert.deepEqual(Array.from(f.state.setupRecovery.displaySlots), [3, 4]);
-  assert.deepEqual(Array.from(f.state.setupRecovery.preservedOverlaySlots), [2]);
-  discovery.resolve({ keyboard: true, display: true });
-  await automatic;
-  assert.equal(f.events.includes('automatic-attempt'), false);
-  await f.handlers['cancel-setup-recovery']();
-  await f.tryAutomaticSetup();
-  assert.equal(f.state.setupRecovery, null);
-  assert.equal(f.events.includes('review-event'), false);
-  assert.equal(f.context.automaticSetupSuspended, true);
-});
-
-test('a prepared review blocks automatic inspection without replacing its token', async () => {
-  const f = fixture({ inspect: async () => assert.fail('No discovery while reviewing settings.') });
-  f.state.setupRecovery = { token: 'existing-review' };
-  await f.tryAutomaticSetup();
-  assert.equal(f.state.setupRecovery.token, 'existing-review');
-  assert.equal(f.events.includes('automatic-attempt'), false);
-});
+test('automatic reconnect does not run during an existing settings review', async()=>{const f=fixture({inspect:async()=>assert.fail('must not inspect')});f.state.setupRecovery={token:'existing'};await f.recoverKeyboardConnection();assert.equal(f.state.setupRecovery.token,'existing');assert.equal(f.events.includes('hid-close'),false);});
+test('automatic reconnect clears stale USB helper before discovery and preserves pending settings for review',async()=>{const f=fixture();await f.recoverKeyboardConnection();assert.ok(f.events.indexOf('detach')<f.events.indexOf('hid-close'));assert.equal(f.state.setupRecovery.token,'review');assert.equal(f.events.includes('connect'),false);assert.equal(f.events.includes('review-event'),true);assert.equal(f.state.connectionRecovering,false);});
+test('quit during reconnect discovery never starts setup writes',async()=>{const d=deferred(),f=fixture({inspect:()=>d.promise,start:async()=>assert.fail('No writes after quit')});const work=f.recoverKeyboardConnection();await new Promise(r=>setImmediate(r));const quit=f.cleanup();d.resolve({keyboard:true,display:true});await assert.rejects(work,/closing/);await quit;assert.equal(f.events.includes('connect'),false);});
+test('reconnect reloads display and monitor after verified setup',async()=>{const f=fixture({start:async()=>({backup:{verified:true}})});await f.recoverKeyboardConnection();assert.equal(f.state.strip,true);assert.equal(f.context.recoveryVerified,true);assert.ok(f.events.includes('appearance'));assert.ok(f.events.includes('monitor-start'));});

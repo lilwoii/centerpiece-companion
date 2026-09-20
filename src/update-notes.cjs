@@ -10,7 +10,7 @@ class UpdateNotes {
     this.io = io;
     this.file = path.join(directory, 'update-notes.json');
     const items = notes[version];
-    this.items = Array.isArray(items) && items.length > 0 && items.length <= 8 &&
+    this.items = Array.isArray(items) && items.length > 0 && items.length <= 12 &&
       items.every(item => typeof item === 'string' && item.trim() && item.length <= 300)
       ? [...items] : null;
     this.dismissedVersion = null;
@@ -45,3 +45,4 @@ class UpdateNotes {
 }
 
 module.exports = { UpdateNotes };
+

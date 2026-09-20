@@ -1,0 +1,1 @@
+{"FileVersion":3,"Version":1,"VersionName":"1.0","FriendlyName":"Centerpiece reflected API declarations","Description":"Community reverse-engineered compile-time declarations. Host supplies runtime implementation.","CanContainContent":false,"Modules":[{"Name":"SkinApi","Type":"Runtime","LoadingPhase":"Default"}]}

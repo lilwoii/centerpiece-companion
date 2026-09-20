@@ -1,0 +1,9 @@
+Local photo subject extraction
+
+U²-Net by Xuebin Qin and contributors: https://github.com/xuebinqin/U-2-Net
+License: Apache-2.0 (included alongside this notice).
+Model distribution: https://github.com/danielgatis/rembg/releases/tag/v0.0.0
+SHA-256: 8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491
+
+Inference uses ONNX Runtime (Microsoft, MIT license included in its dependency).
+The model downloads on first use. Image inference happens locally; no photo is uploaded.

@@ -5,7 +5,7 @@ class Som {
   constructor() {
     const device = HID.devices().find(d => d.vendorId === 0x361d && d.productId === 0x202 && d.usagePage === 0xff00 && d.usage === 1);
     if (!device) throw new Error('Centerpiece display is not connected.');
-    this.serial = device.serialNumber;
+    this.serial = device.serialNumber;this.identity=String(device.serialNumber||device.path||'');
     this.handle = new HID.HID(device.path); this.listeners = new Set();
     this.handle.on('data', raw => {
       if (raw[0] !== 3 || raw.length < 4) return;

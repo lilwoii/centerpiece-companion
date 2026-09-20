@@ -1,0 +1,1 @@
+{"FileVersion":3,"Version":1,"VersionName":"1.0","FriendlyName":"Studio device asset generator","Description":"Editor-only original Blueprint generator. No device write access.","CanContainContent":false,"Modules":[{"Name":"SkinStudioDeviceBuilder","Type":"Editor","LoadingPhase":"Default"}],"Plugins":[{"Name":"SkinApi","Enabled":true}]}

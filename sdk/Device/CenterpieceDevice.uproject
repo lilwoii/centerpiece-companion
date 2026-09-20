@@ -1,0 +1,1 @@
+{"FileVersion":3,"EngineAssociation":"4.27","Description":"Experimental Blueprint-only Centerpiece device target. Generator and device loading require verification.","Plugins":[{"Name":"SkinApi","Enabled":true},{"Name":"SkinStudioDeviceBuilder","Enabled":true},{"Name":"PythonScriptPlugin","Enabled":true},{"Name":"EditorScriptingUtilities","Enabled":true}]}

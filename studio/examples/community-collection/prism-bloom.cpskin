@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-prism-bloom",
+  "name": "Prism bloom",
+  "description": "An illuminated field of faceted mint and amethyst crystal grows from a quiet slate landscape. Press keys or click near a crystal to make it grow and scatter luminous fragments.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#141e31"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "prism-bloom-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 70,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#92dbcc",
+      "color2": "#b3a0db",
+      "text": "prism-bloom",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "prism-bloom-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "prism-bloom-scene",
+      "effect": "sparkle",
+      "color": "#b3a0db",
+      "strength": 0.85,
+      "duration": 2.8
+    },
+    {
+      "id": "prism-bloom-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "prism-bloom-scene",
+      "effect": "sparkle",
+      "color": "#b3a0db",
+      "strength": 0.85,
+      "duration": 2.8
+    }
+  ]
+}

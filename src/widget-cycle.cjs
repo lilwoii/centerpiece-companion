@@ -1,5 +1,5 @@
-const types=['spotify','clock','weather','cpu','gpu','mic','twitch','text','timer','obs','off'];
-const legacyTypes=types.filter(t=>!['timer','obs'].includes(t));
+const types=['spotify','clock','weather','cpu','gpu','mic','twitch','text','timer','obs','calendar','off'];
+const legacyTypes=types.filter(t=>!['timer','obs','calendar'].includes(t));
 function validateOrder(order){if(order===undefined)return [...legacyTypes];if(!Array.isArray(order)||!order.length||order.length>types.length||new Set(order).size!==order.length||order.some(t=>!types.includes(t)))throw Error('Choose at least one widget, without duplicates.');return [...order];}
 function nextWidget(type,order=legacyTypes){const list=validateOrder(order);return list[(list.indexOf(type)+1)%list.length];}
 class WidgetCycle{

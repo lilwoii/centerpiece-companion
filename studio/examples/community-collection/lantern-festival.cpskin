@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-lantern-festival",
+  "name": "Lantern festival",
+  "description": "A procession of warm paper lanterns drifts above moonlit temple roofs. Press any key or click to send gold embers and a gentle gust through the lanterns.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#11172a"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "lantern-festival-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 85,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#ee884e",
+      "color2": "#ffd58a",
+      "text": "lantern-festival",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "lantern-festival-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "lantern-festival-scene",
+      "effect": "sparkle",
+      "color": "#ffd58a",
+      "strength": 0.85,
+      "duration": 2.5
+    },
+    {
+      "id": "lantern-festival-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "lantern-festival-scene",
+      "effect": "sparkle",
+      "color": "#ffd58a",
+      "strength": 0.85,
+      "duration": 2.5
+    }
+  ]
+}

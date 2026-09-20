@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-desert-caravan",
+  "name": "Desert caravan",
+  "description": "A lantern-lit camel caravan crosses layered desert dunes beneath a crescent moon and twinkling stars. Press any key or click to lift a wind-driven stream of desert sand.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#242438"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "desert-caravan-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 60,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#d4b393",
+      "color2": "#ecceae",
+      "text": "desert-caravan",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "desert-caravan-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "desert-caravan-scene",
+      "effect": "burst",
+      "color": "#ecceae",
+      "strength": 0.85,
+      "duration": 3
+    },
+    {
+      "id": "desert-caravan-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "desert-caravan-scene",
+      "effect": "burst",
+      "color": "#ecceae",
+      "strength": 0.85,
+      "duration": 3
+    }
+  ]
+}

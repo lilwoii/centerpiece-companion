@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-cloud-courier",
+  "name": "Cloud courier",
+  "description": "Guide a little airmail plane through sky towers. A complete keyboard game with collisions, score and restart. Space or Up flaps. Pass towers to score. Press R or Space after a crash to restart.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#164975"
+  },
+  "duration": 120,
+  "fps": 60,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "cloud-courier-scene",
+      "name": "Playable game",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 40,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#e5c68b",
+      "color2": "#fff0c4",
+      "text": "cloud-courier",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "cloud-courier-keyboard",
+      "trigger": "keyDown",
+      "key": "Space",
+      "target": "cloud-courier-scene",
+      "effect": "pulse",
+      "color": "#fff0c4",
+      "strength": 0,
+      "duration": 0.12
+    },
+    {
+      "id": "cloud-courier-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "cloud-courier-scene",
+      "effect": "pulse",
+      "color": "#fff0c4",
+      "strength": 0,
+      "duration": 0.12
+    }
+  ]
+}

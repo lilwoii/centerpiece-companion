@@ -1,3 +1,4 @@
+import {discordInteraction,approvalButtons} from './discord-interactions.mjs';
 // Discord credentials and webhook are Worker secrets, never desktop configuration.
 const encoder=new TextEncoder();
 const now=()=>Math.floor(Date.now()/1000);
@@ -17,7 +18,8 @@ async function notify(env,id){if(!env.DISCORD_WEBHOOK)return;let target;try{targ
  const row=await env.DB.prepare('SELECT s.* FROM submissions s JOIN notifications n ON n.submission_id=s.id WHERE s.id=? AND n.sent=0 AND n.attempts<5').bind(id).first();if(!row)return;
  // Claim before posting. An ambiguous network response is not automatically resent.
  const claimed=await env.DB.prepare('UPDATE notifications SET sent=2,attempts=attempts+1 WHERE submission_id=? AND sent=0 RETURNING submission_id').bind(id).first();if(!claimed)return;
- try{const r=await fetch(target,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({allowed_mentions:{parse:[]},embeds:[{title:(row.kind==='skin'?'Skin submission: ':'Feature request: ')+row.title,description:row.body.slice(0,2000),color:0x80c9ec,author:{name:row.username},timestamp:new Date(row.created*1000).toISOString(),fields:[{name:'Submission ID',value:row.id},{name:'Status',value:row.status},...(row.skin_url?[{name:'Submitted link — review before opening',value:row.skin_url}]:[])]}]}),signal:AbortSignal.timeout(10000),redirect:'manual'});if(r.ok)await env.DB.prepare('UPDATE notifications SET sent=1 WHERE submission_id=?').bind(id).run();else if(r.status===429)await env.DB.prepare('UPDATE notifications SET sent=0 WHERE submission_id=?').bind(id).run();}catch{/* Preserve uncertain status for owner review; no duplicate auto-post. */}}
+ const interactive=row.kind==='skin'&&env.DISCORD_BOT_TOKEN&&/^[0-9]{15,22}$/.test(env.DISCORD_REVIEW_CHANNEL_ID||'')&&/^[a-f0-9]{64}$/i.test(env.DISCORD_PUBLIC_KEY||'');
+ try{const r=await fetch(interactive?'https://discord.com/api/v10/channels/'+env.DISCORD_REVIEW_CHANNEL_ID+'/messages':target,{method:'POST',headers:{'Content-Type':'application/json',...(interactive?{Authorization:'Bot '+env.DISCORD_BOT_TOKEN}:{})},body:JSON.stringify({...(interactive?{components:approvalButtons(row.id)}:{}),allowed_mentions:{parse:[]},embeds:[{title:(row.kind==='skin'?'Skin submission: ':'Feature request: ')+row.title,description:row.body.slice(0,2000),color:0x80c9ec,author:{name:row.username},timestamp:new Date(row.created*1000).toISOString(),fields:[{name:'Submission ID',value:row.id},{name:'Status',value:row.status},...(row.skin_url?[{name:'Submitted link — review before opening',value:row.skin_url}]:[])]}]}),signal:AbortSignal.timeout(10000),redirect:'manual'});if(r.ok)await env.DB.prepare('UPDATE notifications SET sent=1 WHERE submission_id=?').bind(id).run();else if(r.status===429)await env.DB.prepare('UPDATE notifications SET sent=0 WHERE submission_id=?').bind(id).run();}catch{/* Preserve uncertain status for owner review; no duplicate auto-post. */}}
 async function routes(request,env,ctx){const origin=configured(env),url=new URL(request.url),p=url.pathname;if(request.headers.get('Origin')&&request.headers.get('Origin')!==origin)fail('Origin is not allowed.',403);
  const ip=request.headers.get('CF-Connecting-IP')||'unknown';await limit(env,'ip:'+await hash(ip),90,60);
  if(request.method==='GET'&&p==='/auth/discord'){
@@ -40,7 +42,7 @@ async function routes(request,env,ctx){const origin=configured(env),url=new URL(
  if(request.method==='GET'&&p==='/feed'){const kind=url.searchParams.get('kind')==='skin'?'skin':'feature';const rows=await env.DB.prepare("SELECT s.id,s.username,s.kind,s.title,s.body,s.skin_url,s.status,s.created,p.color FROM submissions s LEFT JOIN profiles p ON p.user_id=s.user_id WHERE s.kind=? AND s.status!='hidden' AND (s.kind!='skin' OR s.status='approved') ORDER BY s.created DESC LIMIT 100").bind(kind).all();return response({items:rows.results});}
  const user=await identity(request,env);
  if(request.method==='POST'&&p==='/profile'){const input=await body(request);if(!/^#[a-f0-9]{6}$/i.test(input.color||''))fail('Choose a valid color.');await env.DB.prepare('INSERT INTO profiles(user_id,color) VALUES(?,?) ON CONFLICT(user_id) DO UPDATE SET color=excluded.color').bind(user.user_id,input.color).run();return response({ok:true});}
- if(request.method==='GET'&&p==='/me')return response({id:user.user_id,name:user.username,isAdmin:user.isAdmin});
+ if(request.method==='GET'&&p==='/me'){const profile=await env.DB.prepare('SELECT color FROM profiles WHERE user_id=?').bind(user.user_id).first();return response({id:user.user_id,name:user.username,isAdmin:user.isAdmin,color:/^#[a-f0-9]{6}$/i.test(profile?.color||'')?profile.color:'#9bb9ff'});}
  if(request.method==='POST'&&p==='/logout'){await env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await hash(request.headers.get('Authorization').slice(7))).run();return response({ok:true});}
  if(request.method==='POST'&&p==='/submit'){
   const input=await body(request);if(!['feature','skin'].includes(input.kind))fail('Choose a feature request or skin submission.');const title=text(input.title,3,100),description=text(input.body,10,2000),link=input.kind==='skin'?skinLink(input.skinUrl):'';if(input.kind==='skin'&&(!link||input.ownsRights!==true))fail('Include your skin link and confirm permission to share it.');
@@ -51,7 +53,7 @@ async function routes(request,env,ctx){const origin=configured(env),url=new URL(
  fail('Not found.',404);
 }
 export default{
- async fetch(request,env,ctx){try{return await routes(request,env,ctx);}catch(error){return response({error:error.status?error.message:'Community service is temporarily unavailable.'},error.status||500,error.retryAfter?{'Retry-After':String(error.retryAfter)}:{});}},
+ async fetch(request,env,ctx){try{if(new URL(request.url).pathname==='/discord/interactions')return await discordInteraction(request,env);return await routes(request,env,ctx);}catch(error){return response({error:error.status?error.message:'Community service is temporarily unavailable.'},error.status||500,error.retryAfter?{'Retry-After':String(error.retryAfter)}:{});}},
  async scheduled(_event,env,ctx){ctx.waitUntil((async()=>{for(const table of ['oauth_states','auth_codes','sessions','rate_limits'])await env.DB.prepare(`DELETE FROM ${table} WHERE expires<?`).bind(now()).run();const rows=await env.DB.prepare('SELECT submission_id FROM notifications WHERE sent=0 AND attempts<5 LIMIT 10').all();for(const row of rows.results)await notify(env,row.submission_id);})());}
 };
 export{skinLink,text,challenge};

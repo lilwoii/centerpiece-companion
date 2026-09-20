@@ -1,0 +1,26 @@
+.studio-collection{margin:0 0 calc(var(--space)*1.5);padding-bottom:var(--space);border-bottom:1px solid var(--border)}
+.studio-collection-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.studio-collection-heading h2{margin:0;font-family:var(--font-display)}
+.studio-collection-category{display:inline-flex;align-items:center;gap:7px;color:var(--success);border:1px solid var(--success);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:600}
+.studio-collection-category::before{content:'●';font-size:7px}
+.studio-collection-note{margin-top:10px}
+.studio-collection-toolbar{margin-bottom:12px}
+.studio-collection-toolbar label:last-child{flex:0 1 180px}
+.studio-collection-status{min-height:18px}
+.studio-collection-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:16px;margin-top:12px}
+.studio-project-card{display:flex;flex-direction:column}
+.studio-project-visual{aspect-ratio:1920/550;background:var(--background);position:relative;overflow:hidden}
+.studio-project-card .studio-project-visual img{width:100%;height:100%;aspect-ratio:1920/550;object-fit:contain}
+.studio-project-image-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;color:var(--muted);font-size:12px;text-align:center}
+.studio-project-image-fallback[hidden],.studio-project-visual img[hidden]{display:none}
+.studio-project-card .skin-card-body{display:flex;flex:1;flex-direction:column;padding:16px}
+.studio-project-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.studio-project-format{color:var(--primary);font-size:11px;font-weight:600}
+.studio-project-meta .note{min-height:0;margin:0;font-size:11px}
+.studio-project-card h3{font-family:var(--font-display);font-size:17px;margin:10px 0 6px}
+.studio-project-card .studio-project-description{margin:0;line-height:1.5}
+.studio-project-card .studio-project-interaction{margin:12px 0 0;padding-left:10px;border-left:2px solid var(--primary);line-height:1.5;color:var(--ink)}
+.studio-project-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:16px}
+.studio-project-card .studio-project-actions .button{margin-top:0;min-height:36px;white-space:normal}
+@media(max-width:600px){.studio-collection-toolbar label:last-child{flex:1 1 100%}.studio-project-actions .button{flex:1}}
+@media(forced-colors:active){.studio-collection-category,.studio-project-interaction{border-color:CanvasText}.studio-collection-category,.studio-project-format{color:CanvasText}}

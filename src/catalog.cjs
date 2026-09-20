@@ -1,4 +1,6 @@
+const appearance=require('./appearance.cjs');
 const entries=[
+ ['decoration','Decoration','Personalize','decoration',null],
  ['timer','Countdown timer','Widgets',null,null],
  ['weather','Local weather','Widgets',null,null],
  ['clock','Local time','Widgets',null,null],
@@ -34,9 +36,10 @@ const entries=[
  ['kofi','Ko-fi','Community','kofi','https://ko-fi.com/'],
  ['github','GitHub','Community','github','https://github.com/']
 ];
+entries.push(['calendar','Calendar','Live widgets','clock',null]);
 const action=(id,label)=>({id,label});
 const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon:icon||id,url,actions:[
- ...(['weather','clock','cpu','gpu'].includes(id)?[action('display','Show live reading')]:[]),
+ ...(['weather','clock','cpu','gpu','calendar','decoration'].includes(id)?[action('display',id==='decoration'?'Display only · no action':'Show live reading')]:[]),
  ...(id==='timer'?[action('start','Start new timer'),action('toggle','Pause / resume timer'),action('reset','Reset timer')]:[]),
  ...(id==='mic'?[action('mute','Mute / unmute microphone')]:[]),
  ...(id==='spotify'?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track')]:[]),
@@ -45,7 +48,7 @@ const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon
  ...(url?[action('open',id==='steam'?'Open Steam':`Open ${name}`)]:[]),
  ...(id==='browser'?[action('url','Open website')]:[]),
  ...(id==='app'?[action('app','Open chosen app')]:[]),
- action('hotkey','Send configured shortcut')
+ ...(id==='decoration'?[]:[action('hotkey','Send configured shortcut')])
 ]}));
 function hotkeyCodes(value){
  if(typeof value!=='string'||value.length>80)throw Error('Enter a shortcut such as Ctrl+Shift+F10.');
@@ -66,6 +69,6 @@ function validateSlot(slot){
  if(slot.action==='url'){let u;try{u=new URL(value);}catch{}if(!u||!['https:','http:'].includes(u.protocol)||u.username||u.password)throw Error('Enter an http or https website address.');}
  if(p.id==='obs'&&['scene','mute'].includes(slot.action)&&(!value||value.length>200))throw Error('Enter the exact OBS scene or input name.');
  if(slot.action==='app'&&(!/^[a-z]:[\\/]/i.test(value)||!/\.(exe|lnk)$/i.test(value)||!require('node:fs').existsSync(value)))throw Error('Choose an installed app.');
- return {plugin:p.id,action:slot.action,value};
+ return {plugin:p.id,action:slot.action,value,...(slot.visual?{visual:appearance.visual(slot.visual)}:{}),...(slot.appearance?{appearance:appearance.tileAppearance(slot.appearance)}:{})};
 }
 module.exports={catalog,hotkeyCodes,validateSlot};

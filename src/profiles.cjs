@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),{randomUUID}=require('node:crypto');
 // Profiles intentionally store display choices only; never connections or keymaps.
-function snapshot(config){return structuredClone({slots:config.slots,widget:{type:config.widget.type,text:config.widget.text},widgetOrder:config.widgetOrder,timerMinutes:config.timerMinutes});}
-function merge(config,saved){return {...config,slots:saved.slots,widget:{...config.widget,...saved.widget},widgetOrder:saved.widgetOrder,timerMinutes:saved.timerMinutes};}
+function snapshot(config){return structuredClone({slots:config.slots,widget:{type:config.widget.type,text:config.widget.text,...(config.widget.textStyle?{textStyle:config.widget.textStyle}:{})},widgetOrder:config.widgetOrder,timerMinutes:config.timerMinutes,appearance:config.appearance,indicator:config.indicator,layerColor:config.layerColor,skinId:config.skinId||''});}
+function merge(config,saved){const optional={};for(const key of ['appearance','indicator','layerColor','skinId'])if(saved[key]!==undefined)optional[key]=saved[key];return {...config,...optional,slots:saved.slots,widget:{...config.widget,...saved.widget},widgetOrder:saved.widgetOrder,timerMinutes:saved.timerMinutes};}
 function appName(value){if(typeof value!=='string'||value.length>100||!value.endsWith('.exe')||/[\\/:*?"<>|\x00-\x1f]/.test(value))throw Error('Choose an app executable, for example obs64.exe.');return value.toLowerCase();}
 class Profiles {
  constructor(directory,workspace,apply,allowed=()=>true){this.file=path.join(directory,'profiles.json');this.workspace=workspace;this.apply=apply;this.allowed=allowed;this.data={enabled:false,items:[],base:null};this.active=null;this.candidate=null;this.samples=0;this.busy=false;this.error='';this.revision=0;

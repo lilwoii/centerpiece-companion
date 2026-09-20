@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-paper-ocean",
+  "name": "Paper ocean",
+  "description": "A folded-paper whale sails through six layers of ocean with a fleet of tiny paper boats. Press any key or click to make the whale rise and blow a sparkling spray.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#b1d8d5"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "paper-ocean-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 50,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#e2b775",
+      "color2": "#d8f2e5",
+      "text": "paper-ocean",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "paper-ocean-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "paper-ocean-scene",
+      "effect": "burst",
+      "color": "#d8f2e5",
+      "strength": 0.85,
+      "duration": 2.8
+    },
+    {
+      "id": "paper-ocean-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "paper-ocean-scene",
+      "effect": "burst",
+      "color": "#d8f2e5",
+      "strength": 0.85,
+      "duration": 2.8
+    }
+  ]
+}

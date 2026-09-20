@@ -78,3 +78,10 @@ test('saved display pools reject duplicate, reserved or insufficient slots',()=>
  const{ownedPool}=require('../src/display-cache.cjs');assert.deepEqual(ownedPool({}),[2,3,4,5,6,7,8,9,10]);assert.deepEqual(ownedPool({ownedSlots:[3,5,10]}),[3,5,10]);
  for(const ownedSlots of [[],[2],[2,2],[1,2],[2,11],['2',3],null])assert.throws(()=>ownedPool({ownedSlots}));
 });
+
+test('Caps and navigation cannot emit display packets during exclusive native transfers',async()=>{
+ const sent=[],cache=new DisplayCache('.',()=>''),{DisplayTasks}=require('../src/display-tasks.cjs');
+ cache.som={selectSlot:slot=>sent.push(slot)};cache.config={};cache.cache.set('idle:0',2);cache.cache.set('idle:1',3);cache.cache.set('nav:next',4);cache.lastSlot=2;
+ const tasks=new DisplayTasks(cache);await tasks.run(async()=>{cache.setLocks({caps:true});cache.show({active:true,id:'next'});cache.setLayer(true);assert.deepEqual(sent,[]);});
+ assert.deepEqual(sent,[4]);assert.equal(cache.desired,'next');assert.equal(cache.caps,true);
+});

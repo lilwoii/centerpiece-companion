@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict');const languages=require('../src/languages.cjs');
+test('language labels fall back safely while a lookup is pending',()=>{const {languageLabel}=require('../src/language-labels.js');assert.equal(languageLabel('A',{id:'auto'}),'A');});
+test('Windows Russian, Korean and automatic layouts produce usable labels',{skip:process.platform!=='win32'},async()=>{const ru=await languages.map('00000419'),ko=await languages.map('korean-2'),auto=await languages.map('auto');assert.equal(ru.labels[17],'й');assert.equal(ru.labels.length,68);assert.equal(ko.labels[17],'ㅂ');assert.equal(auto.id,'auto');assert.equal(auto.labels.length,68);assert.ok(auto.resolvedId);});
+test('language IDs reject paths and commands',async()=>{await assert.rejects(languages.map('../layout'));await assert.rejects(languages.map('00000409;whoami'));});

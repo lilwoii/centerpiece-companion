@@ -1,11 +1,29 @@
 {
   "profile": "product-admin",
-  "sourceRoots": ["src"],
+  "sourceRoots": [
+    "src",
+    "studio"
+  ],
   "locale": "en-US",
-  "ownership": { "Select/Listbox": "native" },
+  "ownership": {
+    "Select/Listbox": "native"
+  },
   "canonicalMap": "UX-CONTRACT.md",
-  "requiredCapabilities": ["Scrollbar", "Toast"],
-  "requiredCommands": ["unit", "check"],
-  "commands": { "unit": "npm test", "check": "npm run check" },
-  "evidence": { "failurePaths": "tests/desktop-verify.cjs" }
+  "requiredCapabilities": [
+    "Scrollbar",
+    "Toast"
+  ],
+  "requiredCommands": [
+    "unit",
+    "check",
+    "studio"
+  ],
+  "commands": {
+    "unit": "npm test",
+    "check": "npm run check",
+    "studio": "npm run test:studio"
+  },
+  "evidence": {
+    "failurePaths": "tests/desktop-verify.cjs"
+  }
 }

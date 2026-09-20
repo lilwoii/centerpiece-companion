@@ -1,0 +1,78 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-neon-speedway",
+  "name": "Neon speedway",
+  "description": "Drive a violet grand tourer toward a striped sunset through a rain-slick neon city. Press Space for a speed boost; other keys throw neon sparks from the road.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#110e26"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "neon-speedway-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 60,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#719ded",
+      "color2": "#f575b1",
+      "text": "neon-speedway",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "neon-speedway-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "neon-speedway-scene",
+      "effect": "sparkle",
+      "color": "#f575b1",
+      "strength": 0.85,
+      "duration": 1.6
+    },
+    {
+      "id": "neon-speedway-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "neon-speedway-scene",
+      "effect": "sparkle",
+      "color": "#f575b1",
+      "strength": 0.85,
+      "duration": 1.6
+    },
+    {
+      "id": "neon-speedway-boost",
+      "trigger": "keyDown",
+      "key": "Space",
+      "target": "neon-speedway-scene",
+      "effect": "pulse",
+      "color": "#719ded",
+      "strength": 1.4,
+      "duration": 3
+    }
+  ]
+}

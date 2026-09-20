@@ -1,5 +1,15 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  keyboardSkins:(action,input)=>ipcRenderer.invoke('keyboard-skins',action,input),
+  openUnrealSetup:()=>ipcRenderer.invoke('open-unreal-setup'),
+  openSupport:()=>ipcRenderer.invoke('open-support'),
+  studioRequest:(action,input)=>ipcRenderer.invoke('studio-request',action,input),
+  skinLibrary:()=>ipcRenderer.invoke('skin-library'),
+  skinImport:(name,bytes)=>ipcRenderer.invoke('skin-import',name,bytes),
+  skinArchive:(id,value)=>ipcRenderer.invoke('skin-archive',id,value),
+  skinSelect:id=>ipcRenderer.invoke('skin-select',id),
+  skinExport:id=>ipcRenderer.invoke('skin-export',id),
+  previewLayout:(config,flags)=>ipcRenderer.invoke('preview-layout',config,flags),
   dismissUpdateNotes:version=>ipcRenderer.invoke('dismiss-update-notes',version),
   setStripVisible:enabled=>ipcRenderer.invoke('set-strip-visible',enabled),
   saveWidgetOrder:(order,motion)=>ipcRenderer.invoke('save-widget-order',order,motion),

@@ -1,20 +1,23 @@
 {
   "name": "centerpiece-companion",
-  "version": "0.3.0-preview.21",
+  "version": "0.3.0-preview.27",
   "description": "Unofficial local companion for Finalmouse Centerpiece Pro",
   "main": "src/main.cjs",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node --test tests/plugins.test.cjs tests/desk.test.cjs tests/community.test.cjs tests/signin-regression.test.cjs tests/twitch-auth.test.cjs tests/widget-cycle.test.cjs tests/update-storage.test.cjs tests/shutdown.test.cjs tests/legacy-setup.test.cjs tests/widget-display.test.cjs tests/xpanel-skins.test.cjs tests/startup.test.cjs tests/media-poll.test.cjs tests/playback-clock.test.cjs tests/catalog-audit.test.cjs tests/features.test.cjs tests/strip-visibility.test.cjs tests/setup-report.test.cjs tests/setup-transaction.test.cjs tests/update-notes.test.cjs tests/studio-errors.test.cjs tests/automatic-setup.test.cjs tests/setup-lifecycle.test.cjs",
+    "test": "node --test tests/plugins.test.cjs tests/desk.test.cjs tests/task-feedback.test.cjs tests/update-detection.test.cjs tests/community.test.cjs tests/signin-regression.test.cjs tests/twitch-auth.test.cjs tests/widget-cycle.test.cjs tests/update-storage.test.cjs tests/shutdown.test.cjs tests/legacy-setup.test.cjs tests/widget-display.test.cjs tests/xpanel-skins.test.cjs tests/startup.test.cjs tests/media-poll.test.cjs tests/playback-clock.test.cjs tests/catalog-audit.test.cjs tests/features.test.cjs tests/strip-visibility.test.cjs tests/setup-report.test.cjs tests/setup-transaction.test.cjs tests/update-notes.test.cjs tests/studio-errors.test.cjs tests/automatic-setup.test.cjs tests/setup-lifecycle.test.cjs tests/customization.test.cjs tests/media-key-icons.test.cjs tests/community-profile.test.cjs tests/language-layouts.test.cjs tests/language-disabled.test.cjs tests/connection-recovery.test.cjs tests/weather-clock.test.cjs tests/shortcut-status.test.cjs",
     "check": "node --check src/main.cjs && node --check src/media.cjs && node --check src/device.cjs && node --check src/renderer.js",
     "package": "node scripts/package.cjs",
-    "dist": "electron-builder --win nsis --x64 --publish never"
+    "dist": "node scripts/dist-clean.cjs",
+    "preview:customization": "node scripts/customization-preview.cjs",
+    "test:studio": "node --test tests/studio-model.test.cjs tests/studio-history.test.cjs tests/studio-render.test.cjs tests/studio-sdk.test.cjs tests/studio-server.test.cjs tests/skin-library.test.cjs tests/keyboard-skins.test.cjs tests/unreal-tools.test.cjs tests/studio-collection.test.cjs tests/studio-project-loader.test.cjs tests/studio-gallery.test.cjs tests/studio-scene-library.test.cjs tests/studio-interactions.test.cjs tests/studio-games.test.cjs tests/my-skins.test.cjs tests/studio-motion.test.cjs tests/studio-pond.test.cjs tests/studio-physical.test.cjs tests/studio-reaction-presets.test.cjs tests/studio-build.test.cjs tests/studio-service.test.cjs tests/studio-device-loader.test.cjs tests/studio-device-service.test.cjs tests/studio-device-native.test.cjs tests/studio-dependencies.test.cjs tests/studio-pak.test.cjs tests/studio-image-converter.test.cjs tests/studio-text.test.cjs tests/studio-restoration.test.cjs tests/studio-photo.test.cjs tests/studio-unreal-edit.test.cjs"
   },
   "dependencies": {
     "electron-updater": "6.8.9",
     "node-hid": "3.4.0",
     "obs-websocket-js": "5.0.8",
+    "onnxruntime-node": "1.29.0",
     "protobufjs": "8.8.0",
     "sharp": "0.35.4",
     "ws": "8.21.3"
@@ -44,7 +47,9 @@
       "PLUGIN-GUIDE.md",
       "!**/hardware-backup/**",
       "!**/diagnostics/**",
-      "!**/verification/**"
+      "!**/verification/**",
+      "studio/**/*",
+      "sdk/**/*"
     ],
     "asar": false,
     "npmRebuild": false,

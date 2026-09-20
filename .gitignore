@@ -22,3 +22,4 @@ scripts/restore-hardware.cjs
 scripts/setup-hardware.cjs
 scripts/update-portable.cjs
 premium-audit.json
+.local-preview/

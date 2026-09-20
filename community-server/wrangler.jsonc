@@ -18,6 +18,7 @@
   "vars": {
     "PUBLIC_ORIGIN": "https://centerpiece-community.community-server.workers.dev",
     "DISCORD_CLIENT_ID": "1486218048095649933",
-    "DISCORD_OWNER_ID": "399065450555899905"
+    "DISCORD_OWNER_ID": "399065450555899905",
+    "DISCORD_PUBLIC_KEY": "6379525559b1e34adcb73f6ecd5c7d99ea90cf3b7f0273ce9c44ba98b8a897ea"
   }
 }

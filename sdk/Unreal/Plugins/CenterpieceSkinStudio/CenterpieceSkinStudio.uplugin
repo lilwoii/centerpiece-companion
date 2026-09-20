@@ -1,0 +1,12 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1-source-preview",
+  "FriendlyName": "Centerpiece Skin Studio Community Runtime",
+  "Description": "JSON scene importer, keyframes, Blueprint input events and local Canvas preview. Not a Finalmouse ABI implementation.",
+  "Category": "Community",
+  "CreatedBy": "Centerpiece Companion community",
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "Modules": [{ "Name": "CenterpieceSkinStudio", "Type": "Runtime", "LoadingPhase": "Default" }]
+}

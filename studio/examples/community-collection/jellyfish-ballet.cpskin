@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-jellyfish-ballet",
+  "name": "Jellyfish ballet",
+  "description": "Translucent jellyfish pulse and drift in a deep ocean, with trailing tentacles and fine suspended particles. Press any key or click to lift and illuminate the glowing bloom.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#07132d"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "jellyfish-ballet-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 80,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#8cd7da",
+      "color2": "#d4bde9",
+      "text": "jellyfish-ballet",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "jellyfish-ballet-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "jellyfish-ballet-scene",
+      "effect": "pulse",
+      "color": "#d4bde9",
+      "strength": 0.85,
+      "duration": 3.5
+    },
+    {
+      "id": "jellyfish-ballet-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "jellyfish-ballet-scene",
+      "effect": "pulse",
+      "color": "#d4bde9",
+      "strength": 0.85,
+      "duration": 3.5
+    }
+  ]
+}

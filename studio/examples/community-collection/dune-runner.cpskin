@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-dune-runner",
+  "name": "Dune runner",
+  "description": "A little desert fox runs across a moving dune landscape. Time your jumps over cacti as the pace rises. Space or Up jumps. Clear cacti to score. Press R or Space after a collision to restart.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#39284b"
+  },
+  "duration": 120,
+  "fps": 60,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "dune-runner-scene",
+      "name": "Playable game",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 40,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#efc195",
+      "color2": "#f6ddbd",
+      "text": "dune-runner",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "dune-runner-keyboard",
+      "trigger": "keyDown",
+      "key": "Space",
+      "target": "dune-runner-scene",
+      "effect": "pulse",
+      "color": "#f6ddbd",
+      "strength": 0,
+      "duration": 0.12
+    },
+    {
+      "id": "dune-runner-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "dune-runner-scene",
+      "effect": "pulse",
+      "color": "#f6ddbd",
+      "strength": 0,
+      "duration": 0.12
+    }
+  ]
+}

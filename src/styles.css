@@ -52,6 +52,17 @@ main{max-width:1120px;margin:auto;padding:28px 36px}.page-heading,.section-headi
 
 .language-panel{margin:20px 0;padding:20px 0;border-block:1px solid var(--border)}.language-panel select{max-width:100%;width:420px;margin:8px 0 14px}.language-panel .button-row{display:flex;flex-wrap:wrap;gap:10px}.key{font-family:"Segoe UI","Malgun Gothic","Microsoft YaHei",sans-serif;unicode-bidi:plaintext}
 
+/* Keyboard indicators share the first row; language follows the binding editor. */
+[data-page="keyboard"] .keyboard-indicators{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;margin-bottom:24px}
+[data-page="keyboard"] .keyboard-indicators>.section{min-width:0;margin:0;padding:18px}
+[data-page="keyboard"] .keyboard-indicators h2{margin-top:0}
+[data-page="keyboard"] .keyboard-indicators .note{line-height:1.5;overflow-wrap:anywhere}
+[data-page="keyboard"] .keyboard-indicators .custom-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+[data-page="keyboard"] .keyboard-indicators .button{white-space:normal}
+[data-page="keyboard"]>.language-panel{margin:24px 0 0}
+@media(max-width:1050px){[data-page="keyboard"] .keyboard-indicators{grid-template-columns:1fr}}
+@media(max-width:450px){[data-page="keyboard"] .keyboard-indicators .custom-grid{grid-template-columns:1fr}}
+
 .header-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}.header-status small{max-width:260px;color:var(--muted)}.community-account{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:20px 0;border-bottom:1px solid var(--border)}.community-account p{flex-basis:100%}.community-feed{margin:20px 0}.community-message{display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;padding:18px 0;border-bottom:1px solid var(--border)}.community-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--tint);font-weight:700}.message-meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.message-meta time,.status-label{font-size:12px;color:var(--muted)}.community-message h3{margin:8px 0;font-size:16px}.community-message p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.empty-feed{padding:40px 0;color:var(--muted)}.request-composer{border-top:1px solid var(--border);padding:24px 0}.request-composer>label{display:grid;gap:8px;margin:14px 0}.request-composer textarea{font:inherit;resize:vertical;min-height:110px;background:var(--surface);color:var(--ink);border:1px solid var(--border);padding:12px;border-radius:7px}.review-row{padding:18px 0;border-bottom:1px solid var(--border)}.submitted-link{overflow-wrap:anywhere}.device-readings{padding-block:18px}.device-readings p{font-size:14px}.header-status .button{min-height:36px}
 
 .resize-none{resize:none!important;min-height:140px}
@@ -88,7 +99,11 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 #update-status{line-height:1.4}
 .update-label,.update-detail{display:block}.update-label{font-size:13px;font-weight:700}.update-detail{font-size:11px;margin-top:2px;color:var(--muted)}
 .header-status .update-attention{color:var(--attention)}
-.header-status .button.update-attention{border-color:var(--attention)}
-.header-status .button.update-attention:hover:not(:disabled){border-color:var(--attention);background:var(--tint)}
+.header-status .button.update-attention{border-color:var(--attention);background:var(--attention);color:var(--background);font-weight:700}
+.header-status .button.update-attention:hover:not(:disabled){border-color:var(--attention);background:var(--attention);color:var(--background);filter:brightness(1.08)}
 .header-status .update-progress{color:var(--primary)}.header-status .update-error{color:var(--error)}
 @media(forced-colors:active){.header-status .update-attention,.header-status .update-progress,.header-status .update-error{color:CanvasText}.header-status .button.update-attention{color:ButtonText;border-color:ButtonText}}
+
+.physical-board .key{font-family:"Segoe UI","Malgun Gothic","Microsoft YaHei","Yu Gothic","Nirmala UI",Arial,sans-serif}
+
+.weather-motion.moon,.weather-motion.night-cloud{color:#e1eaff;animation:sun-shine 4s ease-in-out infinite}

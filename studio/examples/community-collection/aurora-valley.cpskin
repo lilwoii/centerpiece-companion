@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-aurora-valley",
+  "name": "Aurora valley",
+  "description": "Luminous aurora curtains slowly fold above a snow-covered valley and a shimmering dark lake. Press any key or click to lift and brighten the aurora above the mountains.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#102b3b"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "aurora-valley-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 75,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#90d9ba",
+      "color2": "#bddadf",
+      "text": "aurora-valley",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "aurora-valley-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "aurora-valley-scene",
+      "effect": "pulse",
+      "color": "#bddadf",
+      "strength": 0.85,
+      "duration": 4
+    },
+    {
+      "id": "aurora-valley-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "aurora-valley-scene",
+      "effect": "pulse",
+      "color": "#bddadf",
+      "strength": 0.85,
+      "duration": 4
+    }
+  ]
+}

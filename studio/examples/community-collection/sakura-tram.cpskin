@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-sakura-tram",
+  "name": "Sakura tram",
+  "description": "A cream tram rolls through a mountain town under flowering cherry trees and a constant drift of petals. Press any key or click to send a gust through the falling cherry blossoms.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#526e83"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "sakura-tram-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 95,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#dfb5c4",
+      "color2": "#f1d7ce",
+      "text": "sakura-tram",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "sakura-tram-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "sakura-tram-scene",
+      "effect": "sparkle",
+      "color": "#f1d7ce",
+      "strength": 0.85,
+      "duration": 3.2
+    },
+    {
+      "id": "sakura-tram-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "sakura-tram-scene",
+      "effect": "sparkle",
+      "color": "#f1d7ce",
+      "strength": 0.85,
+      "duration": 3.2
+    }
+  ]
+}

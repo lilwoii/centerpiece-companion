@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-rainy-cafe",
+  "name": "Rainy café",
+  "description": "Warm pendant lamps illuminate a steaming mug and a resting cat while rain slides past a city window. Press any key or click to make the steam rise and paint warm light across the desk.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#273341"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "rainy-cafe-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 65,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#d9b28e",
+      "color2": "#efd4b3",
+      "text": "rainy-cafe",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "rainy-cafe-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "rainy-cafe-scene",
+      "effect": "heat",
+      "color": "#efd4b3",
+      "strength": 0.85,
+      "duration": 3
+    },
+    {
+      "id": "rainy-cafe-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "rainy-cafe-scene",
+      "effect": "heat",
+      "color": "#efd4b3",
+      "strength": 0.85,
+      "duration": 3
+    }
+  ]
+}

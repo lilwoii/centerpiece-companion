@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-prism-breaker",
+  "name": "Prism breaker",
+  "description": "Clear three rows of luminous prisms with a bouncing ball. Three lives, paddle control, collision scoring and a win state. Space serves; Left/Right or A/D moves the paddle. Press R to restart.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#0c1731"
+  },
+  "duration": 120,
+  "fps": 60,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "prism-breaker-scene",
+      "name": "Playable game",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 40,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#b4e8e0",
+      "color2": "#f3e3af",
+      "text": "prism-breaker",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "prism-breaker-keyboard",
+      "trigger": "keyDown",
+      "key": "Space",
+      "target": "prism-breaker-scene",
+      "effect": "pulse",
+      "color": "#f3e3af",
+      "strength": 0,
+      "duration": 0.12
+    },
+    {
+      "id": "prism-breaker-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "prism-breaker-scene",
+      "effect": "pulse",
+      "color": "#f3e3af",
+      "strength": 0,
+      "duration": 0.12
+    }
+  ]
+}

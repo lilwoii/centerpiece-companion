@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-volcanic-drift",
+  "name": "Volcanic drift",
+  "description": "Molten rivers flow from a glowing crater while drifting ash and sparks lift into a dusky sky. Press any key or click to release a burst of bright volcanic embers.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#332c35"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "volcanic-drift-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 95,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#ed9c53",
+      "color2": "#ffd197",
+      "text": "volcanic-drift",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "volcanic-drift-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "volcanic-drift-scene",
+      "effect": "burst",
+      "color": "#ffd197",
+      "strength": 0.85,
+      "duration": 3.2
+    },
+    {
+      "id": "volcanic-drift-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "volcanic-drift-scene",
+      "effect": "burst",
+      "color": "#ffd197",
+      "strength": 0.85,
+      "duration": 3.2
+    }
+  ]
+}

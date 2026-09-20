@@ -10,7 +10,7 @@ const appRoot = path.join(target, 'resources/app');
 fs.mkdirSync(appRoot, { recursive: true });
 const metadata = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 fs.writeFileSync(path.join(appRoot, 'package.json'), JSON.stringify({ name: metadata.name, version: metadata.version, main: metadata.main, license: metadata.license }, null, 2));
-for (const item of ['src', 'README.md', 'PLUGIN-GUIDE.md', 'LICENSE', 'PRODUCT.md', 'PRIVACY.md']) fs.cpSync(path.join(root, item), path.join(appRoot, item), { recursive: true });
+for (const item of ['src', 'studio', 'sdk', 'README.md', 'PLUGIN-GUIDE.md', 'LICENSE', 'PRODUCT.md', 'PRIVACY.md']) fs.cpSync(path.join(root, item), path.join(appRoot, item), { recursive: true });
 const npmCLI = path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
 const dirs = execFileSync(process.execPath, [npmCLI, 'ls', '--omit=dev', '--all', '--parseable'], { cwd: root, encoding: 'utf8' }).trim().split(/\r?\n/).slice(1);
 for (const dir of dirs) {

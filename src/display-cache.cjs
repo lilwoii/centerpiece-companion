@@ -68,7 +68,7 @@ class DisplayCache{
   return true;
  }
  displayReady(){
-  if(!this.som||!this.config||this.updating||this.watching)return;
+  if(!this.som||!this.config||this.updating||this.watching||this.tasksPaused)return;
   const key=this.key(),slot=this.cache.get(key);
   if(slot){this.touch(key);if(slot!==this.lastSlot){this.som.selectSlot(slot);this.lastSlot=slot;this.selectionAt=Date.now();}}
   else if(!this.error&&!this.tasksPaused)void this.refreshLive().catch(error=>{this.error=error.message;});
@@ -87,6 +87,7 @@ class DisplayCache{
   catch(e){this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
  async reconcile(){if(!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300)return;this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}finally{this.watching=false;this.displayReady();}}
+ detach(){const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';}
  async close(){if(!this.som)return;const som=this.som;this.som=null;try{await som.activate(this.manifest.originalSlot||0);}finally{som.close();}}
 }
 module.exports={DisplayCache,ownedPool};

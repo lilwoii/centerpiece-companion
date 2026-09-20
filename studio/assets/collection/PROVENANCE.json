@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "date": "2026-09-12",
+  "tool": "Built-in image_gen",
+  "originals": "Full-resolution generated originals are retained in local verification/original-collection-art. Display assets are encoded at keyboard resolution for project size.",
+  "copyright": "Original generated imagery for Centerpiece Companion. No video frames or third-party skin artwork were copied.",
+  "assets": [
+    {
+      "id": "tidal-observatory",
+      "file": "tidal-observatory.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic photograph of a secluded volcanic tidal pool viewed from a low oblique angle. Smooth obsidian stones at both edges, perfectly clear turquoise water across the center, sun caustics illuminating golden sand beneath, very distant rugged coastline. Fine realistic water detail and natural late-afternoon sunlight, calm serene atmosphere. Composition for an interactive game background: main water occupies central 70%; no people, buildings, animals, interface, letters or watermark."
+    },
+    {
+      "id": "alpine-reflection",
+      "file": "alpine-reflection.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic high-resolution landscape photograph of a remote glacial alpine lake in the blue hour before sunrise. Jagged snow-covered mountain massif across upper half, reflected nearly symmetrically in turquoise lake occupying lower half. Foreground dark pines on far left, some pale granite at far right, delicate mist over lake. Natural cinematic depth, realistic rock strata and snow, restrained rose sunlight on highest peaks. No people, buildings, interface, text or watermark."
+    },
+    {
+      "id": "storm-window",
+      "file": "storm-window.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic night photograph taken through very dark clean glass looking over a rainy modern city. Out-of-focus amber and red traffic bokeh near lower third, soft deep teal city building silhouettes and scattered warm windows. Moody cinematic real optics and reflected lights. Keep the glass itself mostly clean with just a few tiny drops because moving raindrops will be added in app. No readable signs, no people, no interface or watermark."
+    },
+    {
+      "id": "ember-forge",
+      "file": "ember-forge.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic close-up photograph in a traditional blacksmith forge. A dark forged steel anvil centered slightly to the left, a glowing orange steel billet resting horizontally on its face, beds of detailed glowing coals behind it, scorched brick forge wall in the upper background, dark workbench foreground. Cinematic macro realism, textured hammered steel, subtle amber bounce light, shallow atmospheric smoke. No person, no hammer in motion, no text, no interface, no watermark."
+    },
+    {
+      "id": "moon-tranquility",
+      "file": "moon-tranquility.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic photorealistic space mission image standing on the Moon, looking across highly detailed grey lunar regolith and small crater rims toward a deep black horizon. Earth hangs small above horizon on the right third, realistic blue oceans and white cloud structure. Extremely crisp raking sunlight from upper left reveals rough granular dust and layered crater shadows. No astronaut, no vehicle, no flags, no lettering or watermark."
+    },
+    {
+      "id": "atlas-launch",
+      "file": "atlas-launch.jpg",
+      "prompt": "Use case: photorealistic-natural. Asset type: original landscape game skin background. Very wide cinematic panoramic aspect ratio, ideally 3:1, for 1920×550 center crop. An ultra-wide panoramic cinematic photograph of a modern coastal space launch complex at dawn, ground-level telephoto framing. Empty launch platform centered, detailed steel umbilical service tower immediately right of center, distant wetlands and low industrial structures stretch horizontally. Pale blue morning sky occupies upper two thirds, slight golden warm light, subtle ground haze. IMPORTANT: no rocket or spacecraft anywhere; leave center x=45 percent clear from platform to sky for compositing a separately animated upright white rocket. Highly realistic weathered steel, concrete, pipes, foreground flame trench. No people, logos, text, interface or watermark."
+    },
+    {
+      "id": "atlas-vehicle",
+      "file": "atlas-vehicle-display.png",
+      "prompt": "Original photoreal white two-stage orbital rocket, upright, isolated on a genuine transparent background, warm left-side dawn light, graphite interstage, fine thermal panel seams and plumbing, all engines visible. No logos, text, background or exhaust."
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+using UnrealBuildTool;
+public class SkinStudioDeviceBuilder : ModuleRules { public SkinStudioDeviceBuilder(ReadOnlyTargetRules Target):base(Target) { PCHUsage=PCHUsageMode.UseExplicitOrSharedPCHs; PublicDependencyModuleNames.AddRange(new[]{"Core","CoreUObject","Engine"}); PrivateDependencyModuleNames.AddRange(new[]{"SkinApi","UnrealEd","Kismet","KismetCompiler","BlueprintGraph","AssetRegistry","Json","RawMesh","RenderCore","RHI"}); } }

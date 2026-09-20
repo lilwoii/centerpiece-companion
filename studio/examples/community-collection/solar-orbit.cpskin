@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-solar-orbit",
+  "name": "Solar orbit",
+  "description": "Five shaded planets and their moving moons orbit a glowing star. Saturn-like rings turn in the distance. Press any key or click to launch a bright comet across your solar system.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#060d20"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "solar-orbit-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 90,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#ebb87a",
+      "color2": "#b6e4ed",
+      "text": "solar-orbit",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "solar-orbit-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "solar-orbit-scene",
+      "effect": "burst",
+      "color": "#b6e4ed",
+      "strength": 0.85,
+      "duration": 3
+    },
+    {
+      "id": "solar-orbit-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "solar-orbit-scene",
+      "effect": "burst",
+      "color": "#b6e4ed",
+      "strength": 0.85,
+      "duration": 3
+    }
+  ]
+}

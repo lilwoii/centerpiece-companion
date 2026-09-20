@@ -1,0 +1,14 @@
+{
+  "method": "OpenAI built-in image generation, original authored environments. Resized to 1920x550 and JPEG optimized for local embedded projects.",
+  "generatedAt": "2026-09-12",
+  "images": {
+    "lighthouse-watch": "exec-d25e76e8-9365-4461-9d29-53d50f097a06.png",
+    "redwood-sanctuary": "exec-06540ddb-df17-43dd-909b-6f36e71ff618.png",
+    "coral-current": "exec-1accb6ef-8e4f-4bc2-b4ea-758d053c7d8d.png"
+  },
+  "prompts": {
+    "lighthouse-watch": "Create an original ultra photoreal panoramic environment plate for an interactive keyboard skin. Composition exactly panoramic 1920 by 550, no text, no logos, no borders. Scene: a coastal lighthouse on the far left atop dark wet rocks, dramatic Atlantic ocean filling the lower half with recognizable curved swell patterns, a distant ship tiny on the horizon right, twilight blue with warm lighthouse lens. Large quiet sea field across center and right where live water animations will be composited. Real photographic textures, cinematic long-lens landscape, refined natural color, mist and water physically credible, not a cartoon, not painted. The lighthouse should be stationary and no visible beam baked in because a rotating beam will be rendered in app. Save high quality.",
+    "redwood-sanctuary": "Original ultra photoreal panoramic photograph environmental plate, exactly wide 1920 by 550 composition, no text or logos. Inside a lush temperate fern forest looking across a luminous stream at massive ancient redwood trunks. Warm sunrise shafts slant diagonally through canopy mist. Detailed moss, pebbles, bark and leaves; center and bottom right clear stream stretches horizontally and will receive live ripples in software. No people, creatures or fairy lights, cinematic fine art nature photography, subtle rich green and amber. This is scenery for animated keyboard skin so keep tall trees distributed left and right, quiet readable center. Full image landscape, no borders.",
+    "coral-current": "Create an original ultra photoreal landscape plate exactly panoramic 1920 by 550, no letters, no logos, no borders. An underwater tropical coral reef at about 8 metres deep, sunlit turquoise blue upper third with soft diagonal sunbeams; richly detailed natural coral gardens at left and right, deep cyan open water in center and quiet sandy sea floor bottom center. NO fish or turtles, these will be procedurally animated separately. Real underwater photography with nuanced water color, lifelike coral textures, subtle volumetric light, sparkling calm beauty, not cartoon not illustration. All main reef detail within the wide middle horizontal strip."
+  }
+}

@@ -7,6 +7,29 @@ if($request.action -eq 'list'){
  ConvertTo-Json -InputObject $items -Compress
  exit
 }
+if($request.action -eq 'current'){
+ Add-Type -TypeDefinition @"
+using System;using System.Runtime.InteropServices;
+public static class ActiveKeyboardLayout {
+ [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+ [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd,IntPtr id);
+ [DllImport("user32.dll")] public static extern IntPtr GetKeyboardLayout(uint thread);
+}
+"@
+ $thread=[ActiveKeyboardLayout]::GetWindowThreadProcessId([ActiveKeyboardLayout]::GetForegroundWindow(),[IntPtr]::Zero)
+ $value=[ActiveKeyboardLayout]::GetKeyboardLayout($thread).ToInt64()
+ $id=('{0:x8}' -f ($value -band 0xffffffffL))
+ if(!(Test-Path -LiteralPath ($root+'\'+$id)) -and (($value -shr 16) -band 0xf000L) -eq 0xf000L){
+  $variant=(($value -shr 16) -band 0x0fffL);$suffix=('{0:x4}' -f ($value -band 0xffffL))
+  $match=Get-ChildItem $root|Where-Object {$_.PSChildName -like ('*'+$suffix)}|Where-Object {$props=Get-ItemProperty $_.PSPath;$props.'Layout Id' -and [Convert]::ToInt32($props.'Layout Id',16) -eq $variant}|Select-Object -First 1
+  if($match){$id=$match.PSChildName}
+ }
+ if(!(Test-Path -LiteralPath ($root+'\'+$id))){$id=('{0:x8}' -f ($value -band 0xffffL))}
+ if(!(Test-Path -LiteralPath ($root+'\'+$id))){$id='00000409'}
+ if(($value -band 0xffffL) -eq 0x0412){$id='korean-2'}
+ @{id=$id}|ConvertTo-Json -Compress
+ exit
+}
 if($request.action -ne 'map' -or $request.id -notmatch '^[0-9a-fA-F]{8}$' -or !(Test-Path -LiteralPath ($root+'\'+$request.id))){throw 'Choose a Windows keyboard layout.'}
 Add-Type -TypeDefinition @'
 using System; using System.Text; using System.Runtime.InteropServices;

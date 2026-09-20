@@ -1,0 +1,68 @@
+{
+  "format": "centerpiece-skin-studio",
+  "version": 1,
+  "id": "collection-clockwork-garden",
+  "name": "Clockwork garden",
+  "description": "Brass flowers mesh into a living mechanical garden among copper stems and fireflies. Press any key or click to wind the garden and accelerate its interlocking gears.",
+  "canvas": {
+    "width": 1920,
+    "height": 550,
+    "background": "#0c2825"
+  },
+  "duration": 24,
+  "fps": 30,
+  "engineTarget": "4.27",
+  "layers": [
+    {
+      "id": "clockwork-garden-scene",
+      "name": "Animated scene",
+      "type": "collection",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 550,
+      "rotation": 0,
+      "opacity": 1,
+      "size": 40,
+      "speed": 1,
+      "density": 60,
+      "reactivity": 1,
+      "fontSize": 72,
+      "seed": 9187,
+      "visible": true,
+      "locked": false,
+      "blend": "source-over",
+      "color": "#c9aa6e",
+      "color2": "#ecd790",
+      "text": "clockwork-garden",
+      "image": "",
+      "font": "sans",
+      "textAlign": "center",
+      "textVertical": "center",
+      "fontWeight": "600",
+      "keyframes": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "clockwork-garden-keyboard",
+      "trigger": "keyDown",
+      "key": "any",
+      "target": "clockwork-garden-scene",
+      "effect": "pulse",
+      "color": "#ecd790",
+      "strength": 0.85,
+      "duration": 3
+    },
+    {
+      "id": "clockwork-garden-pointer",
+      "trigger": "pointer",
+      "key": "any",
+      "target": "clockwork-garden-scene",
+      "effect": "pulse",
+      "color": "#ecd790",
+      "strength": 0.85,
+      "duration": 3
+    }
+  ]
+}

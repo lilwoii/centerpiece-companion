@@ -24,3 +24,9 @@ The skin gallery fetches the public registry and preview images from assets.free
 ## Optional automatic profiles
 
 When enabled, automatic profiles read the executable name of the foreground Windows app locally. The companion does not collect window titles, browsing history or typed text, and does not send foreground app names to a server. Saved profiles and app links stay in `profiles.json` in your Windows user data folder. Profile snapshots exclude account connections, keyboard remaps and skins. App-launch slots can contain local app paths. Automatic switching is off until you enable it.
+
+## Local photo animation (development build)
+
+Photo subject extraction runs on this PC in a background worker. Photos are not sent to an AI service. First use downloads the U²-Net model from its fixed GitHub release URL and checks its SHA-256 before running it. The model stays in the app’s local data folder. Extracted images become part of the saved Studio project. Publishing or exporting that project includes those images.
+
+Opening a built skin in Unreal creates a separate local project copy. Unreal edits do not automatically modify the Companion draft or its existing keyboard package.

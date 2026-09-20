@@ -1,0 +1,29 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
+const {SkinLibrary}=require('../src/skin-library.cjs');
+const sha = bytes => crypto.createHash('sha1').update(bytes).digest();
+function u32(value) { const b = Buffer.alloc(4); b.writeUInt32LE(value); return b; }
+function u64(value) { const b = Buffer.alloc(8); b.writeBigUInt64LE(BigInt(value)); return b; }
+function string(text) { const b = Buffer.from(text + '\0'); return Buffer.concat([u32(b.length), b]); }
+function pakFixture(fileName = 'Preview.uasset') {
+  const data = Buffer.from('{"EngineAssociation":"4.27","Modules":[{"Name":"spark"}]}');
+  const directory = Buffer.concat([u32(1), string('/spark/Content/'), u32(1), string(fileName), u32(0)]);
+  const hashes = Buffer.concat([u32(1), u64(10), u32(0)]), entries = Buffer.alloc(12);
+  const primary = Buffer.concat([string('../../../'), u32(1), u64(0), u32(1), Buffer.alloc(36), u32(1), Buffer.alloc(36), u32(entries.length), entries, u32(0)]);
+  const pointer = string('../../../').length + 4 + 8 + 4;
+  u64(data.length + primary.length).copy(primary, pointer); u64(hashes.length).copy(primary, pointer + 8); sha(hashes).copy(primary, pointer + 16);
+  const directoryPointer = pointer + 40;
+  u64(data.length + primary.length + hashes.length).copy(primary, directoryPointer); u64(directory.length).copy(primary, directoryPointer + 8); sha(directory).copy(primary, directoryPointer + 16);
+  const footer = Buffer.alloc(221); footer.writeUInt32LE(0x5a6f12e1, 17); footer.writeUInt32LE(11, 21); footer.writeBigUInt64LE(BigInt(data.length), 25); footer.writeBigUInt64LE(BigInt(primary.length), 33); sha(primary).copy(footer, 41);
+  return { bytes: Buffer.concat([data, primary, hashes, directory, footer]), primaryOffset: data.length, primarySize: primary.length, directoryOffset: data.length + primary.length + hashes.length, pointer, directoryPointer };
+}
+function rehashPrimary(fixture) { sha(fixture.bytes.subarray(fixture.primaryOffset, fixture.primaryOffset + fixture.primarySize)).copy(fixture.bytes, fixture.bytes.length - 221 + 41); }
+
+function temp(t){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'companion-library-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));return dir;}
+test('local import validates, deduplicates, persists and archives without deleting skins',t=>{const dir=temp(t),lib=new SkinLibrary(dir),bytes=pakFixture().bytes,id=lib.import('test.pak',bytes);assert.equal(lib.view().items.length,1);assert.equal(lib.import('duplicate.pak',bytes),id);assert.deepEqual(fs.readFileSync(lib.file(id)),bytes);lib.archive(id,true);assert.equal(new SkinLibrary(dir).view().items[0].archived,true);assert.ok(fs.existsSync(lib.file(id)));lib.import('restore.pak',bytes);assert.equal(lib.view().items[0].archived,false);assert.throws(()=>lib.file('../invalid'));});
+test('invalid and corrupt packages cannot enter the local library',t=>{const lib=new SkinLibrary(temp(t));assert.throws(()=>lib.import('test.exe',pakFixture().bytes));assert.throws(()=>lib.import('test.pak',Buffer.from('invalid')));assert.equal(lib.view().items.length,0);});
+test('export rejects a stored package changed after import without deleting it',t=>{const lib=new SkinLibrary(temp(t)),bytes=pakFixture().bytes,id=lib.import('test.pak',bytes),file=lib.file(id),changed=Buffer.from(bytes);changed[0]^=1;fs.writeFileSync(file,changed);assert.throws(()=>lib.file(id),/no longer matches/);assert.equal(fs.readFileSync(file)[0],changed[0]);});
+test('unreadable index is preserved and blocks imports',t=>{const dir=temp(t);fs.mkdirSync(path.join(dir,'skin-library'));const index=path.join(dir,'skin-library/index.json');fs.writeFileSync(index,'broken');const lib=new SkinLibrary(dir);assert.match(lib.view().error,/preserved/);assert.throws(()=>lib.import('test.pak',pakFixture().bytes));assert.equal(fs.readFileSync(index,'utf8'),'broken');});
+test('Studio service permits only source export and metadata inspection',async()=>{const {studioRequest}=require('../src/studio-service.cjs');await assert.rejects(studioRequest('upload',{}));const layout=await studioRequest('layout');assert.equal(layout.keys.length,68);const report=await studioRequest('inspect',pakFixture().bytes);assert.ok(report);const project=require('../studio/presets.js').list[0].create();const archive=await studioRequest('export',project);assert.equal(Buffer.from(archive).readUInt32LE(),0x04034b50);});
+test('profiles preserve appearance and skin association without saving credentials',()=>{const {snapshot,merge}=require('../src/profiles.cjs'),W=require('../src/workspace.cjs'),c=W.Workspace.prototype.validate.call({},W.defaults());c.skinId='a'.repeat(64);c.credentials='private';const saved=snapshot(c);assert.equal(saved.skinId,c.skinId);assert.deepEqual(saved.indicator,c.indicator);assert.equal(saved.credentials,undefined);const legacy={slots:c.slots,widget:c.widget,widgetOrder:c.widgetOrder,timerMinutes:c.timerMinutes};assert.equal(merge(c,legacy).skinId,c.skinId);});
+
+test('scene library keeps initial default, five slots and preserves stored data on failed saves',()=>{const scenes=require('../studio/scene-library.js'),values=new Map(),storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};const initial=require('../studio/presets.js').list[1].create(),saved=scenes.load(storage,initial);assert.equal(saved.defaultScene.id,initial.id);const rocket=require('../studio/presets.js').list[0].create();saved.slots[0]=rocket;scenes.save(storage,saved);assert.equal(scenes.load(storage,rocket).defaultScene.id,initial.id);const before=values.get(scenes.KEY);assert.throws(()=>scenes.save(storage,{...saved,count:6}));assert.equal(values.get(scenes.KEY),before);saved.count=1;scenes.save(storage,saved);assert.equal(scenes.load(storage,initial).slots.length,5);});

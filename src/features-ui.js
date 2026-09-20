@@ -1,4 +1,4 @@
-const widgetNames={spotify:'Spotify',clock:'Local time',weather:'Weather',cpu:'CPU',gpu:'GPU',mic:'Microphone',twitch:'Twitch chat',text:'Custom text',timer:'Countdown timer',obs:'OBS status',off:'Off'};
+const widgetNames={calendar:'Calendar',spotify:'Spotify',clock:'Local time',weather:'Weather',cpu:'CPU',gpu:'GPU',mic:'Microphone',twitch:'Twitch chat',text:'Custom text',timer:'Countdown timer',obs:'OBS status',off:'Off'};
 let favoritesLoaded=false,featuresProfileRevision=0,profileListRevision=-1,confirmProfileId='';
 function drawFavorites(order){
  const host=el('widget-favorites');host.replaceChildren();
@@ -13,7 +13,7 @@ function profileFields(){const p=selectedProfile();el('profile-name').value=p?.n
 function renderFeatures(state){
  if(!state.desk)return;
  const changed=(state.profileRevision||0)!==featuresProfileRevision;featuresProfileRevision=state.profileRevision||0;
- if(!favoritesLoaded||changed){favoritesLoaded=true;drawFavorites(state.desk.config.widgetOrder||['spotify','clock','weather','cpu','gpu','mic','twitch','text','off']);el('timer-minutes').value=state.desk.config.timerMinutes||25;el('weather-animation').checked=state.desk.config.weatherMotion!==false;}
+ if(!favoritesLoaded||changed){favoritesLoaded=true;drawFavorites(state.desk.config.widgetOrder||['spotify','clock','weather','cpu','gpu','mic','twitch','text','off']);el('timer-minutes').value=state.desk.config.timerMinutes||25;const weatherToggle=el('weather-animation');weatherToggle.checked=state.desk.config.weatherMotion!==false;weatherToggle.parentElement.childNodes.forEach(node=>{if(node.nodeType===Node.TEXT_NODE)node.nodeValue=' Animate weather on plugins and screen widget';});}
  const timer=state.desk.timer||{remaining:1500};el('timer-status').textContent=formatCountdown(timer.remaining)+' · '+(timer.finished?'Time is up':timer.running?'Running':'Paused');el('timer-toggle').textContent=timer.running?'Pause timer':'Resume timer';
  for(const id of ['save-favorites','timer-start','timer-toggle','timer-reset','timer-show','profile-create','profiles-auto','profile-default','profile-load','profile-replace','profile-remove','profile-pick','profile-link','profile-delete'])if(!el(id).hasAttribute('aria-busy'))el(id).disabled=false;
  const profiles=state.profiles;if(!profiles)return;

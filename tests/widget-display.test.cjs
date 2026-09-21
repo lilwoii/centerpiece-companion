@@ -85,3 +85,13 @@ test('Caps and navigation cannot emit display packets during exclusive native tr
  const tasks=new DisplayTasks(cache);await tasks.run(async()=>{cache.setLocks({caps:true});cache.show({active:true,id:'next'});cache.setLayer(true);assert.deepEqual(sent,[]);});
  assert.deepEqual(sent,[4]);assert.equal(cache.desired,'next');assert.equal(cache.caps,true);
 });
+
+test('animated live frames are rate limited to prevent rapid full-screen flashes',async()=>{
+ const uploads=[];const cache=new DisplayCache('.',(selected,config)=>'<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>'+Date.now()+'</title></svg>');
+ cache.som={uploadOverlay:async slot=>uploads.push(slot),selectSlot:()=>{}};
+ cache.config={widget:{type:'weather'},weatherMotion:true,slots:[]};
+ await cache.refreshLive();await cache.refreshLive();
+ assert.equal(uploads.length,1);
+ cache.liveUploadedAt=Date.now()-1501;await cache.refreshLive();
+ assert.equal(uploads.length,2);
+});

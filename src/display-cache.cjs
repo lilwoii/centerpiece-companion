@@ -7,7 +7,7 @@ function ownedPool(manifest){
  return [...pool];
 }
 class DisplayCache{
- constructor(directory,render){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;}
+ constructor(directory,render){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;}
  get capacity(){return this.pool.length-1;}
  key(selected=this.desired,caps=this.caps,layer=this.layer){return selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);}
  frame(selected,caps,layer){const config=selected==='idle'?this.config:{...this.config,indicator:{...this.config.indicator,enabled:false}};return this.render(selected,config,{caps,layer},this.data);}
@@ -34,7 +34,8 @@ class DisplayCache{
   this.lastSlot=slot;this.selectionAt=Date.now();const key=this.key(selected,caps,layer);
   this.cache.set(key,slot);this.frames.set(key,svg);this.touch(key);this.trim();return svg;
  }
- setWidget(widget){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget)};}
+ setWidget(widget){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget)};this.liveUploadedAt=0;}
+ animatedLive(){const c=this.config||{},w=c.widget||{};return c.weatherMotion!==false&&(w.type==='weather'||w.clockSeconds===true||c.appearance?.motion&&c.appearance.motion!=='off'||c.slots?.some(slot=>slot?.plugin==='weather'));}
  initialStates(){
   const idle=[['idle',false,false],['idle',true,false]],layer=[['idle',false,true],['idle',true,true]],nav=NAVIGATION.map(name=>[name,false,false]);
   if(this.capacity>=8)return [...idle,...layer,...nav];
@@ -46,7 +47,7 @@ class DisplayCache{
  }
  async apply(config,locks){
   if(!this.som)throw Error('Keyboard strip is disconnected.');if(this.updating||this.watching)throw Error('Display is busy. Try again.');
-  this.updating=true;this.config=structuredClone(config);this.caps=!!locks.caps;this.error='';
+  this.updating=true;this.config=structuredClone(config);this.caps=!!locks.caps;this.error='';this.liveUploadedAt=0;
   try{
    if(typeof this.som.currentSlot==='function'){
     const active=await this.som.currentSlot();if(!Number.isInteger(active)||active<0||active>10)throw Error('The display returned an invalid active slot.');
@@ -81,13 +82,14 @@ class DisplayCache{
   if(!this.som||!this.config||this.updating||this.watching)return;
   const selected=this.desired,caps=this.caps,layer=selected==='idle'&&this.layer,key=this.key(selected,caps,layer),svg=this.frame(selected,caps,layer);
   if(this.cache.has(key)&&svg===this.frames.get(key))return;
+  if(this.animatedLive()&&this.liveUploadedAt&&Date.now()-this.liveUploadedAt<1500)return;
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.updating=true;
-  try{this.lastFrame=await this.write(target,selected,caps,layer,false);}
+  try{this.lastFrame=await this.write(target,selected,caps,layer,false);this.liveUploadedAt=Date.now();}
   catch(e){this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
  async reconcile(){if(!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300)return;this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}finally{this.watching=false;this.displayReady();}}
- detach(){const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';}
+ detach(){const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
  async close(){if(!this.som)return;const som=this.som;this.som=null;try{await som.activate(this.manifest.originalSlot||0);}finally{som.close();}}
 }
 module.exports={DisplayCache,ownedPool};

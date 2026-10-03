@@ -82,7 +82,8 @@ class DisplayCache{
   if(!this.som||!this.config||this.updating||this.watching)return;
   const selected=this.desired,caps=this.caps,layer=selected==='idle'&&this.layer,key=this.key(selected,caps,layer),svg=this.frame(selected,caps,layer);
   if(this.cache.has(key)&&svg===this.frames.get(key))return;
-  if(this.animatedLive()&&this.liveUploadedAt&&Date.now()-this.liveUploadedAt<1500)return;
+  // Live animation throttling must never defer a missing selection/Caps frame.
+  if(this.cache.has(key)&&this.animatedLive()&&this.liveUploadedAt&&Date.now()-this.liveUploadedAt<1500)return;
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.updating=true;
   try{this.lastFrame=await this.write(target,selected,caps,layer,false);this.liveUploadedAt=Date.now();}

@@ -95,3 +95,11 @@ test('animated live frames are rate limited to prevent rapid full-screen flashes
  cache.liveUploadedAt=Date.now()-1501;await cache.refreshLive();
  assert.equal(uploads.length,2);
 });
+
+test('animated weather never throttles an uncached navigation highlight',async()=>{
+ const {x,cache,config}=poolFixture([9,10]);config.widget={type:'weather'};config.weatherMotion=true;
+ await cache.apply(config,{caps:false});await settled(cache);
+ cache.liveUploadedAt=Date.now();cache.show({active:true,id:'fourth'});await settled(cache);
+ assert.equal(x.active,cache.cache.get('nav:fourth'));
+ assert.equal(cache.desired,'fourth');assert.equal(cache.error,'');
+});

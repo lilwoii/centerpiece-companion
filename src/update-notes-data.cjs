@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  '0.3.0-preview.28': Object.freeze([
+    'Fixed stock L1 arrow actions opening Finalmouse’s “Waiting for Plugin Engine connection” screen. Setup automatically repairs those stock bindings and preserves custom mappings.',
+    'L1 + P still opens Companion plugin navigation, and L1 + / still switches widgets.',
+    'Missing plugin highlights now take priority over animated display refreshes. Navigation stops if the keyboard display becomes unavailable.',
+    'Original arrow mappings are backed up locally and restored with Companion’s keyboard restoration.'
+  ]),
   '0.3.0-preview.27': Object.freeze([
     'Live seconds now preserve your regional 12/24-hour time format.',
     'Weather animation is clearer across plugin tiles and the screen widget, with an option to turn it off.',

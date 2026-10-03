@@ -10,6 +10,31 @@ function fixture(t, options={}) {
   class Som{constructor(){this.serial='display';}close(){}async readOverlay(n){(x.overlayReads??=[]).push(n);if(x.occupied===n||x.occupied?.includes?.(n))return Buffer.from('existing overlay');return null;}async currentSlot(){return x.activeSlot??0;}}
   return {x,directory,deps:{Studio,Som}};
 }
+
+test('existing installations migrate stock plugin arrows, back them up and preserve custom arrows',async t=>{
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);
+ const stock=[[57,44345],[65,1072],[66,17738],[67,33158]];
+ for(const [position,behaviorId]of stock)x.map.layers[1].bindings[position]={behaviorId};
+ const custom={behaviorId:50397,param1:0x70004};x.map.layers[1].bindings[65]=custom;
+ const before=structuredClone(x.map);x.edits=[];
+ const backup=await setup(directory,{includeWidget:true},deps);
+ assert.deepEqual(x.edits.map(e=>e.keyPosition),[57,66,67]);
+ assert.deepEqual(x.map.layers[1].bindings[65],custom);
+ assert.deepEqual(backup.pluginArrows.map(a=>a.position),[57,66,67]);
+ for(const a of backup.pluginArrows){assert.deepEqual(a.original,before.layers[1].bindings[a.position]);before.layers[1].bindings[a.position]=a.installed;}
+ assert.equal(sameKeymap(before,x.map),true);
+ const saves=x.saves;await setup(directory,{includeWidget:true},deps);assert.equal(x.saves,saves);
+ const {arrowRestorations}=require('../src/plugin-arrow-bindings.cjs');
+ assert.equal(arrowRestorations(x.map.layers[1],backup).length,3);
+ x.map.layers[1].bindings[67]=custom;assert.equal(arrowRestorations(x.map.layers[1],backup).length,2);
+});
+
+test('arrow migration respects pending changes even on a verified installation',async t=>{
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);
+ x.map.layers[1].bindings[67]={behaviorId:33158};x.pending=true;x.edits=[];
+ const result=await startSetup(directory,{includeWidget:true},deps);
+ assert.equal(result.needsConfirmation,true);assert.equal(x.edits.length,0);
+});
 test('normal setup installs both shortcuts with one save and preserves every other key',async t=>{
   const {x,directory,deps}=fixture(t),before=structuredClone(x.map);x.map.layers[0].bindings[32]={behaviorId:50397,param1:0x70039};before.layers[0].bindings[32]=structuredClone(x.map.layers[0].bindings[32]);
   const result=await setup(directory,{includeWidget:true},deps);assert.equal(result.verified,true);assert.equal(x.saves,1);assert.deepEqual(x.edits.map(e=>e.keyPosition),[26,55]);before.layers[1].bindings[26]=pluginBinding;before.layers[1].bindings[55]=widgetBinding;assert.equal(sameKeymap(x.map,before),true);assert.ok(x.calls.every(r=>!r.keymap.discardChanges));

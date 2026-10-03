@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {randomUUID} = require('node:crypto');
 const {pendingChanges} = require('./studio-response.cjs');
+const {pluginArrowChanges} = require('./plugin-arrow-bindings.cjs');
 const {keyboardError, assertBindingResult, assertSaveResult, sameBinding, sameKeymap} = require('./keyboard-errors.cjs');
 const pluginBinding = {behaviorId: 50397, param1: 0x05070013};
 const widgetBinding = {behaviorId: 50397, param1: 0x05070045};
@@ -78,7 +79,7 @@ async function prepareSetup(directory, options = {}, deps = {}) {
     const includeWidget = options.includeWidget === true;
     if (includeWidget && widgetPrior && ![widgetPrior.original, widgetPrior.installed, widgetBinding, {behaviorId:50397,param1:0x05070073}].some(b => b && sameBinding(b, layer.bindings[55]))) throw keyboardError('KEYBOARD_WIDGET_KEY_CUSTOMIZED', 'L1 + / changed since its backup was made. Setup preserved the current mapping.');
     // A correct verified installation needs no save, regardless of a dirty flag.
-    if (prior?.verified && !prior.setupInProgress && !prior.restored && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
+    if (prior?.verified && !prior.setupInProgress && !prior.restored && !pluginArrowChanges(map).length && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
     stage = 'read_pending_status'; const pending = await pendingChanges(s);
     if (pending && !options.reviewPending) throw keyboardError('KEYBOARD_PENDING_CHANGES', 'The keyboard reports pending configuration changes. This does not prove XPANEL has unsaved edits. Choose Review current settings to back up and keep the current configuration, or use Check setup for details.');
     stage = 'read_layout'; const physicalLayouts = await layouts(s);
@@ -115,13 +116,16 @@ async function commitSetup(directory, plan, options = {}, deps = {}) {
     fs.writeFileSync(path.join(directory, `setup-checkpoint-${plan.id}.json`), JSON.stringify({format:1, createdAt:new Date().toISOString(), keyboardSerial:s.serial, serial:som.serial, pending:plan.pending, map:plan.map, physicalLayouts:plan.physicalLayouts, ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots},null,2), {flag:'wx'});
     const layer = checkMap(plan.map);
     const backup = {...(plan.prior || {serial:som.serial, keyboardSerial:s.serial, originalSlot:plan.originalSlot, originalBinding:layer.bindings[26], layerId:1, keyPosition:26, createdAt:new Date().toISOString()}), ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots};
+    const arrowChanges=pluginArrowChanges(plan.map);
+    backup.pluginArrows=[...(backup.pluginArrows||[])];
+    for(const change of arrowChanges)if(!backup.pluginArrows.some(item=>item.position===change.position))backup.pluginArrows.push(change);
     if (!plan.prior && !fs.existsSync(path.join(directory,'keymap-original.json'))) fs.writeFileSync(path.join(directory,'keymap-original.json'), JSON.stringify(plan.map,null,2), {flag:'wx'});
     writeRecord(path.join(directory,'hardware.json'), {...backup,verified:false,setupInProgress:true});
     if (plan.includeWidget && !plan.widgetPrior) fs.writeFileSync(path.join(directory,'widget-shortcut.json'), JSON.stringify({serial:s.serial, original:layer.bindings[55], installed:widgetBinding, createdAt:new Date().toISOString()},null,2), {flag:'wx'});
     const expected = structuredClone(plan.map), expectedLayer = checkMap(expected);
-    for (const [position, binding, name] of [[26,pluginBinding,'L1 + P'], ...(plan.includeWidget ? [[55,widgetBinding,'L1 + /']] : [])]) {
+    for (const [position, binding, name] of [[26,pluginBinding,'L1 + P'], ...(plan.includeWidget ? [[55,widgetBinding,'L1 + /']] : []), ...arrowChanges.map(item=>[item.position,item.installed,'L1 arrow'])]) {
       if (sameBinding(expectedLayer.bindings[position],binding)) continue;
-      stage = position === 26 ? 'assign_plugin_shortcut' : 'assign_widget_shortcut'; writesAttempted = true;
+      stage = position === 26 ? 'assign_plugin_shortcut' : position===55?'assign_widget_shortcut':'assign_plugin_arrow'; writesAttempted = true;
       assertBindingResult((await s.request({keymap:{setLayerBinding:{layerId:1,keyPosition:position,binding}}}))?.keymap?.setLayerBinding, name);
       expectedLayer.bindings[position] = binding;
     }

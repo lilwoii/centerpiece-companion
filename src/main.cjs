@@ -49,11 +49,13 @@ function leaveMode() {
 }
 function armModeTimeout() { clearTimeout(modeTimeout); modeTimeout = setTimeout(leaveMode, 45000); }
 function enterMode() {
+  if(!state.strip||strip.error){state.error='Plugin navigation needs a working keyboard display. Companion is reconnecting; try L1 + P when the display is ready.';send();return;}
   if(desk?.config.stripEnabled===false){state.feedback='Plugin strip is off. Enable it in Plugin library to navigate plugins.';send();return;}
   // DisplayCache keeps the desired state and selects its cached frame after an upload.
   if (navigation.active) { leaveMode(); return; }
   for (const key of modeKeys) {
     if (!globalShortcut.register(key, () => {
+      if(!state.strip||strip.error){leaveMode();state.error='Plugin navigation stopped because the keyboard display is unavailable. Companion is reconnecting.';send();return;}
       armModeTimeout();
       if (key === 'Escape') { leaveMode(); return; }
       if (key === 'Return') { runSlot(navigation.action); return; }

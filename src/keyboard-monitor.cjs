@@ -10,8 +10,9 @@ class KeyboardMonitor extends EventEmitter{
    // An L1 release or an unrelated sensor clears the hint.
    const layer=position===63?pressed:[26,55,this.pluginPosition??26].includes(position)?this.layer:false;if(this.layer!==layer){this.layer=layer;this.layerChanges++;this.emit('layer',layer);}
    if(pressed&&position>=0&&position<68&&Date.now()<this.captureUntil){this.captureUntil=0;this.emit('selected',position);}
-  });this.handle.on('error',()=>{this.close();this.emit('disconnected');});const tick=()=>{try{const packet=Buffer.alloc(64);packet[0]=3;packet[1]=2;packet[2]=240;packet[3]=29;this.handle?.write([...packet]);}catch{this.close();}};tick();this.timer=setInterval(tick,2500);
+  });this.handle.on('error',()=>this.disconnected());const tick=()=>{try{const packet=Buffer.alloc(64);packet[0]=3;packet[1]=2;packet[2]=240;packet[3]=29;this.handle?.write([...packet]);}catch{this.disconnected();}};tick();if(this.handle)this.timer=setInterval(tick,2500);
  }
+ disconnected(){if(!this.handle)return;this.close();this.emit('disconnected');}
  capture(enabled){this.captureUntil=enabled?Date.now()+10000:0;}
  close(){clearInterval(this.timer);this.timer=null;this.captureUntil=0;try{this.handle?.close();}catch{}this.handle=null;this.layer=false;}
 }

@@ -1,5 +1,10 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  '0.3.0-preview.30': Object.freeze([
+    'Faster plugin strip On/Off: visibility changes reuse cached graphics instead of rebuilding every navigation and indicator frame. Widgets remain available.',
+    'Fixed a keyboard-monitor failure that could stop L1 highlights without notifying automatic recovery. Companion now detects a stopped monitor and reconnects.',
+    'Expanded support reports with connection status and recent shortcut-check history, without recording typed keys. Find Check setup under Connections → Keyboard setup help.'
+  ]),
   '0.3.0-preview.29': Object.freeze([
     'Added L1 + Esc recovery for Finalmouse’s waiting screen. Press it once while the message is visible; pressing it again reopens that screen. Existing custom Esc assignments are preserved.',
     'Automatic setup restores Companion’s L1 + P shortcut when it has been cleared or reassigned, and repairs stock Plugin Engine arrow actions.',

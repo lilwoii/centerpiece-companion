@@ -9,7 +9,7 @@ function ownedPool(manifest){
 class DisplayCache{
  constructor(directory,render){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;}
  get capacity(){return this.pool.length-1;}
- key(selected=this.desired,caps=this.caps,layer=this.layer){return selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);}
+ key(selected=this.desired,caps=this.caps,layer=this.layer){const key=selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);return this.config?.stripEnabled===false?'hidden:'+key:key;}
  frame(selected,caps,layer){const config=selected==='idle'?this.config:{...this.config,indicator:{...this.config.indicator,enabled:false}};return this.render(selected,config,{caps,layer},this.data);}
  touch(key){this.usage.set(key,++this.usedAt);}
  trim(){
@@ -47,6 +47,13 @@ class DisplayCache{
  }
  async apply(config,locks){
   if(!this.som)throw Error('Keyboard strip is disconnected.');if(this.updating||this.watching)throw Error('Display is busy. Try again.');
+  // A visibility toggle does not change the contents of the existing visible
+  // frames. Retain them and render only the requested hidden/visible state.
+  if(this.config&&this.cache.size&&!this.error&&(this.config.stripEnabled!==false)!==(config.stripEnabled!==false)&&JSON.stringify({...this.config,stripEnabled:true})===JSON.stringify({...config,stripEnabled:true})){
+   this.config=structuredClone(config);this.caps=!!locks.caps;this.liveUploadedAt=0;
+   if(!this.cache.has(this.key()))await this.refreshLive();
+   this.displayReady();return;
+  }
   this.updating=true;this.config=structuredClone(config);this.caps=!!locks.caps;this.error='';this.liveUploadedAt=0;
   try{
    if(typeof this.som.currentSlot==='function'){

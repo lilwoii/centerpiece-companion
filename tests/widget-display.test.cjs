@@ -26,6 +26,28 @@ function poolFixture(pool){
 }
 async function settled(cache){const deadline=Date.now()+3000;do{await new Promise(resolve=>setTimeout(resolve,2));if(!cache.updating&&!cache.watching)return;if(Date.now()>deadline)throw Error('Cache did not settle');}while(true);}
 
+test('visibility toggles use at most one upload and retain reusable navigation frames',async()=>{
+ const {DisplayTasks}=require('../src/display-tasks.cjs');
+ for(const pool of [[2,3,4,5,6,7,8,9,10],[9,10]]){
+  const {x,cache,config}=poolFixture(pool),tasks=new DisplayTasks(cache);
+  cache.render=(selected,c,locks)=>`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${c.stripEnabled!==false}/${selected}/${locks.caps}/${c.widget.type}</title></svg>`;
+  await tasks.run(()=>cache.apply(config,{caps:false}));const initial=x.uploads.length;
+  for(const enabled of [false,true,false,true]){
+   const before=x.uploads.length;await tasks.run(()=>cache.apply({...config,stripEnabled:enabled},{caps:false}));
+   assert.ok(x.uploads.length-before<=1,'toggle must not rebuild every highlight');
+   assert.equal(x.active,cache.cache.get(cache.key()));
+   assert.match(cache.frames.get(cache.key()),new RegExp(`${enabled}/idle/false/spotify`));
+  }
+  if(pool.length===9){assert.equal(x.uploads.length-initial,1,'repeat toggles select cached frames');for(const id of ['previous','toggle','next','fourth']){const before=x.uploads.length;cache.show({active:true,id});assert.equal(x.active,cache.cache.get('nav:'+id));assert.equal(x.uploads.length,before);}}
+ }
+});
+
+test('visibility with other edits uses full rebuild and failed toggle is surfaced',async()=>{
+ const {x,cache,config}=poolFixture([2,3,4,5,6,7,8,9,10]);await cache.apply(config,{caps:false});let before=x.uploads.length;
+ await cache.apply({...config,stripEnabled:false,widget:{type:'clock'}},{caps:false});assert.ok(x.uploads.length-before>1);
+ x.uploadHook=async()=>{throw Error('Disconnected during toggle');};await assert.rejects(cache.apply({...cache.config,stripEnabled:true},{caps:false}),/Disconnected during toggle/);assert.match(cache.error,/Disconnected/);
+});
+
 test('eight, five and two free slots preserve occupied overlays through navigation, Caps and live frames',async()=>{
  for(const pool of [[3,4,5,6,7,8,9,10],[4,5,7,9,10],[9,10]]){
   const {x,cache,config}=poolFixture(pool);await cache.apply(config,{caps:false});await settled(cache);

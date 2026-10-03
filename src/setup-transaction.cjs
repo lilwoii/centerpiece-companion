@@ -74,12 +74,12 @@ async function prepareSetup(directory, options = {}, deps = {}) {
     const prior = record(directory, 'hardware.json'), widgetPrior = record(directory, 'widget-shortcut.json');
     s = new Studio(); som = new Som(); identity(s, som, prior, widgetPrior);
     stage = 'read_keymap'; const map = await keymap(s), layer = checkMap(map);
-    const pluginOwned = prior && sameBinding(layer.bindings[26], prior.installedBinding || pluginBinding);
-    if (layer.bindings[26].behaviorId !== 60498 && !pluginOwned) throw keyboardError('KEYBOARD_PLUGIN_KEY_CUSTOMIZED', 'L1 + P already has a custom mapping. Setup preserved it. Restore its Plugin Toggle behavior in XPANEL before assigning the companion shortcut.');
+    // Companion owns L1 + P. Reclaim blank or externally remapped bindings as
+    // well as stock Plugin Toggle, with the full pre-change map checkpointed.
     const includeWidget = options.includeWidget === true;
     if (includeWidget && widgetPrior && ![widgetPrior.original, widgetPrior.installed, widgetBinding, {behaviorId:50397,param1:0x05070073}].some(b => b && sameBinding(b, layer.bindings[55]))) throw keyboardError('KEYBOARD_WIDGET_KEY_CUSTOMIZED', 'L1 + / changed since its backup was made. Setup preserved the current mapping.');
     // A correct verified installation needs no save, regardless of a dirty flag.
-    if (prior?.verified && !prior.setupInProgress && !prior.restored && !pluginArrowChanges(map).length && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
+    if (prior?.verified && prior.keyboardSerial===s.serial && !prior.setupInProgress && !prior.restored && !pluginArrowChanges(map).length && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
     stage = 'read_pending_status'; const pending = await pendingChanges(s);
     if (pending && !options.reviewPending) throw keyboardError('KEYBOARD_PENDING_CHANGES', 'The keyboard reports pending configuration changes. This does not prove XPANEL has unsaved edits. Choose Review current settings to back up and keep the current configuration, or use Check setup for details.');
     stage = 'read_layout'; const physicalLayouts = await layouts(s);

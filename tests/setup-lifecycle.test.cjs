@@ -14,14 +14,14 @@ function section(from, to) {
 }
 function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 
-function fixture({ sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), start } = {}) {
+function fixture({ shortcuts = async () => ({position:26,engineRecovery:true}), sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), start } = {}) {
   const events = [], handlers = {}, state = { device: {}, strip: false }, context = {
     Promise, Error, state,fs:{existsSync:()=>false},path:require("node:path"),leaveMode(){}, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
     quitting: false, automaticSetupSuspended: false, automaticCheckBusy: false, automaticSetupTimer: 1,
     connectionTimer:null,recoveryVerified:false,connectionRecovery:null,profileTimer: null, timer: null, stripTimer: null, lockTimer: null, liveTimer: null, modeTimeout: null,
     hardwareDirectory: 'test-only', widgetShortcutReady: true, appliedAppearance: '',
     clearInterval() { events.push('clear-timer'); }, clearTimeout() {},
-    desk: { editor: { busy: false }, live: { sample }, close() { assert.equal(state.setupRunning, false); events.push('desk-close'); } },
+    desk: {config:{},save(config){this.config=config;}, editor: { busy: false }, live: { sample }, close() { assert.equal(state.setupRunning, false); events.push('desk-close'); } },
     strip: { detach(){events.push('detach');},connect() { events.push('connect'); return true; }, async close() { events.push('strip-close'); } },
     monitor: { start() { events.push('monitor-start'); }, close() { events.push('monitor-close'); } },
     media: { close() { events.push('media-close'); } }, mediaPoll: null, community: null, twitch: null, widgetCycle: null,
@@ -32,6 +32,7 @@ function fixture({ sample = async () => {}, appearance = async () => {}, inspect
     automaticSetup: { canAttempt: () => true, async run({ eligible, setup }) { if (!eligible) return { attempted: false }; events.push('automatic-attempt'); return { attempted: true, result: await setup() }; } },
     require(name) {
       if (name === './keyboard-errors.cjs') return require('../src/keyboard-errors.cjs');
+      if (name === './plugin-shortcuts.cjs') return {configureStartup:async()=>({settings:await shortcuts(),warning:''})};
       if (name === './hid.cjs') return { async shutdown() { events.push('hid-close'); } };
       if (name === './setup-transaction.cjs') return { startSetup: start || (async () => ({ needsConfirmation: true, plan: { id: 'review', pending: true, map: { layers: [] }, ownedSlots: [3, 4], preservedSlots: [2] } })) };
       throw Error('Unexpected dependency: ' + name);
@@ -57,6 +58,12 @@ test('quit waits for the setup transaction and never starts display initializati
   assert.equal(f.events.includes('monitor-start'), false);
   assert.ok(f.events.indexOf('desk-close') < f.events.indexOf('hid-close'));
   await assert.rejects(f.setupOperation(async () => assert.fail('No setup after Quit.'), true), /companion is closing/);
+});
+
+test('quit during recovery-shortcut installation waits without reopening the display',async()=>{
+ const reached=deferred(),done=deferred(),f=fixture({shortcuts:()=>{reached.resolve();return done.promise;}});
+ const setup=f.setupOperation(async()=>({verified:true}),true);await reached.promise;const quit=f.cleanup();
+ done.resolve({position:26,engineRecovery:true});await Promise.all([setup,quit]);assert.equal(f.events.includes('connect'),false);
 });
 
 test('quit during the live sample waits and does not queue display initialization', async () => {

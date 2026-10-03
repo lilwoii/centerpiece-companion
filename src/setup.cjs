@@ -4,6 +4,7 @@ const {setup,pluginBinding:binding}=require('./setup-transaction.cjs');
 const {sameBinding,sameKeymap,assertBindingResult,assertSaveResult}=require('./keyboard-errors.cjs');
 const {arrowRestorations}=require('./plugin-arrow-bindings.cjs');
 async function restore(directory){
+ if(require('./plugin-shortcuts.cjs').read(directory))await require('./plugin-shortcuts.cjs').configure(directory,{custom:false,engineRecovery:false});
  await require('./widget-shortcut.cjs').widgetShortcut(directory,true);
  const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file,'utf8'));
  const s=new Studio();let som;

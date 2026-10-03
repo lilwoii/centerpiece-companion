@@ -41,6 +41,7 @@ const strip = new StripController(hardwareDirectory);
 const displayTasks=new(require('./display-tasks.cjs').DisplayTasks)(strip);
 state.strip = false;
 let modeTimeout;
+let pluginKeyCapture=false;
 const modeKeys = ['Left', 'Right', 'Up', 'Down', 'Return', 'Escape'];
 function leaveMode() {
   clearTimeout(modeTimeout);
@@ -134,7 +135,7 @@ else {
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     startup=new Startup(app,process.execPath,app.getPath('userData'));try{state.startup=startup.initialize();}catch(e){state.startup=startup.read();state.error=e.message;}xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
-    desk=new Workspace(app.getPath('userData'),shell,dialog,media);twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});desk.language=null; // Keyboard language overlays are temporarily disabled.
+    desk=new Workspace(app.getPath('userData'),shell,dialog,media);const shortcutRecord=require('./plugin-shortcuts.cjs').read(hardwareDirectory);if(shortcutRecord&&!shortcutRecord.inProgress)desk.config.pluginShortcuts=require('./plugin-shortcuts.cjs').normalize(shortcutRecord.settings);monitor.pluginPosition=desk.config.pluginShortcuts.position;twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});desk.language=null; // Keyboard language overlays are temporarily disabled.
 deskState();updateNavigation();
     const autoAllowed=()=>!quitting&&!win?.isFocused()&&!navigation.active&&!executing&&!displayBusy&&!displayTasks.paused;
     profiles=new(require('./profiles.cjs').Profiles)(app.getPath('userData'),desk,async(config,automatic)=>{
@@ -144,7 +145,7 @@ deskState();updateNavigation();
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';state.strip=false;recoveryVerified=false;appliedAppearance='';send();});
     monitor.on('layer',active=>{state.layer=active;if(state.strip)strip.setLayer(active);send();});
-    monitor.on('selected',position=>{if(win?.isFocused())win.webContents.send('selected-key',position);});
+    monitor.on('selected',position=>{if(win?.isFocused())win.webContents.send(pluginKeyCapture?'plugin-selected-key':'selected-key',position);pluginKeyCapture=false;});
     win = new BrowserWindow({ icon:path.join(__dirname,'assets/community.png'), width: 1320, height: 920, minWidth: 560, minHeight: 600, show: !process.argv.includes('--background') && !process.argv.includes('--verify') && !process.argv.includes('--smoke'), backgroundColor: '#11151d', title: 'Centerpiece Companion', autoHideMenuBar: true,
       frame:false, skipTaskbar:process.argv.includes('--background'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
       win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -202,7 +203,7 @@ deskState();updateNavigation();
     handle('pick-profile-app',async()=>{const result=await dialog.showOpenDialog(win,{title:'Choose an app for this profile',properties:['openFile'],filters:[{name:'Windows app',extensions:['exe']}]});return result.canceled?'':path.win32.basename(result.filePaths[0]).toLowerCase();});
     handle('preview-layout',(config,flags)=>require('./layout-preview.cjs').preview(config,{media:state.media,live:desk.live.state,chat:desk.chat.state,timer:desk.countdown.view(),obs:desk.obsStatus},flags));
     handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
-    handle('save-desk', async config=>{leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'auto'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
+    handle('save-desk', async config=>{config={...config,pluginShortcuts:desk.config.pluginShortcuts};leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'auto'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
     handle('run-slot', index=>runSlot(index));
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});
     handle('pick-app',()=>desk.pick());
@@ -213,6 +214,7 @@ deskState();updateNavigation();
     handle('set-language',()=>{throw Error('Keyboard language feature is temporarily disabled. Use XPANEL for keyboard labels.');});
     handle('language-settings',()=>{throw Error('Keyboard language feature is temporarily disabled.');});
     handle('capture-key',enabled=>{if(typeof enabled!=='boolean')throw Error('Invalid capture setting');monitor.capture(enabled&&win.isFocused());return true;});
+    handle('capture-plugin-key',enabled=>{if(typeof enabled!=='boolean')throw Error('Invalid capture setting');pluginKeyCapture=enabled&&win.isFocused();monitor.capture(pluginKeyCapture);return true;});
     handle('search-city',city=>desk.live.search(city));
     handle('windows-location',async()=>{try{return await desk.system.request('windows-location');}catch{throw Error('Windows location is unavailable or disabled. Choose a city manually.');}});
     handle('set-weather',async(location,unit)=>{const next={...desk.config,weather:{location,unit}};desk.save(next);await desk.live.weather(true);send();return state;});
@@ -221,6 +223,12 @@ deskState();updateNavigation();
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
     handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
     handle('dismiss-update-notes',version=>{const next=updateNotes.dismiss(version);send();return next;});
+    handle('set-plugin-shortcuts',async settings=>{
+      leaveMode();
+      const saved=await setupOperation(()=>require('./plugin-shortcuts.cjs').configure(hardwareDirectory,settings));
+      desk.save({...desk.config,pluginShortcuts:saved});monitor.pluginPosition=saved.position;state.shortcutWarning='';
+      appliedAppearance='';await syncAppearance();state.error='';state.feedback='Keyboard shortcuts saved. '+require('./plugin-shortcuts.cjs').label(saved)+' opens plugins.';send();return state;
+    });
     handle('copy-setup-report',()=>{if(!state.setupReport)throw Error('Run Check setup first.');clipboard.writeText(JSON.stringify(state.setupReport,null,2));return true;});
     const setupReview=plan=>({token:plan.id,pending:plan.pending,shortcuts:plan.includeWidget?['L1 + P','L1 + /']:['L1 + P'],layerCount:plan.map.layers.length,displaySlots:plan.ownedSlots,preservedOverlaySlots:plan.preservedSlots});
     async function setupOperation(action, initialize=false){
@@ -232,6 +240,11 @@ deskState();updateNavigation();
         if(quitting)return initialize?state:result;
         if(initialize&&result?.needsConfirmation){setupPlan=result.plan;state.setupRecovery=setupReview(setupPlan);state.error='';state.feedback='Setup found pending keyboard settings. Recovery is ready; confirm keeping the current configuration to continue.';send();return state;}
         const backup=result?.backup||result;
+        if(initialize){
+          const result=await displayTasks.run(()=>require('./plugin-shortcuts.cjs').configureStartup(hardwareDirectory,desk.config.pluginShortcuts));
+          desk.save({...desk.config,pluginShortcuts:result.settings});monitor.pluginPosition=result.settings.position;state.shortcutWarning=result.warning;
+          if(quitting)return state;
+        }
         if(initialize){state.strip=strip.connect();appliedAppearance='';send();try{await desk.live.sample();}catch{}if(quitting)return state;try{await syncAppearance();if(quitting)return state;monitor.start();}catch(error){error.configurationVerified=true;error.code='KEYBOARD_DISPLAY_INITIALIZATION_FAILED';error.stage='initialize_display';error.message='Shortcuts were saved, but the display could not initialize. '+error.message;throw error;}state.feedback='Keyboard setup complete. Original settings are backed up on this PC.';}
         if(initialize){recoveryVerified=true;automaticSetupSuspended=false;}state.error='';if(initialize&&backup?.preservedSlots?.length)state.feedback+=' Existing display overlays were preserved.';if(initialize&&backup?.pendingAfterSetup)state.feedback+=' The firmware still reports a pending flag, but saving and the current settings were verified.';send();return initialize?state:result;
       }catch(error){state.setupFailure=require('./keyboard-errors.cjs').setupFailure(error);state.error=state.setupFailure.message;send();throw error;}finally{setupBusy=false;state.setupRunning=false;try{send();}finally{completeSetup();}}

@@ -33,6 +33,8 @@ components:
 
 # Centerpiece Companion design
 
+Plugin shortcuts use the existing section, native checkbox, readonly key-capture box and primary Save shortcut button in Plugin library. Clicking the box arms one-key capture for ten seconds; Tab, blur and page changes cancel it. Capture uses physical key positions, not translated characters. Custom L1 shortcuts are additive: P remains a fallback and Companion reclaims P automatically. Existing XPANEL assignments block custom shortcut saves; overlay conflicts identify the overlay number. Recovery defaults on and is clearly labeled L1 + Esc, a firmware toggle to use only while the waiting screen is visible. A custom L1+Esc assignment leaves recovery disabled rather than blocking display startup. The saved shortcut owns sidebar and default strip hints; custom decorative hints remain unchanged. Never update the displayed saved shortcut before hardware readback succeeds. Display connection status is separate from the saved strip visibility switch and never claims to observe physical pixels.
+
 ## Overview
 
 This is a product surface for one Windows Centerpiece owner, with potential free sharing. English is the current language; no market-specific workflow is assumed. The brief prioritizes Spotify, then Stream Deck style actions. No prior application or sibling design exists.

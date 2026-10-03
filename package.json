@@ -1,6 +1,6 @@
 {
   "name": "centerpiece-companion",
-  "version": "0.3.0-preview.28",
+  "version": "0.3.0-preview.29",
   "description": "Unofficial local companion for Finalmouse Centerpiece Pro",
   "main": "src/main.cjs",
   "license": "MIT",

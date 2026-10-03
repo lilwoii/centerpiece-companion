@@ -35,6 +35,16 @@ test('arrow migration respects pending changes even on a verified installation',
  const result=await startSetup(directory,{includeWidget:true},deps);
  assert.equal(result.needsConfirmation,true);assert.equal(x.edits.length,0);
 });
+
+test('default plugin shortcut is reclaimed from blank, stock or external mappings',async t=>{
+ for(const binding of [{behaviorId:56811},{behaviorId:60498},{behaviorId:50397,param1:0x70004}]){
+  const {x,directory,deps}=fixture(t);x.map.layers[1].bindings[26]=binding;
+  const backup=await setup(directory,{includeWidget:true},deps);
+  assert.deepEqual(backup.originalBinding,binding);assert.deepEqual(x.map.layers[1].bindings[26],pluginBinding);
+  x.map.layers[1].bindings[26]={behaviorId:56811};
+  await setup(directory,{includeWidget:true},deps);assert.deepEqual(x.map.layers[1].bindings[26],pluginBinding);
+ }
+});
 test('normal setup installs both shortcuts with one save and preserves every other key',async t=>{
   const {x,directory,deps}=fixture(t),before=structuredClone(x.map);x.map.layers[0].bindings[32]={behaviorId:50397,param1:0x70039};before.layers[0].bindings[32]=structuredClone(x.map.layers[0].bindings[32]);
   const result=await setup(directory,{includeWidget:true},deps);assert.equal(result.verified,true);assert.equal(x.saves,1);assert.deepEqual(x.edits.map(e=>e.keyPosition),[26,55]);before.layers[1].bindings[26]=pluginBinding;before.layers[1].bindings[55]=widgetBinding;assert.equal(sameKeymap(x.map,before),true);assert.ok(x.calls.every(r=>!r.keymap.discardChanges));

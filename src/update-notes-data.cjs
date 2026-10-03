@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  '0.3.0-preview.29': Object.freeze([
+    'Added L1 + Esc recovery for Finalmouse’s waiting screen. Press it once while the message is visible; pressing it again reopens that screen. Existing custom Esc assignments are preserved.',
+    'Automatic setup restores Companion’s L1 + P shortcut when it has been cleared or reassigned, and repairs stock Plugin Engine arrow actions.',
+    'Choose a custom plugin shortcut by clicking the key box, pressing a key, and saving. The strip hint follows your selection; occupied XPANEL keys and overlay shortcuts are protected.',
+    'Plugin strip visibility now has a separate display-connection status. Pending optional shortcut changes no longer block display startup.'
+  ]),
   '0.3.0-preview.28': Object.freeze([
     'Fixed stock L1 arrow actions opening Finalmouse’s “Waiting for Plugin Engine connection” screen. Setup automatically repairs those stock bindings and preserves custom mappings.',
     'L1 + P still opens Companion plugin navigation, and L1 + / still switches widgets.',

@@ -1,5 +1,10 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  '0.3.0-preview.31': Object.freeze([
+    'Weather tiles and widgets now cross-check rain, showers and snowfall against the provider’s condition code, including mixed precipitation and freezing rain.',
+    'A separate “Storms <3h” label shows upcoming thunderstorm forecasts without presenting them as current lightning.',
+    'Older or invalid future weather readings no longer replace newer data. Offline and stale readings remain clearly identified.'
+  ]),
   '0.3.0-preview.30': Object.freeze([
     'Faster plugin strip On/Off: visibility changes reuse cached graphics instead of rebuilding every navigation and indicator frame. Widgets remain available.',
     'Fixed a keyboard-monitor failure that could stop L1 highlights without notifying automatic recovery. Companion now detects a stopped monitor and reconnects.',

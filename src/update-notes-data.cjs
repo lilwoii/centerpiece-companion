@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.33": Object.freeze([
+    "Saved display settings are backed up on launch and before changes, including plugins, widgets, colors and indicators.",
+    "Unreadable or unsupported settings are preserved instead of being replaced with defaults. Automatic setup pauses with a clear error.",
+    "Settings changed by another app cannot be overwritten by a stale Companion instance.",
+    "Includes YouTube Music Desktop/Web plugin controls, live artwork and progress, faster track changes, automatic action saving and the simplified playback setup guide."
+]),
   "0.3.0-preview.32": Object.freeze([
     "Added YouTube Music plugin actions and a live artwork/playback widget, with separate Desktop and Web choices for each position.",
     "Music action changes now save automatically. Faster song and artwork refreshes keep the keyboard display in step with track changes.",

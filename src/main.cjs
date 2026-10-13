@@ -24,12 +24,12 @@ let setupBusy=false, setupPlan=null, automaticSetupTimer, automaticSetupSuspende
 function suspendAutomaticSetup(){automaticSetupSuspended=true;clearInterval(automaticSetupTimer);automaticSetupTimer=null;}
 const updateNotes=new(require('./update-notes.cjs').UpdateNotes)({directory:app.getPath('userData'),version:app.getVersion()});
 let desk, lockTimer, lockBusy=false, appliedAppearance='';
-function deskState(){if(desk)state.desk=desk.view();if(profiles)state.profiles=profiles.view();}
+function deskState(){if(desk){state.desk=desk.view();if(desk.settingsError)state.error=desk.settingsError;}if(profiles)state.profiles=profiles.view();}
 function updateNavigation(){
  navigation.plugins=[{id:'strip',name:'Keyboard strip',actions:desk.config.slots.map((s,i)=>({id:['previous','toggle','next','fourth'][i],label:s?`${desk.view().catalog.find(p=>p.id===s.plugin).name} · ${desk.view().catalog.find(p=>p.id===s.plugin).actions.find(a=>a.id===s.action).label}`:'Empty position'}))}];
  navigation.category=0;state.navigation=navigation.selection();
 }
-async function syncAppearance(){if(quitting)return;return displayTasks.run(async()=>{if(quitting||!state.strip)return;const key=JSON.stringify(desk.config);if(key===appliedAppearance)return;await strip.apply(desk.config,desk.locks);appliedAppearance=key;});}
+async function syncAppearance(){if(quitting||desk?.settingsError)return;return displayTasks.run(async()=>{if(quitting||!state.strip)return;const key=JSON.stringify(desk.config);if(key===appliedAppearance)return;await strip.apply(desk.config,desk.locks);appliedAppearance=key;});}
 async function runSlot(index){if(executing){state.error='A plugin action is already running.';send();return state;}executing=true;leaveMode();try{await desk.run(index);state.error='';state.feedback='Plugin action sent.';}catch(e){state.error=e.message;}finally{executing=false;}deskState();send();return state;}
 
 const media = new MediaBridge();const youtubeMusic=new(require('./music-players.cjs').MusicPlayers)({directory:app.getPath('userData'),canRefresh:()=>!executing&&!quitting,onChange:(target,view,previous)=>{if(!desk||quitting)return;state.youtubeMusic=youtubeMusic.view();state.youtubeMusicByTarget=youtubeMusic.views;send();if(trackKey(previous)!==trackKey(view)||previous?.art!==view.art)void refreshStrip(false);}});const youtube=new MediaBridge('youtube');
@@ -144,7 +144,7 @@ else {
     session.defaultSession.setPermissionCheckHandler(() => false);
     startup=new Startup(app,process.execPath,app.getPath('userData'));try{state.startup=startup.initialize();}catch(e){state.startup=startup.read();state.error=e.message;}xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
     desk=new Workspace(app.getPath('userData'),shell,dialog,media,youtubeMusic,youtube);youtubeMusic.target=desk.config.youtubeMusicTarget;youtubeMusic.source=desk.config.youtubeMusicSource;state.youtubeMusic=youtubeMusic.view();const shortcutRecord=require('./plugin-shortcuts.cjs').read(hardwareDirectory);if(shortcutRecord&&!shortcutRecord.inProgress)desk.config.pluginShortcuts=require('./plugin-shortcuts.cjs').normalize(shortcutRecord.settings);monitor.pluginPosition=desk.config.pluginShortcuts.position;twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});desk.language=null; // Keyboard language overlays are temporarily disabled.
-deskState();updateNavigation();
+if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     const autoAllowed=()=>!quitting&&!win?.isFocused()&&!navigation.active&&!executing&&!displayBusy&&!displayTasks.paused;
     profiles=new(require('./profiles.cjs').Profiles)(app.getPath('userData'),desk,async(config,automatic)=>{
       if(automatic&&!autoAllowed())return false;
@@ -262,6 +262,7 @@ deskState();updateNavigation();
     }
     async function beginKeyboardSetup(){if(state.strip)return state;return setupOperation(()=>{setupPlan=null;state.setupRecovery=null;return require('./setup-transaction.cjs').startSetup(hardwareDirectory,{includeWidget:widgetShortcutReady});},true);}
     async function recoverKeyboardConnection(){
+      if(desk.settingsError){state.error=desk.settingsError;send();return;}
       if(quitting||setupBusy||displayTasks.paused||desk.editor.busy||state.setupRecovery||automaticSetupSuspended)return;
       leaveMode();state.connectionRecovering=true;send();
       try{

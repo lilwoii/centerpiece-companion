@@ -13,6 +13,12 @@ test('repeated install requests share one operation and do not compete with anot
  deps.install();const running=deps.promise;deps.install();assert.equal(deps.promise,running);release();await running;
  assert.equal(checks,1);assert.equal(deps.status().code,'STUDIO_DEPENDENCY_BUSY');
 });
+test('numeric subprocess exit codes produce a handled failure and release the running operation',async t=>{
+ const deps=fixture(t,{detect:async()=>({}),powershell:async script=>{if(script.includes('Get-Process'))throw Object.assign(Error('private subprocess details'),{code:1});return'';},download:async()=>assert.fail('No download after a failed prerequisite check')});
+ deps.install();await assert.doesNotReject(deps.promise);
+ assert.deepEqual(deps.status(),{state:'failed',code:'STUDIO_DEPENDENCY_INSTALL',message:'Creator setup did not finish. Approve the Windows installer prompt or retry from build tools.'});
+ assert.equal(deps.running,false);
+});
 test('a changed local installer cannot reach signature checking or execution',async t=>{
  const deps=fixture(t,{detect:async()=>({}),powershell:async script=>{assert.doesNotMatch(script,/Start-Process|AuthenticodeSignature/);return script.includes('Get-Process')?'0':'';},download:async file=>fs.writeFileSync(file,'untrusted installer')});
  deps.install();await deps.promise;assert.equal(deps.status().code,'STUDIO_DEPENDENCY_SIGNATURE');

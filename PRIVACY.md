@@ -4,6 +4,10 @@ Settings, weather location and keyboard backups stay under each Windows account'
 
 OBS passwords stay in memory for the session. Twitch access and refresh tokens are encrypted with Windows-backed secure storage in twitch-session.bin on the user’s PC. Tokens travel directly between the companion and Twitch, never through the community server. They are excluded from public UI state and community packages. Disconnect removes the saved connection and attempts to revoke Twitch access. Spotify uses the existing Windows media session. The companion does not receive a Spotify password.
 
+YouTube Music normally uses Windows media controls. Its last song, artwork and playback position are cached locally for each Desktop/Web player; remembered tracks are displayed for up to 24 hours and do not enable playback controls. This cache contains no Google credentials or listening history beyond the latest track for each player.
+
+YouTube Music playback uses the selected Windows media session. Companion does not require a YouTube Music Desktop pairing token or a browser extension.
+
 Weather sends the chosen coordinates to api.open-meteo.com and city searches to geocoding-api.open-meteo.com. Twitch chat connects to Twitch over TLS. OBS and optional temperature sensors use loopback. Opening an assigned website or app invokes that destination and its privacy policy.
 
 The keyboard monitor observes L1 state and selects one physical key only when the editor is explicitly armed. It stores no typing history. Caps Lock monitoring reads lock state. Microphone mute control does not record audio.

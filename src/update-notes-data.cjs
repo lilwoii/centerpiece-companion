@@ -1,5 +1,12 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.32": Object.freeze([
+    "Added YouTube Music plugin actions and a live artwork/playback widget, with separate Desktop and Web choices for each position.",
+    "Music action changes now save automatically. Faster song and artwork refreshes keep the keyboard display in step with track changes.",
+    "The YouTube Music widget remembers the last played song when the player is unavailable, with a clear idle fallback.",
+    "Added live playback progress for regular YouTube, plus clearer desktop startup instructions without pairing or browser extensions.",
+    "Fixed creator-tool setup error handling when a Windows subprocess returns a numeric error code."
+]),
   '0.3.0-preview.31': Object.freeze([
     'Weather tiles and widgets now cross-check rain, showers and snowfall against the provider’s condition code, including mixed precipitation and freezing rain.',
     'A separate “Storms <3h” label shows upcoming thunderstorm forecasts without presenting them as current lightning.',

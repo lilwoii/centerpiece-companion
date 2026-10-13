@@ -107,3 +107,19 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 .physical-board .key{font-family:"Segoe UI","Malgun Gothic","Microsoft YaHei","Yu Gothic","Nirmala UI",Arial,sans-serif}
 
 .weather-motion.moon,.weather-motion.night-cloud{color:#e1eaff;animation:sun-shine 4s ease-in-out infinite}
+
+/* Shared player choice: compact alongside actions and screen-widget settings. */
+.music-target{margin:14px 0;min-width:0}.music-target-label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}
+.music-target-options{display:flex;flex-wrap:wrap;gap:6px}.music-target-options .button{min-width:78px;padding:8px 14px}
+.music-target-options .button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--background)}
+.music-target-options .button[aria-pressed="true"]:hover:not(:disabled){background:var(--hover);border-color:var(--hover)}
+.music-target .note{margin:7px 0 0;max-width:72ch;min-height:2.8em}
+@media(forced-colors:active){.music-target-options .button[aria-pressed="true"]{background:Highlight;color:HighlightText;border-color:Highlight}}
+
+.music-playback-note{margin:0 0 16px;padding:12px 14px;border-left:3px solid var(--attention);border-radius:0 7px 7px 0;background:var(--surface);font-size:13px;line-height:1.55}
+.music-playback-note strong{color:var(--attention)}
+.music-playback-note p{margin:4px 0 0;color:var(--ink);max-width:86ch}
+.music-setup-steps{margin:6px 0;padding-left:22px}.music-setup-steps li{padding-left:3px}.music-setup-steps li::marker{color:var(--attention)}
+.music-playback-note .music-setup-footnote{color:var(--muted);font-size:12px}
+.music-playback-note .music-setup-optional{color:var(--primary)}
+@media(forced-colors:active){.music-playback-note{border-color:CanvasText}.music-playback-note strong,.music-playback-note p,.music-playback-note .music-setup-optional{color:CanvasText}}

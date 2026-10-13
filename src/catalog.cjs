@@ -42,7 +42,7 @@ const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon
  ...(['weather','clock','cpu','gpu','calendar','decoration'].includes(id)?[action('display',id==='decoration'?'Display only · no action':'Show live reading')]:[]),
  ...(id==='timer'?[action('start','Start new timer'),action('toggle','Pause / resume timer'),action('reset','Reset timer')]:[]),
  ...(id==='mic'?[action('mute','Mute / unmute microphone')]:[]),
- ...(id==='spotify'?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track')]:[]),
+ ...(['spotify','youtubemusic','youtube'].includes(id)?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track'),action('rewind','Rewind 10 seconds')]:[]),
  ...(id==='obs'?[action('record','Start / stop recording'),action('replay','Save replay buffer'),action('scene','Switch scene'),action('mute','Mute / unmute input')]:[]),
  ...(id==='media'?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track'),action('volumeup','Volume up'),action('volumedown','Volume down'),action('volumemute','Mute speakers')]:[]),
  ...(url?[action('open',id==='steam'?'Open Steam':`Open ${name}`)]:[]),
@@ -64,11 +64,12 @@ function hotkeyCodes(value){
 function validateSlot(slot){
  if(slot===null)return null;
  const p=catalog.find(p=>p.id===slot?.plugin);if(!p||!p.actions.some(a=>a.id===slot.action))throw Error('Choose a plugin and an available action.');
+ if(p.id==='youtubemusic'&&slot.mediaTarget!==undefined&&!['desktop','web'].includes(slot.mediaTarget))throw Error('Choose Desktop or Web for this music position.');
  const value=typeof slot.value==='string'?slot.value.trim():'';
  if(slot.action==='hotkey')hotkeyCodes(value);
  if(slot.action==='url'){let u;try{u=new URL(value);}catch{}if(!u||!['https:','http:'].includes(u.protocol)||u.username||u.password)throw Error('Enter an http or https website address.');}
  if(p.id==='obs'&&['scene','mute'].includes(slot.action)&&(!value||value.length>200))throw Error('Enter the exact OBS scene or input name.');
  if(slot.action==='app'&&(!/^[a-z]:[\\/]/i.test(value)||!/\.(exe|lnk)$/i.test(value)||!require('node:fs').existsSync(value)))throw Error('Choose an installed app.');
- return {plugin:p.id,action:slot.action,value,...(slot.visual?{visual:appearance.visual(slot.visual)}:{}),...(slot.appearance?{appearance:appearance.tileAppearance(slot.appearance)}:{})};
+ return {plugin:p.id,action:slot.action,value,...(p.id==='youtubemusic'&&slot.mediaTarget?{mediaTarget:slot.mediaTarget}:{}),...(slot.visual?{visual:appearance.visual(slot.visual)}:{}),...(slot.appearance?{appearance:appearance.tileAppearance(slot.appearance)}:{})};
 }
 module.exports={catalog,hotkeyCodes,validateSlot};

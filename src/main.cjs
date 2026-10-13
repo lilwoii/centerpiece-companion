@@ -5,7 +5,7 @@ app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion')
 
 const { pathToFileURL } = require('node:url');
 const {PlaybackClock}=require('./playback-clock.cjs');const playbackClock=new PlaybackClock();
-const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll;
+const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll,youtubeMusicPoll,youtubePoll;const youtubeClock=new PlaybackClock();let youtubePolling=false;
 const {Startup,openCompanion,hideCompanion}=require('./startup.cjs');let startup,refreshTray=()=>{};
 const {XpanelSkins}=require('./xpanel-skins.cjs');let xpanelSkins;
 const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,widgetCycle,widgetShortcutReady=false;
@@ -32,10 +32,10 @@ function updateNavigation(){
 async function syncAppearance(){if(quitting)return;return displayTasks.run(async()=>{if(quitting||!state.strip)return;const key=JSON.stringify(desk.config);if(key===appliedAppearance)return;await strip.apply(desk.config,desk.locks);appliedAppearance=key;});}
 async function runSlot(index){if(executing){state.error='A plugin action is already running.';send();return state;}executing=true;leaveMode();try{await desk.run(index);state.error='';state.feedback='Plugin action sent.';}catch(e){state.error=e.message;}finally{executing=false;}deskState();send();return state;}
 
-const media = new MediaBridge();
+const media = new MediaBridge();const youtubeMusic=new(require('./music-players.cjs').MusicPlayers)({directory:app.getPath('userData'),canRefresh:()=>!executing&&!quitting,onChange:(target,view,previous)=>{if(!desk||quitting)return;state.youtubeMusic=youtubeMusic.view();state.youtubeMusicByTarget=youtubeMusic.views;send();if(trackKey(previous)!==trackKey(view)||previous?.art!==view.art)void refreshStrip(false);}});const youtube=new MediaBridge('youtube');
 let unrealDock;
 let win, tray, timer, stripTimer, displayBusy=false, polling = false, executing = false, quitting = false;
-const state = { media: { available: false, message: 'Connecting to Spotify…' }, device: {}, plugins: plugins.list(), shortcuts: false, feedback: '', error: '', deviceError: '' };
+const state = { youtube:{available:false,message:'Play YouTube in your browser.'}, youtubeMusic:youtubeMusic.view(),youtubeMusicByTarget:youtubeMusic.views,media: { available: false, message: 'Connecting to Spotify…' }, device: {}, plugins: plugins.list(), shortcuts: false, feedback: '', error: '', deviceError: '' };
 const navigation = new PluginNavigation(state.plugins);
 state.navigation = navigation.selection();
 const strip = new StripController(hardwareDirectory);
@@ -71,7 +71,7 @@ const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 function send() {
   state.updateNotes=updateNotes.view();state.keyboardReady=!!(state.strip&&appliedAppearance);deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
-  if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,bindingLayers:desk.bindingLayers,language:desk.language});
+  if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,youtubeMusic:state.youtubeMusic,youtubeMusicByTarget:state.youtubeMusicByTarget,youtube:state.youtube,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,bindingLayers:desk.bindingLayers,language:desk.language});
   if(state.strip&&!quitting)try{strip.show(state.navigation);}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;}
   if (win && !win.isDestroyed()) win.webContents.send('state', state);
 }
@@ -103,6 +103,13 @@ async function refresh() {
   catch (error) { state.media = playbackClock.update({ available: false, message: error.message }); }
   finally { polling = false; send();if(previousTrack!==trackKey(state.media))void refreshStrip(false); }
 }
+async function refreshYoutubeMusic(){return youtubeMusic.refresh();}
+async function refreshYoutube(){
+ if(youtubePolling||executing||quitting)return;youtubePolling=true;const previous=trackKey(state.youtube);
+ try{state.youtube={...youtubeClock.update(await youtube.request('status')),receivedAt:Date.now()};}
+ catch(error){state.youtube=youtubeClock.update({available:false,message:error.message});}
+ finally{youtubePolling=false;if(!quitting){send();if(previous!==trackKey(state.youtube))void refreshStrip(false);}}
+}
 async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}
 async function perform(plugin, action) {
   if (executing) return { ok: false, error: 'A control is already in progress.' };
@@ -129,14 +136,14 @@ else if(process.argv.includes('--quit')) app.quit();
 else {
   function diagnostics(){
     const directory=path.join(__dirname,'../diagnostics');fs.mkdirSync(directory,{recursive:true});
-      fs.writeFileSync(path.join(directory,'state.json'),JSON.stringify({strip:state.strip,navigation:state.navigation,error:state.error,deviceError:state.deviceError,expectedSlot:strip.lastSlot,layer:state.layer,monitor:monitor.status(),updating:strip.updating,cacheKeys:[...strip.cache.keys()],observedSlot:strip.lastObservedSlot,desired:strip.desired,media:{available:state.media.available,status:state.media.status,position:state.media.position,duration:state.media.duration,receivedAt:state.media.receivedAt},pluginBinding:desk?.editor.snapshot?.layers.find(l=>l.id===1)?.bindings[26]},null,2));
+      fs.writeFileSync(path.join(directory,'state.json'),JSON.stringify({strip:state.strip,navigation:state.navigation,error:state.error,deviceError:state.deviceError,expectedSlot:strip.lastSlot,layer:state.layer,monitor:monitor.status(),updating:strip.updating,cacheKeys:[...strip.cache.keys()],observedSlot:strip.lastObservedSlot,desired:strip.desired,media:{available:state.media.available,status:state.media.status,position:state.media.position,duration:state.media.duration,receivedAt:state.media.receivedAt},youtubeMusic:{available:state.youtubeMusic.available,source:state.youtubeMusic.source,status:state.youtubeMusic.status,target:youtubeMusic.target,position:state.youtubeMusic.position,duration:state.youtubeMusic.duration,hasArtwork:!!state.youtubeMusic.art,receivedAt:state.youtubeMusic.receivedAt},widgetType:desk?.config.widget?.type,pluginBinding:desk?.editor.snapshot?.layers.find(l=>l.id===1)?.bindings[26]},null,2));
   }
   app.on('second-instance', (_event,args) => { if(args.includes('--diagnostics')){diagnostics();return;} if(args.includes('--quit')){app.quit();return;} if(args.includes('--background'))return;if (win) openCompanion(win); });
   app.whenReady().then(async () => {
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     startup=new Startup(app,process.execPath,app.getPath('userData'));try{state.startup=startup.initialize();}catch(e){state.startup=startup.read();state.error=e.message;}xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
-    desk=new Workspace(app.getPath('userData'),shell,dialog,media);const shortcutRecord=require('./plugin-shortcuts.cjs').read(hardwareDirectory);if(shortcutRecord&&!shortcutRecord.inProgress)desk.config.pluginShortcuts=require('./plugin-shortcuts.cjs').normalize(shortcutRecord.settings);monitor.pluginPosition=desk.config.pluginShortcuts.position;twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});desk.language=null; // Keyboard language overlays are temporarily disabled.
+    desk=new Workspace(app.getPath('userData'),shell,dialog,media,youtubeMusic,youtube);youtubeMusic.target=desk.config.youtubeMusicTarget;youtubeMusic.source=desk.config.youtubeMusicSource;state.youtubeMusic=youtubeMusic.view();const shortcutRecord=require('./plugin-shortcuts.cjs').read(hardwareDirectory);if(shortcutRecord&&!shortcutRecord.inProgress)desk.config.pluginShortcuts=require('./plugin-shortcuts.cjs').normalize(shortcutRecord.settings);monitor.pluginPosition=desk.config.pluginShortcuts.position;twitch=new(require('./twitch-auth.cjs').TwitchConnection)(app.getPath('userData'),shell,safeStorage,desk.chat,require('./distribution.json').twitchClientId);twitch.on('change',send);widgetCycle=new(require('./widget-cycle.cjs').WidgetCycle)(desk,async()=>{try{await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';}catch(e){state.error=e.message;}send();},()=>{leaveMode();state.widgetRevision=(state.widgetRevision||0)+1;state.feedback='Screen widget: '+desk.config.widget.type;send();});desk.language=null; // Keyboard language overlays are temporarily disabled.
 deskState();updateNavigation();
     const autoAllowed=()=>!quitting&&!win?.isFocused()&&!navigation.active&&!executing&&!displayBusy&&!displayTasks.paused;
     profiles=new(require('./profiles.cjs').Profiles)(app.getPath('userData'),desk,async(config,automatic)=>{
@@ -202,9 +209,12 @@ deskState();updateNavigation();
     handle('skin-export',async id=>{const item=skinLibrary.find(id),result=await dialog.showSaveDialog(win,{title:'Export library skin',defaultPath:item.name,filters:[{name:'Unreal skin',extensions:['pak']}]});if(!result.canceled&&result.filePath)await fs.promises.copyFile(skinLibrary.file(id),result.filePath);return{cancelled:result.canceled};});
     handle('profile-action',async(action,input={})=>{if(!input||typeof input!=='object')throw Error('Invalid profile request');if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='remove')profiles.remove(input.id);else if(action==='enable'){if(input.enabled)throw Error('Automatic app profiles have been retired. Choose your design in Skin Studio.');profiles.enable(false);}else if(action==='load')await profiles.load(input.id);else throw Error('Unknown profile action');send();return state;});
     handle('pick-profile-app',async()=>{const result=await dialog.showOpenDialog(win,{title:'Choose an app for this profile',properties:['openFile'],filters:[{name:'Windows app',extensions:['exe']}]});return result.canceled?'':path.win32.basename(result.filePaths[0]).toLowerCase();});
-    handle('preview-layout',(config,flags)=>require('./layout-preview.cjs').preview(config,{media:state.media,live:desk.live.state,chat:desk.chat.state,timer:desk.countdown.view(),obs:desk.obsStatus},flags));
-    handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
-    handle('save-desk', async config=>{config={...config,pluginShortcuts:desk.config.pluginShortcuts};leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'auto'};}catch{}desk.save(config);if(config.weather?.location)await desk.live.weather(true);updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
+    handle('preview-layout',(config,flags)=>require('./layout-preview.cjs').preview(config,{media:state.media,youtubeMusic:state.youtubeMusic,youtubeMusicByTarget:state.youtubeMusicByTarget,youtube:state.youtube,live:desk.live.state,chat:desk.chat.state,timer:desk.countdown.view(),obs:desk.obsStatus},flags));
+    handle('youtube-music-target',async target=>{desk.saveMusicTarget(target);youtubeMusic.target=desk.config.youtubeMusicTarget;youtubeMusic.source='';state.youtubeMusic=youtubeMusic.view();state.error='';state.feedback='YouTube Music widget player saved.';send();await refreshYoutubeMusic();return state;});
+    handle('youtube-music-source',async source=>{source=require('./music-source.cjs').validateSource(source);if(source&&!state.youtubeMusic.sources?.some(s=>s.id===source)&&source!==desk.config.youtubeMusicSource)throw Error('Play a track and select an available Windows media source.');desk.save({...desk.config,youtubeMusicSource:source});youtubeMusic.source=source;state.youtubeMusic=youtubeMusic.view();send();await refreshYoutubeMusic();return state;});
+    handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget,widgetOrder:require('./widget-cycle.cjs').includeWidget(desk.config.widgetOrder,widget?.type)};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRotationRevision=(state.widgetRotationRevision||0)+1;state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
+    handle('save-desk', async config=>{config={...config,youtubeMusicTarget:desk.config.youtubeMusicTarget,youtubeMusicSource:desk.config.youtubeMusicSource,pluginShortcuts:desk.config.pluginShortcuts};leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'auto'};}catch{}const weatherChanged=JSON.stringify(config.weather)!==JSON.stringify(desk.config.weather);desk.save(config);if(weatherChanged&&config.weather?.location)void desk.live.weather(true).then(send).catch(()=>{});updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
+    handle('set-slot',async input=>{desk.saveSlot(input);leaveMode();updateNavigation();send();try{await syncAppearance();state.error='';state.feedback=state.strip?'Plugin action saved to keyboard.':'Plugin action saved. Reconnect the keyboard to display it.';}catch(error){state.error='Action saved locally, but the keyboard display could not update. '+error.message;}send();return state;});
     handle('run-slot', index=>runSlot(index));
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});
     handle('pick-app',()=>desk.pick());
@@ -306,7 +316,7 @@ deskState();updateNavigation();
       app.quit(); return;
     }
     if(!process.argv.includes('--verify')){setTimeout(()=>updates.check({background:true}),10000).unref();setInterval(()=>updates.check({background:true}),5*60000).unref();}
-    mediaPoll=new MediaPoll(refresh,()=>state.media);mediaPoll.start();
+    mediaPoll=new MediaPoll(refresh,()=>state.media);mediaPoll.start();youtubeMusicPoll=youtubeMusic;youtubeMusicPoll.start();youtubePoll=new MediaPoll(refreshYoutube,()=>state.youtube);youtubePoll.start();
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(()=>{if(desk.countdown.view().running)send();if(strip.data)strip.data.timer=desk.countdown.view();refreshStrip();},500);
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();await desk.sampleObs();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
@@ -339,11 +349,11 @@ deskState();updateNavigation();
   app.on('before-quit', require('./shutdown.cjs').shutdownGate(async()=>{
     if(unrealDock)await unrealDock.shutdown();
     quitting=true;clearInterval(connectionTimer);clearInterval(automaticSetupTimer);clearInterval(profileTimer);clearInterval(timer);clearInterval(stripTimer);clearInterval(lockTimer);clearInterval(liveTimer);clearTimeout(modeTimeout);
-    globalShortcut.unregisterAll();mediaPoll?.close();
+    globalShortcut.unregisterAll();mediaPoll?.close();youtubeMusicPoll?.close();youtubePoll?.close();
     // A setup transaction may still be saving or finishing its display upload.
     // Keep its resources alive until it exits; quitting guards prevent new init.
     await setupFinished;
-    community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();desk?.close();
+    community?.close();twitch?.close();widgetCycle?.close();monitor.close();media.close();youtubeMusic.close();youtube.close();desk?.close();
     // Drain queued display work and the current transfer before restoring the overlay.
     await displayTasks.run(()=>strip.close());
     await require('./hid.cjs').shutdown();

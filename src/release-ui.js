@@ -22,9 +22,79 @@ bind('setup-device',async()=>{const state=await setupUIAction(()=>window.compani
 bind('restore-device',async()=>{const state=await window.companion.restoreKeyboard();renderRelease(state);announce(state.feedback);});
 function renderRelease(state){if(!state.desk)return;deskCurrent=state;if((state.widgetRevision||0)!==widgetRevision){widgetRevision=state.widgetRevision;draft.widget=structuredClone(state.desk.config.widget);el('widget-type').value=draft.widget.type;el('widget-text').value=draft.widget.text;el('clock-seconds').checked=!!draft.widget.clockSeconds;for(const k of ['x','y','width','height'])el('widget-'+k).value=draft.widget[k];}el('setup-banner').hidden=true;for(const id of ['capture-key','save-layer','save-widget','save-sensors','windows-location','find-city','connect-twitch','disconnect-twitch','disconnect-obs','setup-device','restore-device'])if(!el(id).hasAttribute('aria-busy'))el(id).disabled=false;el('restore-device').disabled=!state.strip||!!state.setupRunning;el('setup-device').disabled=!!state.setupRunning||el('setup-device').hasAttribute('aria-busy');
  if(!releaseLoaded){releaseLoaded=true;const c=state.desk.config;el('layer-match').checked=!c.layerColor;el('layer-color').value=c.layerColor||c.indicator.on;el('widget-type').value=c.widget.type;el('widget-text').value=c.widget.text;el('clock-seconds').checked=!!c.widget.clockSeconds;for(const k of ['x','y','width','height'])el('widget-'+k).value=c.widget[k];el('weather-unit').value=c.weather.unit;el('enable-lhm').checked=c.sensors;}
+ const videoNote=document.getElementById('youtube-video-note');if(videoNote)videoNote.hidden=el('widget-type').value!=='youtube';renderYoutubeMusicTarget(state);
  const live=state.desk.live;el('weather-status').textContent=live.weather?`${live.weather.temperature}${live.weather.unit} · ${live.weather.label} · ${live.weather.location||'Selected location'} · Open-Meteo · Reading ${new Date(live.weather.observedAt||live.weather.updatedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${live.weather.feelsLike!=null?' · Feels like '+live.weather.feelsLike+live.weather.unit:''}${live.weather.humidity!=null?' · Humidity '+live.weather.humidity+'%':''}${live.weather.windKmh!=null?' · Wind '+Math.round(live.weather.unit==='°F'?live.weather.windKmh/1.609344:live.weather.windKmh)+(live.weather.unit==='°F'?' mph':' km/h'):''}${live.weatherError?' · Last reading; refresh unavailable':''}`:live.weatherError;el('sensor-status').textContent=`CPU ${live.cpuLoad??'—'}% · CPU temperature ${live.cpuTemp??'—'}°C · GPU ${live.gpuTemp??'—'}°C. ${live.sensorError}`;el('twitch-status').textContent=state.desk.chat.auth?.status||'Not connected';el('connect-twitch').textContent=state.desk.chat.auth?.pending?'Cancel connection':'Connect with Twitch';if(!el('twitch-channel').value&&state.desk.chat.auth?.channel)el('twitch-channel').value=state.desk.chat.auth.channel;
- const preview=el('widget-preview');const type=el('widget-type').value;const heading=document.createElement('strong'),detail=document.createElement('span');heading.textContent=type==='spotify'?(state.media.title||'Open Spotify'):type==='weather'?(live.weather?live.weather.temperature+live.weather.unit:'Choose location'):type==='cpu'?`${live.cpuTemp??live.cpuLoad??'—'}${live.cpuTemp!=null?'°C':'%'}`:type==='gpu'?`${live.gpuTemp??'—'}°C`:type==='timer'?formatCountdown(state.desk.timer?.remaining??1500):type==='obs'?(state.desk.obsStatus?.streaming?'ON AIR':state.desk.obsStatus?.recording?'RECORDING':state.desk.obsStatus?.connected?'OBS READY':'Connect OBS'):type==='twitch'?'TWITCH CHAT':type==='text'?el('widget-text').value:type==='off'?'Widget off':new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',...(el('clock-seconds').checked?{second:'2-digit'}:{})});detail.textContent=type==='spotify'?(state.media.artist||''):type==='twitch'?state.desk.chat.message:'Detail display preview';const previewKey=JSON.stringify([type,heading.textContent,detail.textContent,type==='spotify'?state.media.art:'',type==='weather'?live.weather?.icon:'']);if(!window.widgetPreviewRendered&&preview.dataset.previewKey!==previewKey){preview.dataset.previewKey=previewKey;preview.replaceChildren(heading,detail);if(type==='weather'){const weather=document.createElement('span');weather.className='weather-motion '+(live.weather?.icon||'cloud');weather.setAttribute('aria-hidden','true');weather.textContent=({moon:'☾ ✦', 'night-cloud':'☾ ☁',partly:'☀ ☁',fog:'≋',sun:'☀',cloud:'☁',rain:'☁',snow:'☁',storm:'ϟ'})[live.weather?.icon]||'☁';preview.prepend(weather);}if(type==='spotify'&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(state.media.art||'')){const cover=document.createElement('img');cover.src=state.media.art;cover.alt='Album cover';cover.className='widget-art';preview.prepend(cover);}}
+ const preview=el('widget-preview');const type=el('widget-type').value;const musicWidget=['spotify','youtubemusic','youtube'].includes(type),music=(type==='youtube'?state.youtube:type==='youtubemusic'?state.youtubeMusic:state.media)||{};const heading=document.createElement('strong'),detail=document.createElement('span');heading.textContent=musicWidget?(music.title||(type==='youtube'?'Play YouTube':type!=='spotify'?'YouTube Music':'Open Spotify')):type==='weather'?(live.weather?live.weather.temperature+live.weather.unit:'Choose location'):type==='cpu'?`${live.cpuTemp??live.cpuLoad??'—'}${live.cpuTemp!=null?'°C':'%'}`:type==='gpu'?`${live.gpuTemp??'—'}°C`:type==='timer'?formatCountdown(state.desk.timer?.remaining??1500):type==='obs'?(state.desk.obsStatus?.streaming?'ON AIR':state.desk.obsStatus?.recording?'RECORDING':state.desk.obsStatus?.connected?'OBS READY':'Connect OBS'):type==='twitch'?'TWITCH CHAT':type==='text'?el('widget-text').value:type==='off'?'Widget off':new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',...(el('clock-seconds').checked?{second:'2-digit'}:{})});detail.textContent=musicWidget?(music.artist||''):type==='twitch'?state.desk.chat.message:'Detail display preview';const previewKey=JSON.stringify([type,heading.textContent,detail.textContent,musicWidget?music.art:'',type==='weather'?live.weather?.icon:'']);if(!window.widgetPreviewRendered&&preview.dataset.previewKey!==previewKey){preview.dataset.previewKey=previewKey;preview.replaceChildren(heading,detail);if(type==='weather'){const weather=document.createElement('span');weather.className='weather-motion '+(live.weather?.icon||'cloud');weather.setAttribute('aria-hidden','true');weather.textContent=({moon:'☾ ✦', 'night-cloud':'☾ ☁',partly:'☀ ☁',fog:'≋',sun:'☀',cloud:'☁',rain:'☁',snow:'☁',storm:'ϟ'})[live.weather?.icon]||'☁';preview.prepend(weather);}if(musicWidget&&/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(music.art||'')){const cover=document.createElement('img');cover.src=music.art;cover.alt='Album cover';cover.className='widget-art';preview.prepend(cover);}}
 }
-el('widget-type').addEventListener('change',()=>renderRelease(deskCurrent));el('widget-text').addEventListener('input',()=>{if(el('widget-text').value.trim())el('widget-type').value='text';renderRelease(deskCurrent);});
+el('widget-type').addEventListener('change',()=>{const type=el('widget-type').value;if(type==='text'){renderRelease(deskCurrent);return;}task(el('widget-type'),async()=>{const state=await window.companion.saveWidget({...deskCurrent.desk.config.widget,type});draft.widget=structuredClone(state.desk.config.widget);draft.widgetOrder=structuredClone(state.desk.config.widgetOrder);renderRelease(state);renderFeatures(state);announce(state.error||(state.feedback+(state.desk.config.widgetOrder.includes(type)?' Included in L1 + / rotation.':'')),!!state.error);});});el('widget-text').addEventListener('input',()=>{if(el('widget-text').value.trim())el('widget-type').value='text';renderRelease(deskCurrent);});
 window.companion.subscribe(renderRelease);window.companion.getState().then(renderRelease).catch(e=>announce(e.message,true));
 
+
+// Plugin positions own their player; the fixed artwork widget has its own choice.
+let youtubeTargetPending=false;
+const youtubeTargetHelp={
+ desktop:'Use the installed YouTube Music desktop player.',
+ web:'Use browser playback. Your browser chooses the active media tab, including other videos.'
+};
+function renderYoutubeMusicTarget(state=deskCurrent){
+ if(!state?.desk?.config)return;
+ const value=state.desk.config.youtubeMusicTarget==='web'?'web':'desktop';
+ if(draft)draft.youtubeMusicTarget=value;
+ el('youtube-music-plugin-target').hidden=selectedPlugin!=='youtubemusic';
+ el('youtube-music-widget-target').hidden=el('widget-type').value!=='youtubemusic';
+ for(const button of document.querySelectorAll('[data-youtube-music-target]')){
+  const plugin=button.dataset.youtubeMusicScope==='plugin',pending=plugin?youtubeSlotTargetPending.has(selectedPosition):youtubeTargetPending;
+  button.setAttribute('aria-pressed',String(button.dataset.youtubeMusicTarget===(plugin?selectedMusicTarget:value)));
+  button.disabled=plugin?!window.companion.setSlot:youtubeTargetPending||!window.companion.youtubeMusicTarget;
+  if(pending)button.setAttribute('aria-busy','true');else button.removeAttribute('aria-busy');
+ }
+ for(const note of document.querySelectorAll('[data-youtube-music-target-help]')){
+  const plugin=note.dataset.youtubeMusicScope==='plugin';
+  note.textContent=youtubeTargetHelp[plugin?selectedMusicTarget:value]+' '+(plugin?'Saves this position only; other positions keep their own player.':'Used by the fixed YouTube Music widget. Follow selected plugin uses that position’s player.');
+ }
+}
+async function saveYoutubeMusicTarget(value){
+ if(youtubeTargetPending||!Object.hasOwn(youtubeTargetHelp,value))return;
+ youtubeTargetPending=true;renderYoutubeMusicTarget();announce('Saving YouTube Music widget player…');
+ try{
+  if(!window.companion.youtubeMusicTarget)throw Error('Music player selection is available in the desktop Companion.');
+  const state=await window.companion.youtubeMusicTarget(value);
+  if(!state?.desk?.config)throw Error('The player setting could not be confirmed. Try again.');
+  // Only merge this setting. Slot actions and other page drafts can change while detection runs.
+  const saved=state.desk.config;
+  draft.youtubeMusicTarget=saved.youtubeMusicTarget==='web'?'web':'desktop';draft.youtubeMusicSource=saved.youtubeMusicSource||'';
+  deskCurrent={...deskCurrent,youtubeMusic:state.youtubeMusic||deskCurrent.youtubeMusic,desk:{...deskCurrent.desk,config:{...deskCurrent.desk.config,youtubeMusicTarget:draft.youtubeMusicTarget,youtubeMusicSource:draft.youtubeMusicSource}}};
+  youtubeSourceDirty=false;youtubeSourcesKey='';renderYoutubeMusic(deskCurrent);
+  announce(state.error||state.feedback||'YouTube Music widget player saved.',!!state.error);
+ }catch(error){announce(String(error?.message||error).replace(/^Error invoking remote method '[^']+': (?:Error: )?/,''),true);}
+ finally{youtubeTargetPending=false;renderYoutubeMusicTarget();}
+}
+for(const button of document.querySelectorAll('[data-youtube-music-target]'))button.addEventListener('click',()=>button.dataset.youtubeMusicScope==='plugin'?saveYoutubeMusicSlotTarget(button.dataset.youtubeMusicTarget):saveYoutubeMusicTarget(button.dataset.youtubeMusicTarget));
+
+// Keep the optional advanced source selection stable during live polls.
+let youtubeSourcesKey='',youtubeSourceDirty=false;
+el('youtube-music-source').addEventListener('change',()=>{youtubeSourceDirty=true;});
+bind('save-youtube-music-source',async()=>{
+ if(!window.companion.setYoutubeMusicSource)throw Error('Music connections are available in the desktop Companion.');
+ const state=await window.companion.setYoutubeMusicSource(el('youtube-music-source').value);
+ youtubeSourceDirty=false;youtubeSourcesKey='';draft.youtubeMusicSource=state.desk.config.youtubeMusicSource;renderYoutubeMusic(state);
+ announce(state.error||'Music source saved for the selected YouTube Music player.',!!state.error);
+});
+function renderYoutubeMusic(state){
+ if(!state.desk)return;
+ renderYoutubeMusicTarget(state);
+ const music=state.youtubeMusic||{},saved=state.desk.config.youtubeMusicSource||'',select=el('youtube-music-source');
+ const sources=[...new Map((music.sources||[]).filter(s=>s&&typeof s.id==='string').map(s=>[s.id,s])).values()];
+ const key=JSON.stringify([saved,sources]);
+ if(key!==youtubeSourcesKey&&document.activeElement!==select){
+  const selected=youtubeSourceDirty?select.value:saved;youtubeSourcesKey=key;
+  select.replaceChildren(option('','Use selected player mode'));
+  for(const source of sources)select.append(option(source.id,(source.title?source.title+' · ':'')+source.id));
+  if(selected&&!sources.some(s=>s.id===selected))select.append(option(selected,'Saved source · currently unavailable'));
+  select.value=selected;
+ }
+ const status=el('youtube-music-status');status.textContent=music.available?'Connected':'No playback session';status.classList.toggle('connected',!!music.available);
+ el('youtube-music-detail').textContent=music.available?[music.title||'Untitled track',music.artist,music.status,music.source].filter(Boolean).join(' · '):(music.message||'YouTube Music connects automatically when the selected player exposes its playback session.');
+ const save=el('save-youtube-music-source');if(!save.hasAttribute('aria-busy'))save.disabled=!window.companion.setYoutubeMusicSource;
+}
+window.companion.subscribe(renderYoutubeMusic);window.companion.getState().then(renderYoutubeMusic).catch(()=>{});

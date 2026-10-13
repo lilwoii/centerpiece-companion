@@ -125,3 +125,87 @@ test('animated weather never throttles an uncached navigation highlight',async()
  assert.equal(x.active,cache.cache.get('nav:fourth'));
  assert.equal(cache.desired,'fourth');assert.equal(cache.error,'');
 });
+
+function musicFixture(){
+ let now=10000,id=0;const timers=new Map(),device={active:1,uploads:[],selections:[],concurrent:0,maxConcurrent:0};
+ const cache=new DisplayCache('.',(selected,config,locks,data)=>{
+  const slot=config.slots[data.selected||0],media=config.widget.type==='follow'?data.youtubeMusicByTarget?.[slot.mediaTarget||config.youtubeMusicTarget]:data.youtubeMusic;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${selected}/${locks.caps}/${locks.layer}/${media?.title}/${media?.art}/${media?.position}</title></svg>`;
+ },{now:()=>now,setTimeout:(callback,delay)=>{const token=++id;timers.set(token,{at:now+delay,callback});return token;},clearTimeout:token=>timers.delete(token)});
+ cache.config={widget:{type:'youtubemusic'},youtubeMusicTarget:'desktop',weatherMotion:true,slots:[{plugin:'weather'},{plugin:'youtubemusic',mediaTarget:'web'}]};
+ cache.manifest={originalSlot:1};
+ cache.som={uploadOverlay:async(slot,png,name,verify)=>{
+  assert.notEqual(slot,device.active,'active overlay is never overwritten');
+  assert.ok(cache.pool.includes(slot));device.concurrent++;device.maxConcurrent=Math.max(device.maxConcurrent,device.concurrent);
+  device.uploads.push({slot,verify});try{await device.hook?.();device.active=slot;}finally{device.concurrent--;}
+ },selectSlot:slot=>{assert.notEqual(slot,device.active,'a selected frame must not toggle off');device.selections.push(slot);device.active=slot;},activate:async slot=>{device.active=slot;},close(){}};
+ function set(title='First',art='cover-one',position=0,more={}){cache.setData({youtubeMusic:{available:true,source:'desktop',title,artist:'Artist',art,position},...more});}
+ async function advance(ms){now+=ms;for(const [token,timer]of [...timers])if(timer.at<=now){timers.delete(token);timer.callback();}await settled(cache);}
+ set();return {cache,device,set,advance,timers};
+}
+
+test('new music metadata and artwork bypass the animation delay with one bounded pending upload',async()=>{
+ const {cache,device,set,advance,timers}=musicFixture();await cache.refreshLive();
+ await advance(300);set('Second','cover-two');await cache.refreshLive();
+ assert.equal(device.uploads.length,2,'new title/art does not wait for the 500ms animation deadline');
+ await advance(50);set('Second','cover-two-updated');await cache.refreshLive();
+ assert.equal(device.uploads.length,2,'rapid artwork changes keep the content transfer floor');assert.equal(timers.size,1);
+ await advance(199);assert.equal(device.uploads.length,2);await advance(1);
+ assert.equal(device.uploads.length,3,'deferred cover is delivered without another polling tick');
+ assert.match(cache.frames.get('idle:0'),/Second\/cover-two-updated/);
+ assert.ok(device.uploads.every(upload=>upload.verify===false),'live writes preserve the normal acknowledged upload path');assert.equal(device.maxConcurrent,1);
+});
+
+test('music time samples do not bypass the animation throttle and coalesce to the latest position',async()=>{
+ const {cache,device,set,advance,timers}=musicFixture();await cache.refreshLive();
+ for(let i=1;i<=20;i++){await advance(10);set('First','cover-one',i);await cache.refreshLive();}
+ assert.equal(device.uploads.length,1);assert.equal(timers.size,1,'polling creates only one deadline');
+ await advance(299);assert.equal(device.uploads.length,1);await advance(1);
+ assert.equal(device.uploads.length,2);assert.match(cache.frames.get('idle:0'),/cover-one\/20/);assert.equal(timers.size,0);
+});
+
+test('music changes during an upload preserve only the latest content and latest Caps/navigation state',async()=>{
+ for(const pool of [[2,3,4,5,6,7,8,9,10],[9,10]]){
+  const {cache,device,set,advance}=musicFixture();cache.pool=pool;await cache.apply(cache.config,{caps:false});device.uploads.length=0;device.selections.length=0;
+  let release,entered;const started=new Promise(resolve=>{entered=resolve;});device.hook=()=>{device.hook=null;entered();return new Promise(resolve=>{release=resolve;});};
+  set('Second','cover-two');const writing=cache.refreshLive();await started;
+  set('Third','cover-three');cache.show({active:true,id:'toggle'});await cache.refreshLive();
+  set('Latest','cover-latest');cache.setLocks({caps:true});cache.setLayer(true);cache.show({active:true,id:'fourth'});
+  release();await writing;await advance(250);
+  assert.equal(device.uploads.length,2,'intermediate song and navigation changes are coalesced');
+  assert.equal(device.maxConcurrent,1);assert.deepEqual(device.selections,[],'old song frames are never selected while waiting for current artwork');
+  assert.equal(device.active,cache.cache.get('nav:fourth'));assert.match(cache.frames.get('nav:fourth'),/fourth\/true\/false\/Latest\/cover-latest/);
+  cache.show({active:false});await advance(250);
+  assert.equal(device.active,cache.cache.get('layer:1'));assert.match(cache.frames.get('layer:1'),/idle\/true\/true\/Latest\/cover-latest/);
+  assert.equal(cache.error,'');
+ }
+});
+
+test('only the displayed music player can request content-priority uploads including Follow targets',async()=>{
+ const {cache,device,set,advance,timers}=musicFixture();
+ const web={available:true,source:'web',title:'Web-first',artist:'Artist',art:'web-cover',position:0};
+ set('First','cover-one',0,{youtubeMusicByTarget:{web},selected:1});await cache.refreshLive();
+ set('First','cover-one',1,{youtubeMusicByTarget:{web:{...web,title:'Web-new'}},selected:1});await advance(300);await cache.refreshLive();
+ assert.equal(device.uploads.length,1,'hidden Web metadata does not promote Desktop progress');assert.equal(timers.size,1);
+ cache.setWidget({type:'follow'});await cache.refreshLive();assert.equal(device.uploads.length,2);assert.match(cache.frames.get('idle:0'),/Web-new/);
+ set('Desktop-new','desktop-new-cover',1,{youtubeMusicByTarget:{web:{...web,title:'Web-new',position:1}},selected:1});await advance(300);await cache.refreshLive();
+ assert.equal(device.uploads.length,2,'hidden Desktop metadata does not promote Follow-Web progress');
+ set('Desktop-new','desktop-new-cover',1,{youtubeMusicByTarget:{web:{...web,title:'Web-latest',position:1}},selected:1});await cache.refreshLive();
+ assert.equal(device.uploads.length,3);assert.match(cache.frames.get('idle:0'),/Web-latest/);
+});
+
+test('a queued music update waits for exclusive display tasks and is canceled on disconnect',async()=>{
+ for(const detached of [false,true]){
+  const {cache,device,set,advance,timers}=musicFixture();await cache.refreshLive();set('Next','next-cover');await cache.refreshLive();assert.equal(timers.size,1);
+  cache.tasksPaused=true;await advance(300);assert.equal(device.uploads.length,1,'no scheduled write during another display task');
+  if(detached)cache.detach();cache.tasksPaused=false;cache.displayReady();await settled(cache);
+  assert.equal(device.uploads.length,detached?1:2);assert.equal(timers.size,0);
+ }
+});
+
+test('metadata changes outside visible labels do not delay selecting an identical cached highlight',async()=>{
+ const {cache,device,set}=musicFixture();cache.render=(selected)=>`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${selected}</title></svg>`;
+ await cache.apply(cache.config,{caps:false});const before=device.uploads.length;
+ set('Changed metadata with the same rendered frame');cache.show({active:true,id:'toggle'});await settled(cache);
+ assert.equal(device.uploads.length,before);assert.equal(device.active,cache.cache.get('nav:toggle'));
+});

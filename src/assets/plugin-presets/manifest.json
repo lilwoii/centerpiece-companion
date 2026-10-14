@@ -1,0 +1,2908 @@
+[
+  {
+    "id": "community-duck-photo",
+    "name": "Swinging duck",
+    "category": "Community",
+    "src": "assets/plugin-presets/community-duck-photo.png",
+    "author": "User-supplied image",
+    "license": "User-supplied; original rights retained",
+    "source": "Provided by project owner",
+    "modification": "Resized and cropped to 256 × 256"
+  },
+  {
+    "id": "community-pond-duck",
+    "name": "Pond duck · still image",
+    "category": "Community",
+    "src": "assets/plugin-presets/community-pond-duck.png",
+    "author": "User-supplied image",
+    "license": "User-supplied; original rights retained",
+    "source": "Provided by project owner",
+    "modification": "First GIF frame resized to 256 × 256"
+  },
+  {
+    "id": "illustrated-rocket-launch-midnight",
+    "name": "Rocket launch · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-rocket-launch-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ringed-planet-midnight",
+    "name": "Ringed planet · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-ringed-planet-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lunar-rover-midnight",
+    "name": "Lunar rover · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-lunar-rover-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-astronaut-midnight",
+    "name": "Astronaut · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-astronaut-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-spiral-galaxy-midnight",
+    "name": "Spiral galaxy · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-spiral-galaxy-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-satellite-midnight",
+    "name": "Satellite · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-satellite-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-moon-landing-midnight",
+    "name": "Moon landing · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-moon-landing-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-meteor-shower-midnight",
+    "name": "Meteor shower · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-meteor-shower-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-alien-planet-midnight",
+    "name": "Alien planet · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-alien-planet-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-space-station-midnight",
+    "name": "Space station · Midnight",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-space-station-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rocket-launch-aurora",
+    "name": "Rocket launch · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-rocket-launch-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ringed-planet-aurora",
+    "name": "Ringed planet · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-ringed-planet-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lunar-rover-aurora",
+    "name": "Lunar rover · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-lunar-rover-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-astronaut-aurora",
+    "name": "Astronaut · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-astronaut-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-spiral-galaxy-aurora",
+    "name": "Spiral galaxy · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-spiral-galaxy-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-satellite-aurora",
+    "name": "Satellite · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-satellite-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-moon-landing-aurora",
+    "name": "Moon landing · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-moon-landing-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-meteor-shower-aurora",
+    "name": "Meteor shower · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-meteor-shower-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-alien-planet-aurora",
+    "name": "Alien planet · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-alien-planet-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-space-station-aurora",
+    "name": "Space station · Aurora",
+    "category": "Space",
+    "src": "assets/plugin-presets/illustrated-space-station-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-harvest-pumpkin-midnight",
+    "name": "Harvest pumpkin · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-harvest-pumpkin-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-jack-o-lantern-midnight",
+    "name": "Jack-o-lantern · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-jack-o-lantern-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-christmas-tree-midnight",
+    "name": "Christmas tree · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-christmas-tree-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-snow-globe-midnight",
+    "name": "Snow globe · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-snow-globe-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-gift-box-midnight",
+    "name": "Gift box · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-gift-box-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-festive-wreath-midnight",
+    "name": "Festive wreath · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-festive-wreath-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-winter-cabin-midnight",
+    "name": "Winter cabin · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-winter-cabin-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-candy-cane-midnight",
+    "name": "Candy cane · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-candy-cane-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-fireworks-midnight",
+    "name": "Fireworks · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-fireworks-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-haunted-house-midnight",
+    "name": "Haunted house · Midnight",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-haunted-house-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-alpine-sunrise-midnight",
+    "name": "Alpine sunrise · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-alpine-sunrise-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-waterfall-midnight",
+    "name": "Waterfall · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-waterfall-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-autumn-forest-midnight",
+    "name": "Autumn forest · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-autumn-forest-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-desert-dunes-midnight",
+    "name": "Desert dunes · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-desert-dunes-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cherry-blossom-midnight",
+    "name": "Cherry blossom · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-cherry-blossom-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-northern-lights-midnight",
+    "name": "Northern lights · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-northern-lights-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-volcano-midnight",
+    "name": "Volcano · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-volcano-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mushroom-grove-midnight",
+    "name": "Mushroom grove · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-mushroom-grove-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rainy-mountain-midnight",
+    "name": "Rainy mountain · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-rainy-mountain-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sunflower-field-midnight",
+    "name": "Sunflower field · Midnight",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-sunflower-field-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lighthouse-midnight",
+    "name": "Lighthouse · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-lighthouse-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sailing-ship-midnight",
+    "name": "Sailing ship · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-sailing-ship-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-coral-reef-midnight",
+    "name": "Coral reef · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-coral-reef-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-deep-sea-submarine-midnight",
+    "name": "Deep sea submarine · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-deep-sea-submarine-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sea-turtle-midnight",
+    "name": "Sea turtle · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-sea-turtle-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-jellyfish-midnight",
+    "name": "Jellyfish · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-jellyfish-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-giant-wave-midnight",
+    "name": "Giant wave · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-giant-wave-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-treasure-chest-midnight",
+    "name": "Treasure chest · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-treasure-chest-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-octopus-midnight",
+    "name": "Octopus · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-octopus-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-beach-sunset-midnight",
+    "name": "Beach sunset · Midnight",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-beach-sunset-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-golden-koi-midnight",
+    "name": "Golden koi · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-golden-koi-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-scarlet-betta-midnight",
+    "name": "Scarlet betta · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-scarlet-betta-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-clownfish-midnight",
+    "name": "Clownfish · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-clownfish-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-blue-tang-midnight",
+    "name": "Blue tang · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-blue-tang-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lionfish-midnight",
+    "name": "Lionfish · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-lionfish-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rainbow-trout-midnight",
+    "name": "Rainbow trout · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-rainbow-trout-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-angelfish-midnight",
+    "name": "Angelfish · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-angelfish-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pufferfish-midnight",
+    "name": "Pufferfish · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-pufferfish-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hammerhead-shark-midnight",
+    "name": "Hammerhead shark · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-hammerhead-shark-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-seahorse-midnight",
+    "name": "Seahorse · Midnight",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-seahorse-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-red-supercar-midnight",
+    "name": "Red supercar · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-red-supercar-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-vintage-coupe-midnight",
+    "name": "Vintage coupe · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-vintage-coupe-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rally-car-midnight",
+    "name": "Rally car · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-rally-car-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cyber-roadster-midnight",
+    "name": "Cyber roadster · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-cyber-roadster-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-desert-buggy-midnight",
+    "name": "Desert buggy · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-desert-buggy-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-monster-truck-midnight",
+    "name": "Monster truck · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-monster-truck-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-formula-racer-midnight",
+    "name": "Formula racer · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-formula-racer-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-camper-van-midnight",
+    "name": "Camper van · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-camper-van-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-police-cruiser-midnight",
+    "name": "Police cruiser · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-police-cruiser-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ice-blue-coupe-midnight",
+    "name": "Ice blue coupe · Midnight",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-ice-blue-coupe-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ufo-abduction-midnight",
+    "name": "UFO abduction · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-ufo-abduction-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cat-in-space-midnight",
+    "name": "Cat in space · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-cat-in-space-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-skateboarding-dog-midnight",
+    "name": "Skateboarding dog · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-skateboarding-dog-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-robot-chef-midnight",
+    "name": "Robot chef · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-robot-chef-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sunglasses-pineapple-midnight",
+    "name": "Sunglasses pineapple · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sunglasses-pineapple-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-disco-duck-midnight",
+    "name": "Disco duck · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-disco-duck-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-flying-pig-midnight",
+    "name": "Flying pig · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-flying-pig-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sleeping-dragon-midnight",
+    "name": "Sleeping dragon · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sleeping-dragon-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-wizard-frog-midnight",
+    "name": "Wizard frog · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-wizard-frog-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sneaker-planet-midnight",
+    "name": "Sneaker planet · Midnight",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sneaker-planet-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-fox-in-snow-midnight",
+    "name": "Fox in snow · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-fox-in-snow-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-moon-wolf-midnight",
+    "name": "Moon wolf · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-moon-wolf-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-black-cat-midnight",
+    "name": "Black cat · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-black-cat-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-red-panda-midnight",
+    "name": "Red panda · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-red-panda-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-polar-bear-midnight",
+    "name": "Polar bear · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-polar-bear-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-owl-at-dusk-midnight",
+    "name": "Owl at dusk · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-owl-at-dusk-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hummingbird-midnight",
+    "name": "Hummingbird · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-hummingbird-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-butterfly-garden-midnight",
+    "name": "Butterfly garden · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-butterfly-garden-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mountain-eagle-midnight",
+    "name": "Mountain eagle · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-mountain-eagle-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-otter-pool-midnight",
+    "name": "Otter pool · Midnight",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-otter-pool-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-strawberry-cake-midnight",
+    "name": "Strawberry cake · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-strawberry-cake-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sushi-plate-midnight",
+    "name": "Sushi plate · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-sushi-plate-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ramen-bowl-midnight",
+    "name": "Ramen bowl · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-ramen-bowl-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-coffee-steam-midnight",
+    "name": "Coffee steam · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-coffee-steam-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-neon-doughnut-midnight",
+    "name": "Neon doughnut · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-neon-doughnut-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ice-cream-sundae-midnight",
+    "name": "Ice cream sundae · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-ice-cream-sundae-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pizza-slice-midnight",
+    "name": "Pizza slice · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-pizza-slice-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pancake-stack-midnight",
+    "name": "Pancake stack · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-pancake-stack-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-bubble-tea-midnight",
+    "name": "Bubble tea · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-bubble-tea-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-watermelon-splash-midnight",
+    "name": "Watermelon splash · Midnight",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-watermelon-splash-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mountain-tent-midnight",
+    "name": "Mountain tent · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-mountain-tent-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hot-air-balloon-midnight",
+    "name": "Hot air balloon · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-hot-air-balloon-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pirate-island-midnight",
+    "name": "Pirate island · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-pirate-island-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ancient-temple-midnight",
+    "name": "Ancient temple · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-ancient-temple-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-steam-train-midnight",
+    "name": "Steam train · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-steam-train-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-castle-at-night-midnight",
+    "name": "Castle at night · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-castle-at-night-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-airplane-sunset-midnight",
+    "name": "Airplane sunset · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-airplane-sunset-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-bicycle-trail-midnight",
+    "name": "Bicycle trail · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-bicycle-trail-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-underwater-ruins-midnight",
+    "name": "Underwater ruins · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-underwater-ruins-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-crystal-cave-midnight",
+    "name": "Crystal cave · Midnight",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-crystal-cave-midnight.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-harvest-pumpkin-aurora",
+    "name": "Harvest pumpkin · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-harvest-pumpkin-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-jack-o-lantern-aurora",
+    "name": "Jack-o-lantern · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-jack-o-lantern-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-christmas-tree-aurora",
+    "name": "Christmas tree · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-christmas-tree-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-snow-globe-aurora",
+    "name": "Snow globe · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-snow-globe-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-gift-box-aurora",
+    "name": "Gift box · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-gift-box-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-festive-wreath-aurora",
+    "name": "Festive wreath · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-festive-wreath-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-winter-cabin-aurora",
+    "name": "Winter cabin · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-winter-cabin-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-candy-cane-aurora",
+    "name": "Candy cane · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-candy-cane-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-fireworks-aurora",
+    "name": "Fireworks · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-fireworks-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-haunted-house-aurora",
+    "name": "Haunted house · Aurora",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/illustrated-haunted-house-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-alpine-sunrise-aurora",
+    "name": "Alpine sunrise · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-alpine-sunrise-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-waterfall-aurora",
+    "name": "Waterfall · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-waterfall-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-autumn-forest-aurora",
+    "name": "Autumn forest · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-autumn-forest-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-desert-dunes-aurora",
+    "name": "Desert dunes · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-desert-dunes-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cherry-blossom-aurora",
+    "name": "Cherry blossom · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-cherry-blossom-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-northern-lights-aurora",
+    "name": "Northern lights · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-northern-lights-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-volcano-aurora",
+    "name": "Volcano · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-volcano-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mushroom-grove-aurora",
+    "name": "Mushroom grove · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-mushroom-grove-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rainy-mountain-aurora",
+    "name": "Rainy mountain · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-rainy-mountain-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sunflower-field-aurora",
+    "name": "Sunflower field · Aurora",
+    "category": "Nature",
+    "src": "assets/plugin-presets/illustrated-sunflower-field-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lighthouse-aurora",
+    "name": "Lighthouse · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-lighthouse-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sailing-ship-aurora",
+    "name": "Sailing ship · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-sailing-ship-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-coral-reef-aurora",
+    "name": "Coral reef · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-coral-reef-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-deep-sea-submarine-aurora",
+    "name": "Deep sea submarine · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-deep-sea-submarine-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sea-turtle-aurora",
+    "name": "Sea turtle · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-sea-turtle-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-jellyfish-aurora",
+    "name": "Jellyfish · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-jellyfish-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-giant-wave-aurora",
+    "name": "Giant wave · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-giant-wave-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-treasure-chest-aurora",
+    "name": "Treasure chest · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-treasure-chest-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-octopus-aurora",
+    "name": "Octopus · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-octopus-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-beach-sunset-aurora",
+    "name": "Beach sunset · Aurora",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/illustrated-beach-sunset-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-golden-koi-aurora",
+    "name": "Golden koi · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-golden-koi-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-scarlet-betta-aurora",
+    "name": "Scarlet betta · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-scarlet-betta-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-clownfish-aurora",
+    "name": "Clownfish · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-clownfish-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-blue-tang-aurora",
+    "name": "Blue tang · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-blue-tang-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-lionfish-aurora",
+    "name": "Lionfish · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-lionfish-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rainbow-trout-aurora",
+    "name": "Rainbow trout · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-rainbow-trout-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-angelfish-aurora",
+    "name": "Angelfish · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-angelfish-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pufferfish-aurora",
+    "name": "Pufferfish · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-pufferfish-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hammerhead-shark-aurora",
+    "name": "Hammerhead shark · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-hammerhead-shark-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-seahorse-aurora",
+    "name": "Seahorse · Aurora",
+    "category": "Fish",
+    "src": "assets/plugin-presets/illustrated-seahorse-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-red-supercar-aurora",
+    "name": "Red supercar · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-red-supercar-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-vintage-coupe-aurora",
+    "name": "Vintage coupe · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-vintage-coupe-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-rally-car-aurora",
+    "name": "Rally car · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-rally-car-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cyber-roadster-aurora",
+    "name": "Cyber roadster · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-cyber-roadster-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-desert-buggy-aurora",
+    "name": "Desert buggy · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-desert-buggy-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-monster-truck-aurora",
+    "name": "Monster truck · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-monster-truck-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-formula-racer-aurora",
+    "name": "Formula racer · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-formula-racer-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-camper-van-aurora",
+    "name": "Camper van · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-camper-van-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-police-cruiser-aurora",
+    "name": "Police cruiser · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-police-cruiser-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ice-blue-coupe-aurora",
+    "name": "Ice blue coupe · Aurora",
+    "category": "Cars",
+    "src": "assets/plugin-presets/illustrated-ice-blue-coupe-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ufo-abduction-aurora",
+    "name": "UFO abduction · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-ufo-abduction-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-cat-in-space-aurora",
+    "name": "Cat in space · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-cat-in-space-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-skateboarding-dog-aurora",
+    "name": "Skateboarding dog · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-skateboarding-dog-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-robot-chef-aurora",
+    "name": "Robot chef · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-robot-chef-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sunglasses-pineapple-aurora",
+    "name": "Sunglasses pineapple · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sunglasses-pineapple-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-disco-duck-aurora",
+    "name": "Disco duck · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-disco-duck-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-flying-pig-aurora",
+    "name": "Flying pig · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-flying-pig-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sleeping-dragon-aurora",
+    "name": "Sleeping dragon · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sleeping-dragon-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-wizard-frog-aurora",
+    "name": "Wizard frog · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-wizard-frog-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sneaker-planet-aurora",
+    "name": "Sneaker planet · Aurora",
+    "category": "Playful",
+    "src": "assets/plugin-presets/illustrated-sneaker-planet-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-fox-in-snow-aurora",
+    "name": "Fox in snow · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-fox-in-snow-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-moon-wolf-aurora",
+    "name": "Moon wolf · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-moon-wolf-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-black-cat-aurora",
+    "name": "Black cat · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-black-cat-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-red-panda-aurora",
+    "name": "Red panda · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-red-panda-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-polar-bear-aurora",
+    "name": "Polar bear · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-polar-bear-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-owl-at-dusk-aurora",
+    "name": "Owl at dusk · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-owl-at-dusk-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hummingbird-aurora",
+    "name": "Hummingbird · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-hummingbird-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-butterfly-garden-aurora",
+    "name": "Butterfly garden · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-butterfly-garden-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mountain-eagle-aurora",
+    "name": "Mountain eagle · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-mountain-eagle-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-otter-pool-aurora",
+    "name": "Otter pool · Aurora",
+    "category": "Animals",
+    "src": "assets/plugin-presets/illustrated-otter-pool-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-strawberry-cake-aurora",
+    "name": "Strawberry cake · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-strawberry-cake-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-sushi-plate-aurora",
+    "name": "Sushi plate · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-sushi-plate-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ramen-bowl-aurora",
+    "name": "Ramen bowl · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-ramen-bowl-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-coffee-steam-aurora",
+    "name": "Coffee steam · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-coffee-steam-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-neon-doughnut-aurora",
+    "name": "Neon doughnut · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-neon-doughnut-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ice-cream-sundae-aurora",
+    "name": "Ice cream sundae · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-ice-cream-sundae-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pizza-slice-aurora",
+    "name": "Pizza slice · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-pizza-slice-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pancake-stack-aurora",
+    "name": "Pancake stack · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-pancake-stack-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-bubble-tea-aurora",
+    "name": "Bubble tea · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-bubble-tea-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-watermelon-splash-aurora",
+    "name": "Watermelon splash · Aurora",
+    "category": "Food",
+    "src": "assets/plugin-presets/illustrated-watermelon-splash-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-mountain-tent-aurora",
+    "name": "Mountain tent · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-mountain-tent-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-hot-air-balloon-aurora",
+    "name": "Hot air balloon · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-hot-air-balloon-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-pirate-island-aurora",
+    "name": "Pirate island · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-pirate-island-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-ancient-temple-aurora",
+    "name": "Ancient temple · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-ancient-temple-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-steam-train-aurora",
+    "name": "Steam train · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-steam-train-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-castle-at-night-aurora",
+    "name": "Castle at night · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-castle-at-night-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-airplane-sunset-aurora",
+    "name": "Airplane sunset · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-airplane-sunset-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-bicycle-trail-aurora",
+    "name": "Bicycle trail · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-bicycle-trail-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-underwater-ruins-aurora",
+    "name": "Underwater ruins · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-underwater-ruins-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "illustrated-crystal-cave-aurora",
+    "name": "Crystal cave · Aurora",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/illustrated-crystal-cave-aurora.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "photo-37098738",
+    "name": "Cucurbita pepo Halloween pumpkin - Jack o' lantern graveyard",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-37098738.png",
+    "author": "Carly Lesser & Art Drauglis from Washington, DC",
+    "source": "https://commons.wikimedia.org/wiki/File:Cucurbita_pepo_Halloween_pumpkin_-_Jack_o%27_lantern_graveyard.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-163440011",
+    "name": "Halloween Jack-o'-lanterns outside the Yale School of Architecture, 2018",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-163440011.png",
+    "author": "RukshanV",
+    "source": "https://commons.wikimedia.org/wiki/File:Halloween_Jack-o%27-lanterns_outside_the_Yale_School_of_Architecture,_2018.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-37099199",
+    "name": "Halloween jack-o'-lanterns",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-37099199.png",
+    "author": "Swallowtail Garden Seeds from Santa Rosa, California",
+    "source": "https://commons.wikimedia.org/wiki/File:Halloween_jack-o%27-lanterns.png",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-19863182",
+    "name": "Jack-o'-lantern pumpkin cake pops, October 2011",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-19863182.png",
+    "author": "Jamie",
+    "source": "https://commons.wikimedia.org/wiki/File:Jack-o%27-lantern_pumpkin_cake_pops,_October_2011.jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-147828996",
+    "name": "Jack-o'-lantern in Calcata",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-147828996.png",
+    "author": "Albarubescens",
+    "source": "https://commons.wikimedia.org/wiki/File:Jack-o%27-lantern_in_Calcata.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-14366944",
+    "name": "Artificial Christmas Tree in Cardinal Place - geograph.org.uk - 1611657",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-14366944.png",
+    "author": "PAUL FARMER",
+    "source": "https://commons.wikimedia.org/wiki/File:Artificial_Christmas_Tree_in_Cardinal_Place_-_geograph.org.uk_-_1611657.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-157446289",
+    "name": "A bright Christmas tree in a Christmas village",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-157446289.png",
+    "author": "Bim24",
+    "source": "https://commons.wikimedia.org/wiki/File:A_bright_Christmas_tree_in_a_Christmas_village.jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-157446302",
+    "name": "An artificial Christmas tree in a Christmas village with a snowman",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-157446302.png",
+    "author": "Bim24",
+    "source": "https://commons.wikimedia.org/wiki/File:An_artificial_Christmas_tree_in_a_Christmas_village_with_a_snowman.jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-181569045",
+    "name": "2026.01.06 Christmas Ornaments in Snow Vieraskovaja Street Tsna Minsk Belarus",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-181569045.png",
+    "author": "Dina Panayotis",
+    "source": "https://commons.wikimedia.org/wiki/File:2026.01.06_Christmas_Ornaments_in_Snow_Vieraskovaja_Street_Tsna_Minsk_Belarus.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-49782887",
+    "name": "Glass ornament with snow",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/photo-49782887.png",
+    "author": "Madereugeneandrew",
+    "source": "https://commons.wikimedia.org/wiki/File:Glass_ornament_with_snow.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-85063306",
+    "name": "Blue Mountains National Park (AU), Three Sisters -- 2019 -- 1987-9",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-85063306.png",
+    "author": "Dietmar Rabich",
+    "source": "https://commons.wikimedia.org/wiki/File:Blue_Mountains_National_Park_(AU),_Three_Sisters_--_2019_--_1987-9.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-83047724",
+    "name": "Tad Hang waterfalls at sunset, Tad Lo village, Bolaven Plateau, Laos",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-83047724.png",
+    "author": "Basile Morin",
+    "source": "https://commons.wikimedia.org/wiki/File:Tad_Hang_waterfalls_at_sunset,_Tad_Lo_village,_Bolaven_Plateau,_Laos.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-165195521",
+    "name": "Waterfall landscape on Linglong mountain of Lin'an",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-165195521.png",
+    "author": "松照庵",
+    "source": "https://commons.wikimedia.org/wiki/File:Waterfall_landscape_on_Linglong_mountain_of_Lin%27an.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-152611563",
+    "name": "Kirkjufell, Iceland, 20240714 1631 0713",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-152611563.png",
+    "author": "Jakub Hałun",
+    "source": "https://commons.wikimedia.org/wiki/File:Kirkjufell,_Iceland,_20240714_1631_0713.jpg",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-176022366",
+    "name": "Panixersee (Lag da Pigniu) boven Andiast. 26-09-2025. (d.j.b.) 05",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-176022366.png",
+    "author": "Dominicus Johannes Bergsma.",
+    "source": "https://commons.wikimedia.org/wiki/File:Panixersee_(Lag_da_Pigniu)_boven_Andiast._26-09-2025._(d.j.b.)_05.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-34260681",
+    "name": "Skógafoss July 2014",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-34260681.png",
+    "author": "Martin Falbisoner",
+    "source": "https://commons.wikimedia.org/wiki/File:Sk%C3%B3gafoss_July_2014.JPG",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-195195172",
+    "name": "(Landscape of waterfall emerging from a vegetative mountain on Kauai Island, United States) - DPLA -",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-195195172.png",
+    "author": "Carlquist, Sherwin John, 1930-2021",
+    "source": "https://commons.wikimedia.org/wiki/File:(Landscape_of_waterfall_emerging_from_a_vegetative_mountain_on_Kauai_Island,_United_States)_-_DPLA_-_759641c80aec24d682f7e56a56020555.jpg",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-176025534",
+    "name": "Panixersee (Lag da Pigniu) boven Andiast. 26-09-2025. (d.j.b.) 09",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-176025534.png",
+    "author": "Dominicus Johannes Bergsma.",
+    "source": "https://commons.wikimedia.org/wiki/File:Panixersee_(Lag_da_Pigniu)_boven_Andiast._26-09-2025._(d.j.b.)_09.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-169990081",
+    "name": "Waterfall on Balkan mountain",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-169990081.png",
+    "author": "Jelena Potrebic",
+    "source": "https://commons.wikimedia.org/wiki/File:Waterfall_on_Balkan_mountain.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-11393212",
+    "name": "Landscape during Laugavegur hiking trail 2-CA reduced",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-11393212.png",
+    "author": "Chmee2 / Valtameri",
+    "source": "https://commons.wikimedia.org/wiki/File:Landscape_during_Laugavegur_hiking_trail_2-CA_reduced.jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-34259360",
+    "name": "Icelandic Landscape near Neskaupstaður July 2014",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-34259360.png",
+    "author": "Martin Falbisoner",
+    "source": "https://commons.wikimedia.org/wiki/File:Icelandic_Landscape_near_Neskaupsta%C3%B0ur_July_2014.JPG",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-41628507",
+    "name": "Swedish landscape near Björnlunda (by Pudelek) 01",
+    "category": "Nature",
+    "src": "assets/plugin-presets/photo-41628507.png",
+    "author": "Pudelek",
+    "source": "https://commons.wikimedia.org/wiki/File:Swedish_landscape_near_Bj%C3%B6rnlunda_(by_Pudelek)_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-530754",
+    "name": "Challenger explosion",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-530754.png",
+    "author": "Kennedy Space Center",
+    "source": "https://commons.wikimedia.org/wiki/File:Challenger_explosion.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-174031496",
+    "name": "Blue mach diamonds from the main engine nozzles and bright exhaust from the solid rocket boosters ma",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-174031496.png",
+    "author": "NASA",
+    "source": "https://commons.wikimedia.org/wiki/File:Blue_mach_diamonds_from_the_main_engine_nozzles_and_bright_exhaust_from_the_solid_rocket_boosters_mark_the_successful_launch_of_space_shuttle_Endeavour_on_Feb_11,_2000.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-125597808",
+    "name": "Artemis I Launch (NHQ202211160010)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-125597808.png",
+    "author": "Joel Kowsky",
+    "source": "https://commons.wikimedia.org/wiki/File:Artemis_I_Launch_(NHQ202211160010).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-187840380",
+    "name": "The exhaust plume left behind by Artemis II is pictured from the International Space Station (iss074",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-187840380.png",
+    "author": "NASA Johnson Space Center",
+    "source": "https://commons.wikimedia.org/wiki/File:The_exhaust_plume_left_behind_by_Artemis_II_is_pictured_from_the_International_Space_Station_(iss074e0432048).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-187840322",
+    "name": "The exhaust plume left behind by Artemis II is pictured from the International Space Station (iss074",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-187840322.png",
+    "author": "NASA Johnson Space Center",
+    "source": "https://commons.wikimedia.org/wiki/File:The_exhaust_plume_left_behind_by_Artemis_II_is_pictured_from_the_International_Space_Station_(iss074e0431736).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-174030925",
+    "name": "This NASA-ESA Hubble Space Telescope image reveals clouds of gas and dust near the Tarantula Nebula",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-174030925.png",
+    "author": "ESA/Hubble & NASA, C. Murray",
+    "source": "https://commons.wikimedia.org/wiki/File:This_NASA-ESA_Hubble_Space_Telescope_image_reveals_clouds_of_gas_and_dust_near_the_Tarantula_Nebula.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-21973845",
+    "name": "Helix Nebula - Unraveling at the Seams",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-21973845.png",
+    "author": "NASA/JPL-Caltech",
+    "source": "https://commons.wikimedia.org/wiki/File:Helix_Nebula_-_Unraveling_at_the_Seams.jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-196659779",
+    "name": "Flame Nebula (amf-3f49feb8-7a8b-49be-9908-0af3b448fce2)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-196659779.png",
+    "author": "NASA, ESA, and K. Stapelfeldt (Jet Propulsion Laboratory); Processing; Gladys Kober (NASA/Catholic University of America)",
+    "source": "https://commons.wikimedia.org/wiki/File:Flame_Nebula_(amf-3f49feb8-7a8b-49be-9908-0af3b448fce2).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-182156260",
+    "name": "Carina Nebula (3879)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-182156260.png",
+    "author": "Hubble Space Telescope",
+    "source": "https://commons.wikimedia.org/wiki/File:Carina_Nebula_(3879).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-182156256",
+    "name": "Carina Nebula (3879)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-182156256.png",
+    "author": "Hubble Space Telescope",
+    "source": "https://commons.wikimedia.org/wiki/File:Carina_Nebula_(3879).png",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-182262570",
+    "name": "Uncovering the Veil Nebula (2007-30-2164)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-182262570.png",
+    "author": "NASA, ESA, and the Hubble Heritage (STScI/AURA)-ESA/Hubble Collaboration; Acknowledgment: J. Hester (Arizona State University)",
+    "source": "https://commons.wikimedia.org/wiki/File:Uncovering_the_Veil_Nebula_(2007-30-2164).jpg",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-120383764",
+    "name": "“Cosmic Cliffs” in the Carina Nebula (NIRCam and MIRI Composite Image)",
+    "category": "Space",
+    "src": "assets/plugin-presets/photo-120383764.png",
+    "author": "Image: National Aeronautics and Space Administration (a U.S. federal government agency; https://www.nasa.gov/ ) European space agency ( https://www.esa.int/ ), Canadian Space Agency ( https://www.asc-csa.gc.ca/eng/ ) Space Telescope Science Institute ( https://www.stsci.edu/ , science operations center for the Hubble Space Telescope )",
+    "source": "https://commons.wikimedia.org/wiki/File:%E2%80%9CCosmic_Cliffs%E2%80%9D_in_the_Carina_Nebula_(NIRCam_and_MIRI_Composite_Image).tif",
+    "license": "Public domain",
+    "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-116912681",
+    "name": "Coral (Acropora hemprichii), Ras Katy, Sharm el-Sheij, Egipto, 2022-03-26, DD 108",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-116912681.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Acropora_hemprichii),_Ras_Katy,_Sharm_el-Sheij,_Egipto,_2022-03-26,_DD_108.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-116912685",
+    "name": "Coral (Sarcophyton glaucum), Ras Katy, Sharm el-Sheij, Egipto, 2022-03-26, DD 113",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-116912685.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Sarcophyton_glaucum),_Ras_Katy,_Sharm_el-Sheij,_Egipto,_2022-03-26,_DD_113.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133033202",
+    "name": "Coral (Astreopora myriophthalma), mar Rojo, Egipto, 2023-04-18, DD 15",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133033202.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Astreopora_myriophthalma),_mar_Rojo,_Egipto,_2023-04-18,_DD_15.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133068524",
+    "name": "Coral alambre (Cirrhipathes spiralis), mar Rojo, Egipto, 2023-04-17, DD 71",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133068524.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_alambre_(Cirrhipathes_spiralis),_mar_Rojo,_Egipto,_2023-04-17,_DD_71.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133068601",
+    "name": "Coral burbuja (Plerogyra sinuosa), mar Rojo, Egipto, 2023-04-17, DD 13",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133068601.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_burbuja_(Plerogyra_sinuosa),_mar_Rojo,_Egipto,_2023-04-17,_DD_13.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-149185183",
+    "name": "Coral burbuja (Plerogyra sinuosa), Anilao, Filipinas, 2023-08-21, DD 40",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-149185183.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_burbuja_(Plerogyra_sinuosa),_Anilao,_Filipinas,_2023-08-21,_DD_40.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133068643",
+    "name": "Coral plato (Danafungia scruposa), mar Rojo, Egipto, 2023-04-15, DD 49",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133068643.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_plato_(Danafungia_scruposa),_mar_Rojo,_Egipto,_2023-04-15,_DD_49.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133068264",
+    "name": "Coral (Sarcophyton glaucum), mar Rojo, Egipto, 2023-04-17, DD 73",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133068264.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Sarcophyton_glaucum),_mar_Rojo,_Egipto,_2023-04-17,_DD_73.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-118882308",
+    "name": "Coral (Turbinaria reniformis), parque nacional Ras Muhammad, Egipto, 2022-03-28, DD 132",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-118882308.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Turbinaria_reniformis),_parque_nacional_Ras_Muhammad,_Egipto,_2022-03-28,_DD_132.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-116912679",
+    "name": "Coral (Acropora hemprichii), Ras Katy, Sharm el-Sheij, Egipto, 2022-03-26, DD 87",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-116912679.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Coral_(Acropora_hemprichii),_Ras_Katy,_Sharm_el-Sheij,_Egipto,_2022-03-26,_DD_87.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133258130",
+    "name": "Damiselas de tres bandas (Dascyllus abudafur) en un coral (Acropora hemprichii), mar Rojo, Egipto, 2",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133258130.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Damiselas_de_tres_bandas_(Dascyllus_abudafur)_en_un_coral_(Acropora_hemprichii),_mar_Rojo,_Egipto,_2023-04-19,_DD_52.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-133258131",
+    "name": "Damiselas de tres bandas (Dascyllus abudafur) en un coral (Pocillopora verrucosa), mar Rojo, Egipto,",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/photo-133258131.png",
+    "author": "Diego Delso",
+    "source": "https://commons.wikimedia.org/wiki/File:Damiselas_de_tres_bandas_(Dascyllus_abudafur)_en_un_coral_(Pocillopora_verrucosa),_mar_Rojo,_Egipto,_2023-04-14,_DD_24.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68367367",
+    "name": "Porsche 911 No 1000000, 70 Years Porsche Sports Car, Berlin (1X7A3888)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68367367.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_911_No_1000000,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3888).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68367924",
+    "name": "Porsche 911, 70 Years Porsche Sports Car, Berlin (1X7A3904)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68367924.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_911,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3904).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68368152",
+    "name": "Porsche 917-20, 70 Years Porsche Sports Car, Berlin (1X7A3908)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68368152.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_917-20,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3908).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68366804",
+    "name": "Porsche 356 No. 1 Roadster, 70 Years Porsche Sports Car, Berlin (1X7A3875)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68366804.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_356_No._1_Roadster,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3875).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68368061",
+    "name": "Porsche 917-20, 70 Years Porsche Sports Car, Berlin (1X7A3907)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68368061.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_917-20,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3907).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68367516",
+    "name": "Porsche Panamera Turbo S Sport Turismo e-hybrid, 70 Years Porsche Sports Car, Berlin (1X7A3892)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68367516.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_Panamera_Turbo_S_Sport_Turismo_e-hybrid,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3892).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68367279",
+    "name": "Porsche Mission E, 70 Years Porsche Sports Car, Berlin (1X7A3885)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68367279.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_Mission_E,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3885).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68368221",
+    "name": "Porsche 917, 70 Years Porsche Sports Car, Berlin (1X7A3912)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68368221.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_917,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3912).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68367225",
+    "name": "Porsche Mission E, 70 Years Porsche Sports Car, Berlin (1X7A3884)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68367225.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:Porsche_Mission_E,_70_Years_Porsche_Sports_Car,_Berlin_(1X7A3884).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-68368300",
+    "name": "70 Years Porsche Sports Car, Berlin (1X7A3913)",
+    "category": "Cars",
+    "src": "assets/plugin-presets/photo-68368300.png",
+    "author": "Matti Blume",
+    "source": "https://commons.wikimedia.org/wiki/File:70_Years_Porsche_Sports_Car,_Berlin_(1X7A3913).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-158071330",
+    "name": "Cat inside a wong container funny 2025 sns s (2)",
+    "category": "Funny",
+    "src": "assets/plugin-presets/photo-158071330.png",
+    "author": "Gerardolagunes",
+    "source": "https://commons.wikimedia.org/wiki/File:Cat_inside_a_wong_container_funny_2025_sns_s_(2).jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-158070054",
+    "name": "Cat inside a wong container funny 2025 sns s (3)",
+    "category": "Funny",
+    "src": "assets/plugin-presets/photo-158070054.png",
+    "author": "Gerardolagunes",
+    "source": "https://commons.wikimedia.org/wiki/File:Cat_inside_a_wong_container_funny_2025_sns_s_(3).jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-158070053",
+    "name": "Cat inside a wong container funny 2025 sns s (1)",
+    "category": "Funny",
+    "src": "assets/plugin-presets/photo-158070053.png",
+    "author": "Gerardolagunes",
+    "source": "https://commons.wikimedia.org/wiki/File:Cat_inside_a_wong_container_funny_2025_sns_s_(1).jpg",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-94826271",
+    "name": "Cat funny gif",
+    "category": "Funny",
+    "src": "assets/plugin-presets/photo-94826271.png",
+    "author": "Amrutha Unni",
+    "source": "https://commons.wikimedia.org/wiki/File:Cat_funny_gif.gif",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-138286997",
+    "name": "Funny cat posing (14250377907)",
+    "category": "Funny",
+    "src": "assets/plugin-presets/photo-138286997.png",
+    "author": "Vladimir Pustovit",
+    "source": "https://commons.wikimedia.org/wiki/File:Funny_cat_posing_(14250377907).jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120230",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756283",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120230.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756283.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120007",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756235",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120007.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756235.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120075",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756252",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120075.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756252.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120125",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756259",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120125.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756259.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120150",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756268",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120150.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756268.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153120187",
+    "name": "Fox, Acton Turville, Gloucestershire 2021 - geograph.org.uk - 6756276",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-153120187.png",
+    "author": "Ray Bird",
+    "source": "https://commons.wikimedia.org/wiki/File:Fox,_Acton_Turville,_Gloucestershire_2021_-_geograph.org.uk_-_6756276.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-118762465",
+    "name": "Redhill Wildlife Centre - Feb 2012 - Mr. Fox Hungry & Cold (6877284191)",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-118762465.png",
+    "author": "Gareth Williams from Redhill, England",
+    "source": "https://commons.wikimedia.org/wiki/File:Redhill_Wildlife_Centre_-_Feb_2012_-_Mr._Fox_Hungry_%26_Cold_(6877284191).jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-118762458",
+    "name": "Redhill Wildlife Centre - May 2011 - Fox Stretching Out at Dawn (5732214556)",
+    "category": "Animals",
+    "src": "assets/plugin-presets/photo-118762458.png",
+    "author": "Gareth Williams from Redhill, England",
+    "source": "https://commons.wikimedia.org/wiki/File:Redhill_Wildlife_Centre_-_May_2011_-_Fox_Stretching_Out_at_Dawn_(5732214556).jpg",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-187891453",
+    "name": "Cherry blossoms (Somei Yoshino), Nagai Botanical Garden, April 2026 -1488",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-187891453.png",
+    "author": "Laitche",
+    "source": "https://commons.wikimedia.org/wiki/File:Cherry_blossoms_(Somei_Yoshino),_Nagai_Botanical_Garden,_April_2026_-1488.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-118499468",
+    "name": "-Crown-of-thorns -Flower -Garden -free time -Blossom -Fresh",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-118499468.png",
+    "author": "Govindaraj Mahalakshmi",
+    "source": "https://commons.wikimedia.org/wiki/File:-Crown-of-thorns_-Flower_-Garden_-free_time_-Blossom_-Fresh.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-146142321",
+    "name": "A perennial dahlia plant blossoming a pink flower at a garden in Imphal, Kangleipak (Manipur) during",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-146142321.png",
+    "author": "Haoreima",
+    "source": "https://commons.wikimedia.org/wiki/File:A_perennial_dahlia_plant_blossoming_a_pink_flower_at_a_garden_in_Imphal,_Kangleipak_(Manipur)_during_winter_season_of_January_2022.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-153706390",
+    "name": "Blossom in the Children's Garden, Kew Gardens - geograph.org.uk - 6821574",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-153706390.png",
+    "author": "Marathon",
+    "source": "https://commons.wikimedia.org/wiki/File:Blossom_in_the_Children%27s_Garden,_Kew_Gardens_-_geograph.org.uk_-_6821574.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-128989304",
+    "name": "Blossom and flower of Galanthus ophelia",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-128989304.png",
+    "author": "Paradise Chronicle",
+    "source": "https://commons.wikimedia.org/wiki/File:Blossom_and_flower_of_Galanthus_ophelia.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-148202718",
+    "name": "Gibberd Garden apple tree blossom Harlow Essex England 02 darker",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-148202718.png",
+    "author": "Acabashi",
+    "source": "https://commons.wikimedia.org/wiki/File:Gibberd_Garden_apple_tree_blossom_Harlow_Essex_England_02_darker.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-148202717",
+    "name": "Gibberd Garden apple tree blossom Harlow Essex England 01 lighter",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-148202717.png",
+    "author": "Acabashi",
+    "source": "https://commons.wikimedia.org/wiki/File:Gibberd_Garden_apple_tree_blossom_Harlow_Essex_England_01_lighter.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-148202716",
+    "name": "Gibberd Garden apple tree blossom Harlow Essex England 01 darker",
+    "category": "Flowers",
+    "src": "assets/plugin-presets/photo-148202716.png",
+    "author": "Acabashi",
+    "source": "https://commons.wikimedia.org/wiki/File:Gibberd_Garden_apple_tree_blossom_Harlow_Essex_England_01_darker.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "lighthouse",
+    "name": "Lighthouse",
+    "category": "Ocean",
+    "src": "assets/plugin-presets/lighthouse.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "photo-26895519",
+    "name": "HP L4425",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-26895519.png",
+    "author": "Alchemist-hp ( talk )",
+    "source": "https://commons.wikimedia.org/wiki/File:HP_L4425.JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-4286917",
+    "name": "Dead trees at Mammoth Hot Springs",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-4286917.png",
+    "author": "Brocken Inaglory",
+    "source": "https://commons.wikimedia.org/wiki/File:Dead_trees_at_Mammoth_Hot_Springs.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-17425591",
+    "name": "Hot air balloon and moon",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-17425591.png",
+    "author": "Tomascastelazo",
+    "source": "https://commons.wikimedia.org/wiki/File:Hot_air_balloon_and_moon.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-130344081",
+    "name": "Hot-air balloon in Tambov - 02",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-130344081.png",
+    "author": "Alexander Novikov",
+    "source": "https://commons.wikimedia.org/wiki/File:Hot-air_balloon_in_Tambov_-_02.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-4344232",
+    "name": "Upper Terraces of Mammoth Hot Springs",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-4344232.png",
+    "author": "Brocken Inaglory",
+    "source": "https://commons.wikimedia.org/wiki/File:Upper_Terraces_of_Mammoth_Hot_Springs.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-196626242",
+    "name": "Mammoth Hot Springs (78970)",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-196626242.png",
+    "author": "Rhododendrites",
+    "source": "https://commons.wikimedia.org/wiki/File:Mammoth_Hot_Springs_(78970).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-196626278",
+    "name": "Mammoth Hot Springs (78729p)",
+    "category": "Adventure",
+    "src": "assets/plugin-presets/photo-196626278.png",
+    "author": "Rhododendrites",
+    "source": "https://commons.wikimedia.org/wiki/File:Mammoth_Hot_Springs_(78729p).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-27308954",
+    "name": "Amphiprion ocellaris (Clown anemonefish) by Nick Hobgood",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-27308954.png",
+    "author": "Nick Hobgood",
+    "source": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_(Clown_anemonefish)_by_Nick_Hobgood.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-15477882",
+    "name": "Paracanthurus-hepatus-paletten-doktorfisch",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-15477882.png",
+    "author": "Holger Krisp",
+    "source": "https://commons.wikimedia.org/wiki/File:Paracanthurus-hepatus-paletten-doktorfisch.jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-3733305",
+    "name": "Zebrasoma flavescens Luc Viatour",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-3733305.png",
+    "author": "Luc Viatour",
+    "source": "https://commons.wikimedia.org/wiki/File:Zebrasoma_flavescens_Luc_Viatour.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-156915425",
+    "name": "Pterophyllum scalare A742578",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-156915425.png",
+    "author": "Rjcastillo",
+    "source": "https://commons.wikimedia.org/wiki/File:Pterophyllum_scalare_A742578.jpg",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-152596861",
+    "name": "Betta fish (Betta splendens)",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-152596861.png",
+    "author": "Atlas Þə Biologist (number 2)",
+    "source": "https://commons.wikimedia.org/wiki/File:Betta_fish_(Betta_splendens).gif",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-3716457",
+    "name": "Synchiropus splendidus 2 Luc Viatour",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-3716457.png",
+    "author": "Luc Viatour",
+    "source": "https://commons.wikimedia.org/wiki/File:Synchiropus_splendidus_2_Luc_Viatour.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-35648764",
+    "name": "Common lion fish Pterois volitans",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-35648764.png",
+    "author": "Michael Gäbler",
+    "source": "https://commons.wikimedia.org/wiki/File:Common_lion_fish_Pterois_volitans.jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-22106851",
+    "name": "Hippocampus hippocampus (on Ascophyllum nodosum)",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-22106851.png",
+    "author": "Hans Hillewaert",
+    "source": "https://commons.wikimedia.org/wiki/File:Hippocampus_hippocampus_(on_Ascophyllum_nodosum).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "photo-85143742",
+    "name": "Symphysodon aequifasciatus - Karlsruhe Zoo 04",
+    "category": "Fish",
+    "src": "assets/plugin-presets/photo-85143742.png",
+    "author": "H. Zell",
+    "source": "https://commons.wikimedia.org/wiki/File:Symphysodon_aequifasciatus_-_Karlsruhe_Zoo_04.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "modification": "Cropped and resized to 256 × 256 pixels"
+  },
+  {
+    "id": "harvest-pumpkin",
+    "name": "Harvest pumpkin",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/harvest-pumpkin.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "jack-o-lantern",
+    "name": "Jack-o-lantern",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/jack-o-lantern.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "christmas-tree",
+    "name": "Christmas tree",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/christmas-tree.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "snow-globe",
+    "name": "Snow globe",
+    "category": "Holiday",
+    "src": "assets/plugin-presets/snow-globe.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "rocket-launch",
+    "name": "Rocket launch",
+    "category": "Space",
+    "src": "assets/plugin-presets/rocket-launch.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  },
+  {
+    "id": "ringed-planet",
+    "name": "Ringed planet",
+    "category": "Space",
+    "src": "assets/plugin-presets/ringed-planet.png",
+    "author": "Centerpiece Companion",
+    "license": "Original project artwork",
+    "source": "Created for this application"
+  }
+]

@@ -10,7 +10,20 @@ YouTube Music playback uses the selected Windows media session. Companion does n
 
 Weather sends the chosen coordinates to api.open-meteo.com and city searches to geocoding-api.open-meteo.com. Twitch chat connects to Twitch over TLS. OBS and optional temperature sensors use loopback. Opening an assigned website or app invokes that destination and its privacy policy.
 
-The keyboard monitor observes L1 state and selects one physical key only when the editor is explicitly armed. It stores no typing history. Caps Lock monitoring reads lock state. Microphone mute control does not record audio.
+The keyboard monitor observes the state needed for Companion navigation, key selection, and reactive features. Modifier and lock state also select the appropriate physical language legends. It stores no typing history. Microphone mute control does not record audio. Keyboard layout mappings and the original legend-visibility recovery record stay on the PC.
+
+## Monitoring widgets and custom images
+
+- **RAM and VRAM:** usage readings come from Windows physical-memory information and, for supported NVIDIA hardware, the local `nvidia-smi` tool. Readings are displayed locally and are not uploaded by Companion.
+- **Network quality:** while this widget is selected or assigned to a plugin, Companion sends an ICMP probe to Cloudflare's `1.1.1.1` address about every five seconds. That endpoint receives normal network metadata, including the public source IP address. This does not inspect browsing content, run a speed test, or upload traffic history.
+- **Game performance:** bundled PresentMon reads local Windows graphics presentation events for the selected or automatically detected executable. Companion passes `--no_track_input`; this feature does not capture the screen, record video or upload performance readings. It keeps a short in-memory frame-timing window for the displayed FPS and graph. An explicitly chosen executable can be saved in local widget settings. Some Windows accounts need the optional Performance Log Users permission before capture works.
+- **Download progress:** Companion reads the current account's Windows BITS job names/byte counts and Steam library manifests on the PC. Download names and progress appear locally; Companion does not send them to a server or inspect the downloaded file contents.
+- **Market watchlist:** selected ticker symbols are sent to `query1.finance.yahoo.com` to fetch quotes, approximately every 60 seconds while the widget is active. The provider receives the requested symbols and normal connection metadata. No brokerage login, holdings or transactions are requested.
+- **Custom plugin images:** imported images, converted images and chosen presets are stored locally as part of display settings. Selecting an image does not publish it. If you later export or share content containing that image, that explicit action can include the image.
+
+The Screenshot key action invokes **Windows + Print Screen**. Windows saves the image to its screenshot folder; Companion displays that path and can change it when you choose **Change folder**. This changes the Windows destination, and any existing cloud synchronization configured for that folder remains controlled by Windows or its sync provider. Existing captures are not moved. Companion does not upload screenshots. The Print action invokes **Ctrl + P** in the focused app; that app controls the print dialog and document handling.
+
+## Connections and community data
 
 Community requests and skins require a separately configured server. The Discord webhook must remain a server secret; it must never be embedded in a public app or source repository. Discord sign-in must use OAuth, not a user's Discord password or personal account token.
 

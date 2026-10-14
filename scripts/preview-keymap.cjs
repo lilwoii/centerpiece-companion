@@ -11,7 +11,7 @@ function change(map,input){
  if(![0,1].includes(layer)||!Number.isInteger(position)||position<0||position>67||reserved(position))throw Error('Choose an unreserved sample key.');
  const next=structuredClone(map),keys=next.layers.find(l=>l.id===layer).keys;
  if(swap!==null){if(!Number.isInteger(swap)||swap<0||swap>67||swap===position||reserved(swap))throw Error('Choose a different unreserved sample key.');[keys[position].binding,keys[swap].binding]=[keys[swap].binding,keys[position].binding];keys[swap].label=label(keys[swap].binding);}
- else{if(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>7)throw Error('Choose a supported binding.');keys[position].binding={behaviorId:50397,param1:(mods<<24)|value};}
+ else{if(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>15)throw Error('Choose a supported binding.');keys[position].binding={behaviorId:50397,param1:(mods<<24)|value};}
  keys[position].label=label(keys[position].binding);return next;
 }
 module.exports={create,change};

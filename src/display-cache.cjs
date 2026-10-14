@@ -18,21 +18,22 @@ class DisplayCache{
    const choices=[...this.cache].filter(([,slot])=>slot!==this.lastSlot);
    // With eight free slots, keep both Caps states and all four arrow highlights.
    // The remaining cache position is shared by the two L1 hint states.
-   const dynamic=this.capacity>=7?choices.filter(([key])=>key.startsWith('layer:')):[];
+   const dynamic=this.evictionCandidates(choices);
    const candidates=dynamic.length?dynamic:choices;
    candidates.sort((a,b)=>(this.usage.get(a[0])||0)-(this.usage.get(b[0])||0));
    const key=candidates[0]?.[0];if(key===undefined)throw Error('The display cache has no safe frame to replace.');
    this.cache.delete(key);this.frames.delete(key);this.frameContent.delete(key);this.usage.delete(key);
   }
  }
+ evictionCandidates(choices){return this.capacity>=7?choices.filter(([key])=>key.startsWith('layer:')):[];}
  spare(){const used=new Set(this.cache.values());return this.pool.find(slot=>slot!==this.lastSlot&&!used.has(slot));}
- async write(slot,selected,caps,layer=false,verify=true){
+ async write(slot,selected,caps,layer=false,verify=true,shift){
   if(!this.pool.includes(slot)||slot===this.lastSlot)throw Error('The display upload target is not a free inactive companion slot.');
-  const content=this.contentKey(),svg=this.frame(selected,caps,layer),png=await sharp(Buffer.from(svg)).png().toBuffer();
+  const key=this.key(selected,caps,layer,shift),content=this.contentKey(),svg=this.frame(selected,caps,layer,shift),png=await sharp(Buffer.from(svg)).png().toBuffer();
   await this.som.uploadOverlay(slot,png,'Companion strip',verify);
   // The firmware activates a completed overlay upload. Record that transition
   // before dropping old cache entries, so the visible slot is never overwritten.
-  this.lastSlot=slot;this.selectionAt=Date.now();const key=this.key(selected,caps,layer);
+  this.lastSlot=slot;this.selectionAt=Date.now();
   this.cache.set(key,slot);this.frames.set(key,svg);this.frameContent.set(key,content);this.touch(key);this.trim();return svg;
  }
  setWidget(widget){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget)};this.liveUploadedAt=0;}
@@ -69,7 +70,7 @@ class DisplayCache{
   // A slot edit needs one new visible frame, not eight sequential firmware
   // uploads. Other states are rebuilt when requested; keeping their old frame
   // mappings would briefly show the previous action or a stale highlight.
-  const slotEdit=this.config&&this.cache.size&&!this.error&&Array.isArray(this.config.slots)&&Array.isArray(config.slots)&&JSON.stringify(this.config.slots)!==JSON.stringify(config.slots)&&JSON.stringify({...this.config,slots:[]})===JSON.stringify({...config,slots:[]});
+  const slotEdit=this.config&&this.cache.size&&!this.error&&Array.isArray(this.config.slots)&&Array.isArray(config.slots)&&JSON.stringify({...this.config,slots:[],keyIcons:{}})===JSON.stringify({...config,slots:[],keyIcons:{}});
   // A visibility toggle does not change the contents of the existing visible
   // frames. Retain them and render only the requested hidden/visible state.
   if(this.config&&this.cache.size&&!this.error&&(this.config.stripEnabled!==false)!==(config.stripEnabled!==false)&&JSON.stringify({...this.config,stripEnabled:true})===JSON.stringify({...config,stripEnabled:true})){
@@ -85,9 +86,9 @@ class DisplayCache{
    }
    this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();
    const states=slotEdit?[[this.desired,this.caps,this.desired==='idle'&&this.layer]]:this.initialStates();
-   for(const [selected,caps,layer]of states){
+   for(const [selected,caps,layer,shift]of states){
     const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
-    await this.write(target,selected,caps,layer);
+    await this.write(target,selected,caps,layer,true,shift);
    }
    this.lastFrame='';
   }catch(e){this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}

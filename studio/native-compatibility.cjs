@@ -1,6 +1,6 @@
 // Source inventory, not a device compatibility certificate. Keep this shared
 // between native source export and the physical-test status check.
-const INITIAL_NATIVE_SCENES=Object.freeze(['tidal-observatory','cloud-courier','dune-runner','prism-breaker']);
+const INITIAL_NATIVE_SCENES=Object.freeze(['tidal-observatory','alpine-reflection','cloud-courier','dune-runner','prism-breaker']);
 function describe(project){
  const nativeSceneSources=[...new Set(project.layers.filter(l=>l.type==='collection'&&INITIAL_NATIVE_SCENES.includes(l.text)).map(l=>l.text))];
  const previewOnlyScenes=[...new Set(project.layers.filter(l=>l.type==='collection'&&!INITIAL_NATIVE_SCENES.includes(l.text)).map(l=>l.text))];

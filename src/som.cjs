@@ -30,7 +30,11 @@ class Som {
       this.listeners.add(listener); try { trigger(); } catch (error) { done(error); }
     });
   }
+  screenTimeout(value) { if(value!==undefined&&(!Number.isInteger(value)||value<0||value>255))throw Error('Invalid firmware timeout.');return this.wait((cmd,p)=>cmd===51&&p.length?p[0]:undefined,()=>this.send(51,value===undefined?Buffer.alloc(0):Buffer.from([value]))); }
   currentSlot() { return this.wait((cmd, p) => cmd === 50 && p.length ? p[0] : undefined, () => this.send(50)); }
+  language(value) { if(value!==undefined&&(!Number.isInteger(value)||value<0||value>4))throw Error('Unsupported native legend language');return this.wait((cmd,p)=>cmd===53&&p.length?p[0]:undefined,()=>this.send(53,value===undefined?Buffer.alloc(0):Buffer.from([value]))); }
+  legends(value) { if(value!==undefined&&typeof value!=='boolean')throw Error('Invalid legend visibility');return this.wait((cmd,p)=>cmd===52&&p.length===1?!!p[0]:undefined,()=>this.send(52,value===undefined?Buffer.alloc(0):Buffer.from([Number(value)]))); }
+  legendPositions() { return this.wait((cmd,p)=>{if(cmd!==55)return; if(p.length!==340)throw Error('Incomplete keyboard legend positions');const positions=Array(68);for(let n=0;n<p.length;n+=5){const id=p[n],x=p.readUInt16LE(n+1),y=p.readUInt16LE(n+3);if(id>67||positions[id]||x>1920||y>550)throw Error('Invalid keyboard legend positions');positions[id]={x,y};}return positions;},()=>this.send(55)); }
   selectSlot(slot) { if (!Number.isInteger(slot)||slot<1||slot>10) throw new Error('Invalid overlay slot'); this.send(50, Buffer.from([slot])); }
   async activate(slot){const current=await this.currentSlot();if(slot===0){if(current)this.selectSlot(current);}else if(current!==slot)this.selectSlot(slot);}
   readOverlay(slot) {
@@ -60,17 +64,7 @@ class Som {
     const manifest = Buffer.from(JSON.stringify({slot, fileName:name, fileExtension:'png', fileSize:bytes.length, fileID:randomUUID()}));
     await this.transfer(1, manifest); await this.transfer(4, bytes);
     if(!verify)return; // Live frames retain both firmware acknowledgements; setup verifies full previews.
-    const readback = await this.readOverlay(slot);
-    if (!readback) throw new Error('Overlay preview was empty after upload.');
-    // OVERLAY_GET returns a half-resolution preview, not the original PNG.
-    const meta=await sharp(readback).metadata();
-    if(meta.width!==960||meta.height!==275)throw new Error('Unexpected overlay preview dimensions');
-    const actual=await sharp(readback).ensureAlpha().raw().toBuffer();
-    const expected=await sharp(bytes).resize(960,275).ensureAlpha().raw().toBuffer();
-    for(const y of [58,104,150]) {
-      const offset=(y*960+822)*4;
-      for(let c=0;c<4;c++)if(Math.abs(actual[offset+c]-expected[offset+c])>25)throw new Error('Overlay preview selection colors did not match.');
-    }
+    await require('./overlay-preview.cjs').verifyOverlayPreview(bytes,()=>this.readOverlay(slot));
   }
   close() { this.handle.close(); }
 }

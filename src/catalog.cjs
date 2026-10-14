@@ -6,6 +6,10 @@ const entries=[
  ['clock','Local time','Widgets',null,null],
  ['cpu','CPU monitor','Widgets',null,null],
  ['gpu','GPU temperature','Widgets',null,null],
+ ['performance','Game FPS','Widgets','cpu',null],
+ ['ram','RAM usage','Widgets','cpu',null],
+ ['vram','VRAM usage','Widgets','gpu',null],
+ ['network','Network quality','Widgets','browser',null],
  ['mic','Microphone mute','Voice',null,null],
  ['spotify','Spotify','Music','spotify','https://open.spotify.com/'],
  ['youtube','YouTube','Streaming','youtube','https://www.youtube.com/'],
@@ -39,7 +43,7 @@ const entries=[
 entries.push(['calendar','Calendar','Live widgets','clock',null]);
 const action=(id,label)=>({id,label});
 const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon:icon||id,url,actions:[
- ...(['weather','clock','cpu','gpu','calendar','decoration'].includes(id)?[action('display',id==='decoration'?'Display only · no action':'Show live reading')]:[]),
+ ...(['weather','clock','cpu','gpu','calendar','decoration','performance','ram','vram','network'].includes(id)?[action('display',id==='decoration'?'Display only · no action':'Show live reading')]:[]),
  ...(id==='timer'?[action('start','Start new timer'),action('toggle','Pause / resume timer'),action('reset','Reset timer')]:[]),
  ...(id==='mic'?[action('mute','Mute / unmute microphone')]:[]),
  ...(['spotify','youtubemusic','youtube'].includes(id)?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track'),action('rewind','Rewind 10 seconds')]:[]),

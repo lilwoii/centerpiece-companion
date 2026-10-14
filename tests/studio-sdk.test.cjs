@@ -106,6 +106,6 @@ test('collection exports distinguish native scaffolds from preview-only implemen
     assert.match(files.get('Device/Tools/generate_device.py'),/chunk_id=1337/);
     assert.match(files.get('Device/README.md'),/device verification is still in progress/);
     const manifest=JSON.parse(files.get('export-manifest.json'));assert.equal(manifest.cookedPakIncluded,false);assert.equal(manifest.keyboardCompatibilityVerified,false);
-    if(['tidal-observatory','cloud-courier','dune-runner','prism-breaker'].includes(id)){assert.deepEqual(manifest.nativeSceneSources,[id]);assert.deepEqual(manifest.previewOnlyScenes,[]);}else{assert.deepEqual(manifest.previewOnlyScenes,[id]);assert.ok(manifest.warnings.some(w=>w.includes(id)&&w.includes('still need native')));assert.ok(files.has('Reference/Browser/games.js'));assert.ok(files.has('Reference/Browser/collection-v2-effects.js'));}
+    if(['tidal-observatory','alpine-reflection','cloud-courier','dune-runner','prism-breaker'].includes(id)){assert.deepEqual(manifest.nativeSceneSources,[id]);assert.deepEqual(manifest.previewOnlyScenes,[]);}else{assert.deepEqual(manifest.previewOnlyScenes,[id]);assert.ok(manifest.warnings.some(w=>w.includes(id)&&w.includes('still need native')));assert.ok(files.has('Reference/Browser/games.js'));assert.ok(files.has('Reference/Browser/collection-v2-effects.js'));}
   }
 });

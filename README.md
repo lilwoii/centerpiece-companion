@@ -27,9 +27,9 @@ Your settings remain in your Windows account even if the app is installed on ano
 
 | Area | Available features |
 | --- | --- |
-| **Plugin library** | Four positions with recognizable logos; assign media actions, app/website launchers, configured shortcuts and supported OBS controls. |
-| **Screen widgets** | Spotify artwork, track information and progress; local time; weather; CPU/GPU readings; microphone status; Twitch chat; custom text. |
-| **Keyboard editor** | Click a physical key or press it to select it; change bindings, swap keys, choose display layouts and configure a Caps Lock color indicator. |
+| **Plugin library** | Four positions with recognizable logos; assign media actions, app/website launchers, configured shortcuts and supported OBS controls. Replace a plugin's artwork without changing its action, or fill its tile with a custom image. |
+| **Screen widgets** | Music artwork and progress; local time; weather; CPU/GPU, RAM/VRAM and network readings; game performance; supported download progress; market watchlist; calendar; microphone status; Twitch chat; custom text. |
+| **Keyboard editor** | Click a physical key or press it to select it; change bindings, swap keys, assign screenshot/print/media actions, choose display layouts and configure a Caps Lock color indicator. |
 | **Connections** | Configure your own Twitch, local OBS, weather and optional sensor connections. |
 | **Feature requests** | Sign in with Discord, post ideas with timestamps and choose a display-name color. |
 | **Community skins** | Browse the public XPANEL catalog with previews and official downloads, plus owner-approved skin links. |
@@ -82,13 +82,9 @@ Plugin mode exits automatically after **45 seconds without input**. Outside plug
 
 **Example:** Hold L1, tap P, release L1, press Down to select a position, then Enter to run it. To change the small information widget instead, hold L1 and tap /.
 
-### Widget rotation and “Follow selection”
+### Favorite widgets
 
-L1 + / cycles through:
-
-**Spotify → Local time → Weather → CPU → GPU → Microphone → Twitch → Custom text → Off → Spotify**
-
-Plugin navigation does **not** intentionally change a fixed widget. **Follow selection** is a separate, optional choice in Screen widgets that deliberately links the widget to the selected plugin. It is excluded from L1 + / cycling. Choose a fixed widget to keep the two controls independent.
+Open the **Display** dropdown in Screen widgets and click the star beside a widget to favorite it. A yellow star means selected; click it again to remove it. Favorites save immediately. **L1 + /** cycles through your favorites; with no favorites selected, it cycles through all available widget choices. The former **Follow selected plugin** option has been removed. Plugin navigation and widget selection stay independent.
 
 The companion must remain running, including in the tray, for these controls and live widgets to work. Saving a setting does not make the live companion run inside the keyboard firmware.
 
@@ -131,15 +127,40 @@ CPU load is available without an additional sensor driver. NVIDIA temperature us
 
 For Discord, voice effects, soundboards and similar actions, configure a shortcut in the target application and assign the matching **Send configured shortcut** action in the companion.
 
+### Monitoring and market widgets
+
+Select a widget in **Screen widgets → Display**. Related settings appear beneath that control. RAM, VRAM, network quality and game FPS can also occupy a plugin position.
+
+| Reading | Source and limits |
+| --- | --- |
+| **RAM** | Windows physical-memory usage, including memory used outside the foreground game. |
+| **VRAM** | NVIDIA GPU 0 through the installed `nvidia-smi` tool. Other GPU vendors are not supported by this reading. |
+| **Network quality** | An ICMP probe to `1.1.1.1`, approximately every five seconds while selected or assigned to a plugin. The widget reports latency and loss for these probes, not game-server latency or all traffic. A firewall can block replies while the internet still works. |
+| **Game performance** | Bundled PresentMon reads presented-frame timing for the detected executable and shows FPS plus a small frametime graph. Some games or Windows permissions may prevent capture. The orange **Enable game capture** instructions appear only when permission is needed; on affected PCs Windows requires signing out and back in after granting it. |
+| **Download progress** | Windows BITS jobs and Steam's locally saved download progress. This does not cover every browser, launcher or download client; Steam updates can trail the launcher display. |
+| **Market watchlist** | Up to four symbols, with price, daily change, logo or ticker badge, and quote age. Enter symbols such as `TSLA`, `NVDA` or `BTCUSD`; add/remove them beneath Display. Yahoo Finance is polled every 60 seconds while this widget is active. Provider quotes may be delayed, and market hours or a failed refresh can leave an older quote visible. This is not a tick-by-tick price feed. |
+
+An unavailable source stays unavailable rather than displaying an invented reading. These widgets do not require account credentials.
+
 ## Customize your keyboard
 
 In **Keyboard editor**, use **Refresh bindings**, then click a key on the displayed keyboard. Alternatively, click **Press a key to select** and press the physical key within ten seconds while the app is focused.
 
 Choose **Base layer** or **L1 layer**, select a new binding and any modifiers, then use **Save binding to keyboard**. Use **Swap these keys** to exchange supported bindings. The companion backs up edits and checks the saved keymap. L1 and the L1 + P / L1 + / positions stay reserved.
 
+For a quick action, select a key and click **Screenshot**, **Print**, or a media action under **Key actions & icons**. The binding applies immediately; **↶ Undo** restores the previous binding. Screenshot sends **Windows + Print Screen** and saves a full-screen image to the Windows screenshot folder shown in orange. **Change folder** changes that Windows destination for future captures; it does not move existing images. Print sends **Ctrl + P** to open the focused application's print dialog, where supported; it does not immediately print a document.
+
+Screenshot and Print enable their custom icons by default. Other media actions leave custom icons off unless you choose them. Expand **Custom icon, color & placement** to adjust the icon color, size and position, or apply size/position to all custom key icons.
+
 For the Caps Lock indicator, enable **Caps Lock color**, choose on/off colors and apply the indicator. For L1 hints, keep **Match Caps Lock color** enabled or choose a custom color. The current UI may call this the P color; it applies to both P and /.
 
-QWERTY is the default display layout. **Browse Windows layouts** offers other available layouts, including Russian and Korean. Applying labels does not change Windows typing settings or add physical keys. Select the matching Windows input language with **Win + Space**; languages that require an IME still need it configured in Windows.
+**Keyboard language** uses Windows layout mappings. Firmware-supported languages use the keyboard's native legends; other layouts use transparent Companion-rendered legends at the saved XPANEL positions while Companion runs. Shift and Caps Lock select the matching letter/symbol frames. Original native legend visibility is restored when Companion quits normally, with a local recovery record for interrupted sessions.
+
+This broader physical-language rendering is experimental in **preview.34**. UK English and Korean were checked on the owner's keyboard, including modifier switching. The Windows catalog mapping check does not verify every language on physical hardware. Companion's replacement media symbols do not yet match the XPANEL artwork exactly. Function labels such as Esc and Caps Lock may remain English; Korean has no uppercase/lowercase distinction. Applying labels does not change Windows typing settings or add missing ISO/JIS physical keys. Select the matching input language with **Win + Space**; Chinese and other IMEs still compose characters through Windows rather than assigning every written character to a physical key.
+
+The green **Display sleep** control saves its selection immediately. Available timers are **10, 15, 30, 45 minutes and 1 hour**, plus **Never · Companion stays running**. The timed choices use firmware idle sleep; a key press wakes the display. Never uses Companion's background keep-awake behavior, not an unlimited firmware timeout, and requires Companion to remain running. **Test sleep** lets you check wake behavior without waiting for the timer. Quit restores the prior firmware timer.
+
+In **Plugin appearance → Custom image**, choose an image preset or convert a local image for the tile. More than 300 presets include illustrated space, holiday, nature and other subjects. Choose **Large icon with plugin name** or **Fill entire plugin square**; replacing artwork preserves the selected plugin action. Conversion resizes the source cleanly but cannot recover detail missing from a low-resolution image.
 
 **Read device settings** displays supported profile, actuation and rapid-trigger information. Keyboard temperature is not reported by the current integration.
 
@@ -167,7 +188,7 @@ To remove the companion's keyboard assignments, first use **Connections → Rest
 | --- | --- |
 | Keyboard not connected | Save/close XPANEL, check the USB connection and use **Reconnect keyboard**. |
 | L1 shortcuts do nothing | Confirm setup completed, the companion is running in the tray and no shortcut conflict is reported. Release L1 before using arrows in plugin mode. |
-| Widget changes with plugin selection | Select a fixed widget instead of **Follow selection**. |
+| Widget cycling skips some widgets | Open Display and check the yellow favorite stars. With no favorites selected, L1 + / cycles all widgets. |
 | Blank or unavailable widget | Check its connection in Connections, then apply it in Screen widgets. Custom text needs text entered; Off intentionally hides the widget. |
 | Spotify progress is paused or stale | Start playback in the Spotify desktop app and check the media status shown in the companion. |
 | Temperature says “No sensor” | Check the supported NVIDIA tool or your local Libre Hardware Monitor server. |
@@ -205,12 +226,12 @@ Typing in the custom text field selects **Custom text** automatically. Click **A
 
 ## Profiles, favorite widgets and timers
 
-- **Screen widgets → Your widget rotation:** check the widgets you want, move them up/down, then save. **L1 + /** cycles only that ordered list. Existing users keep the previous order until they customize it. Follow selected plugin remains a separate choice.
+- **Screen widgets → Display:** star widgets inside the dropdown. **L1 + /** cycles favorites; with no favorites selected, it cycles all widget choices. Stars save immediately.
 - **Profiles:** save the current applied plugin slots and widget settings under a name. Load manually, or link a profile to an executable such as `obs64.exe`. Choose app can find the executable for you; Task Manager → Details also shows its name.
 - **Automatic switching:** opt in on Profiles. Your current setup becomes the default for unmatched apps. Switching waits for a stable foreground app and pauses while editing in the companion or navigating plugins. Disabling keeps the current layout. Load default setup restores the captured default.
 - **Countdown timer:** choose 1–180 minutes in Screen widgets, start/pause/reset, and choose Show timer on keyboard. Timer controls are also available in Plugin library. It runs while the companion is in the tray; quitting resets it. Completion displays Time up without sending messages or starting other actions.
 - **OBS status widget:** connect OBS in Connections, then choose the OBS display widget. It shows recording/on-air state and elapsed time. When both are active, streaming status takes priority. It never starts streaming by itself.
-- **Animated weather:** clouds drift, sunlight pulses, and rain/snow move in gentle steps. Disable keyboard animation in Your widget rotation if preferred. Desktop previews follow Windows reduced-motion preferences. Hardware motion depends on display transfer speed.
+- **Animated weather:** clouds drift, sunlight pulses, and rain/snow move in gentle steps. Disable **Animate weather on plugins and screen widget** in Screen widgets if preferred. Desktop previews follow Windows reduced-motion preferences. Hardware motion depends on display transfer speed.
 
 Profiles retain display choices only; connections, keyboard skin, remaps, colors and display-area geometry remain unchanged. Save edits in their original pages before capturing a profile. Automatic profile switching needs the companion running in the tray, just like live widgets.
 

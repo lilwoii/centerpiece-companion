@@ -4,8 +4,8 @@ const {Workspace,defaults}=require('../src/workspace.cjs'),{mediaKeySVG,configur
 const validate=c=>Workspace.prototype.validate.call({},c);
 const map=(layer,position,code)=>({bindingLayers:{[layer]:Array.from({length:68},(_,i)=>({behaviorId:50397,param1:i===position?code:0x70004}))}});
 test('media quick choices exactly match the existing device consumer usages',()=>{
- assert.equal(M.items.length,6);
- for(const item of M.items){assert.ok(choices.some(c=>c.value===item.code&&c.label===item.label));assert.equal(M.find(item.code),item);}
+ assert.equal(M.items.length,8);
+ for(const item of M.items){assert.ok(choices.some(c=>c.value===item.code&&(item.mods||c.label===item.label)));assert.equal(M.find(item.code),item);}
  assert.equal(M.find(0x70004),undefined);
 });
 test('icon settings are opt-in, bounded, preserve old setups and reject unsafe values',()=>{
@@ -27,7 +27,7 @@ test('only the active layer and still-matching real binding receive the icon',()
 test('all icon designs rasterize and remain within their physical key',async()=>{
  for(const item of M.items)for(const style of ['outline','solid','badge']){
   const config=validate({...defaults(),keyIcons:{'0:14':{code:item.code,style,color:'#00cc88',background:'#142536'}}});
-  const svg=configuredSVG('idle',config,{caps:false},map(0,14,item.code));
+  const svg=configuredSVG('idle',config,{caps:false},map(0,14,item.code|((item.mods||0)<<24)));
   assert.match(svg,/data-media-key="0:14"/);assert.ok(!/NaN|undefined/.test(svg));
   await sharp(Buffer.from(svg)).png().toBuffer();
  }

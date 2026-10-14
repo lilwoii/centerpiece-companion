@@ -1,5 +1,16 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.34": Object.freeze([
+    "Updated the bundled image-processing library to its latest security patch.",
+    "Screenshot and Print key actions apply immediately, with Undo, larger adjustable icons and a selectable screenshot folder.",
+    "Customize functional plugin icons with your own images or 302 picture presets, including large-icon and full-tile display options.",
+    "Star widgets directly inside the Display menu. L1 + / cycles your favorites, or every widget when none are starred.",
+    "Added FPS, RAM, VRAM and network plugin readings, plus monitoring widgets and a market watchlist for up to four symbols refreshed every 60 seconds.",
+    "Added supported display sleep timers and a Never option while Companion runs, with a Test sleep button.",
+    "Expanded physical keyboard legends for Windows layouts, including Shift/Caps Lock states and cached frames for faster switching.",
+    "Improved overlay-preview validation to avoid rejecting compatible display previews during setup.",
+    "Language legends remain in testing: UK English and Korean passed physical checks; XPANEL media-icon styling and wider physical language verification still need polish."
+]),
   "0.3.0-preview.33": Object.freeze([
     "Saved display settings are backed up on launch and before changes, including plugins, widgets, colors and indicators.",
     "Unreadable or unsupported settings are preserved instead of being replaced with defaults. Automatic setup pauses with a clear error.",

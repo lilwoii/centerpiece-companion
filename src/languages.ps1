@@ -38,7 +38,7 @@ public static class KeyboardLanguage {
  [DllImport("user32.dll")] public static extern bool UnloadKeyboardLayout(IntPtr hkl);
  [DllImport("user32.dll")] public static extern uint MapVirtualKeyEx(uint code,uint type,IntPtr layout);
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int ToUnicodeEx(uint key,uint scan,byte[] state,StringBuilder output,int size,uint flags,IntPtr layout);
- public static string Label(IntPtr layout,uint scan,bool shift){var state=new byte[256];if(shift)state[16]=128;var text=new StringBuilder(16);uint vk=MapVirtualKeyEx(scan,1,layout);int n=ToUnicodeEx(vk,scan,state,text,16,4,layout);return n==0?"":text.ToString();}
+ public static string Label(IntPtr layout,uint scan,bool shift,bool caps){var state=new byte[256];if(shift)state[16]=128;if(caps)state[20]=1;var text=new StringBuilder(16);uint vk=MapVirtualKeyEx(scan,1,layout);int n=ToUnicodeEx(vk,scan,state,text,16,4,layout);return n==0?"":text.ToString();}
 }
 '@
 # Only inspect a layout in this short-lived helper. No activation or Windows language-list writes.
@@ -46,7 +46,9 @@ $layout=[KeyboardLanguage]::LoadKeyboardLayout($request.id,128)
 if($layout -eq [IntPtr]::Zero){throw 'This Windows layout cannot be loaded. Install its language support in Windows Settings.'}
 try{
  $scans=@(1,2,3,4,5,6,7,8,9,10,11,12,13,14,0,0,15,16,17,18,19,20,21,22,23,24,25,26,27,43,0,0,58,30,31,32,33,34,35,36,37,38,39,40,28,42,44,45,46,47,48,49,50,51,52,53,54,0,29,0,56,57,0,0,0,0,0,0)
- $labels=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $false)}else{''}})
- $shift=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $true)}else{''}})
- @{id=$request.id;name=(Get-ItemProperty -LiteralPath ($root+'\'+$request.id)).'Layout Text';labels=$labels;shift=$shift}|ConvertTo-Json -Depth 4 -Compress
+ $labels=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $false, $false)}else{''}})
+ $shift=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $true, $false)}else{''}})
+ $caps=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $false, $true)}else{''}})
+ $capsShift=@($scans|ForEach-Object {if($_ -gt 0){[KeyboardLanguage]::Label($layout,$_, $true, $true)}else{''}})
+ @{id=$request.id;name=(Get-ItemProperty -LiteralPath ($root+'\'+$request.id)).'Layout Text';labels=$labels;shift=$shift;caps=$caps;capsShift=$capsShift}|ConvertTo-Json -Depth 4 -Compress
 }finally{[void][KeyboardLanguage]::UnloadKeyboardLayout($layout)}

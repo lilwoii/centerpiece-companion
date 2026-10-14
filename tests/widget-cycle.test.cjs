@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),vm=require('node:vm');
 const{WidgetCycle,nextWidget,types}=require('../src/widget-cycle.cjs');
-test('widget cycling wraps and rapid taps save every selection but coalesce display work',async()=>{assert.equal(nextWidget('off'),'spotify');const workspace={config:{widget:{type:'spotify',text:'saved text',x:1710}},save(c){this.config=c;}};let applied=0,changed=0;const cycle=new WidgetCycle(workspace,async()=>{applied++;},()=>changed++);for(let i=0;i<3;i++)cycle.press();assert.equal(workspace.config.widget.type,'cpu');assert.equal(workspace.config.widget.text,'saved text');assert.equal(changed,3);await new Promise(r=>setTimeout(r,240));assert.equal(applied,1);cycle.close();assert.equal(new Set(types).size,14);assert.equal(types.includes('follow'),false);assert.equal(nextWidget('text'),'off');assert.equal(nextWidget('follow'),'spotify');});
+test('widget cycling wraps and rapid taps save every selection but coalesce display work',async()=>{assert.equal(nextWidget('off'),'spotify');const workspace={config:{widget:{type:'spotify',text:'saved text',x:1710}},save(c){this.config=c;}};let applied=0,changed=0;const cycle=new WidgetCycle(workspace,async()=>{applied++;},()=>changed++);for(let i=0;i<3;i++)cycle.press();assert.equal(workspace.config.widget.type,'cpu');assert.equal(workspace.config.widget.text,'saved text');assert.equal(changed,3);await new Promise(r=>setTimeout(r,240));assert.equal(applied,1);cycle.close();assert.equal(new Set(types).size,20);assert.equal(types.includes('follow'),false);assert.equal(nextWidget('text'),'off');assert.equal(nextWidget('follow'),'spotify');});
 
 function fixture({pending=false,editResult=0,saveResult={err:0},normalize=false,serial='test-device'}={}){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'widget-key-test-'));
@@ -74,3 +74,5 @@ test('widget shortcut checks device identity and supported layer before acceptin
  const f=fixture({serial:'different-device',pending:true});try{f.state.map.layers[1].bindings[55]=f.binding;await assert.rejects(()=>f.widgetShortcut(f.dir),{code:'KEYBOARD_IDENTITY_MISMATCH'});assert.equal(f.state.requests.length,0);}finally{f.close();}
  const short=fixture({pending:true});try{short.state.map.layers[1].bindings.length=56;short.state.map.layers[1].bindings[55]=short.binding;await assert.rejects(()=>short.widgetShortcut(short.dir),{code:'KEYBOARD_LAYOUT_UNSUPPORTED'});assert.equal(short.state.writes,0);}finally{short.close();}
 });
+
+test('empty favorites cycle all widgets and favorites restrict cycling',()=>{assert.equal(nextWidget('spotify',[]),'youtubemusic');assert.equal(nextWidget('off',[]),'spotify');assert.equal(nextWidget('clock',['clock','market']),'market');assert.equal(nextWidget('market',['clock','market']),'clock');assert.equal(nextWidget('spotify',['market']),'market');});

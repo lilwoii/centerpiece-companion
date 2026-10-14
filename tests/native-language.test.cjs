@@ -1,0 +1,4 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{nativeId,apply}=require('../src/native-language.cjs');
+test('native languages use known firmware IDs only',()=>{assert.equal(nativeId({id:'00000419'}),3);assert.equal(nativeId({id:'auto',resolvedId:'00000407'}),2);assert.equal(nativeId({id:'00000809'}),undefined);});
+test('unsupported layout does not open or change device',async()=>{const r=await apply({id:'00000809'},{createSom(){throw Error('Must not open');}});assert.equal(r.applied,false);});
+test('native legend change verifies and restores previous language on mismatch',async()=>{let values=[],reads=[0,1],closed=false;await assert.rejects(apply({id:'00000419'},{run:f=>f(),createSom:()=>({language:async v=>{if(v===undefined)return reads.shift();values.push(v);},close(){closed=true;}})}),/did not confirm/);assert.deepEqual(values,[3,0]);assert.ok(closed);});

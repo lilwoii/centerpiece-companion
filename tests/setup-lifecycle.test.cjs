@@ -16,7 +16,7 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
 
 function fixture({ shortcuts = async () => ({position:26,engineRecovery:true}), sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), start } = {}) {
   const events = [], handlers = {}, state = { device: {}, strip: false }, context = {
-    Promise, Error, state,fs:{existsSync:()=>false},path:require("node:path"),leaveMode(){}, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
+    Promise, Error, state,widgetSources:{close(){events.push("widget-sources-close");}},sleepService:null,fs:{existsSync:()=>false},path:require("node:path"),leaveMode(){}, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
     quitting: false, automaticSetupSuspended: false, automaticCheckBusy: false, automaticSetupTimer: 1,
     connectionTimer:null,recoveryVerified:false,connectionRecovery:null,profileTimer: null, timer: null, stripTimer: null, lockTimer: null, liveTimer: null, modeTimeout: null,
     hardwareDirectory: 'test-only', widgetShortcutReady: true, appliedAppearance: '',

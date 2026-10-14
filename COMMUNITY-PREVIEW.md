@@ -14,6 +14,20 @@ Keyboard editor uses the physical layout. Click a key or arm **Press a key to se
 
 The small screen above Up supports Spotify artwork/progress, clock, weather, CPU/GPU readings, microphone state, Twitch text and custom text. The idle display refreshes up to twice per second when USB is ready; navigation uses a still snapshot. Sensors are sampled separately. Small-screen text is truncated. Position and size are adjustable.
 
+## Added in preview.34
+
+- **More monitoring:** RAM usage, supported NVIDIA GPU 0 VRAM usage, network probe quality, game FPS/frametime and Steam/Windows BITS download progress. RAM, VRAM, FPS and network readings can also be plugin tiles. Unsupported or blocked sources show their status rather than invented values. PresentMon is bundled for game capture; some Windows accounts need the conditional permission steps shown in the app.
+- **Market watchlist:** display up to four symbols with price, daily change, colored branding where available and data age. Add/remove symbols directly beneath Display when Market watchlist is selected. Yahoo Finance is checked every 60 seconds while active; provider data can be delayed, so this is not a tick-by-tick feed.
+- **Favorite widgets:** stars are inside the Display dropdown. Yellow stars save immediately and limit L1+/ cycling to favorites. With no favorites, every widget participates. The old Follow selected plugin choice has been removed.
+- **Custom plugin artwork:** keep a plugin's action while replacing its logo with a local image or one of more than 300 presets. Image conversion, a larger logo mode and a full-tile image mode are available under Plugin appearance → Custom image.
+- **Key actions:** select a key and click Screenshot, Print or a media action to assign it immediately. Undo restores the prior binding. Screenshot uses Windows + Print Screen and shows the save folder with a Change folder option; Print opens the focused app's Ctrl+P dialog. Custom screenshot/print icons support color, size and placement controls.
+- **Display sleep:** choose 10, 15, 30 or 45 minutes, 1 hour, or Never. A selection saves immediately. Timed sleep is handled by the firmware; Never requires Companion running in the tray. Test sleep checks the display and first-key wake behavior.
+- **Experimental physical languages:** Windows mappings now drive transparent Companion legends for layouts outside the firmware's built-in language sets, including Shift/Caps symbol states. UK English and Korean were physically checked. The full Windows catalog has not been checked on hardware, and Companion-rendered media artwork still differs from XPANEL's original icons.
+
+Existing display choices and keyboard backups remain local. This release does not change YouTube Music integration. See [README.md](README.md) for source limits and [PRIVACY.md](PRIVACY.md) for the data each monitoring feature uses.
+
+## Connections and daily use
+
 Weather prefers Windows location, with a manual city and unit choice. Data refreshes about every ten minutes. Weather attribution: [Open-Meteo](https://open-meteo.com/), CC BY 4.0; the free endpoint is intended for noncommercial use.
 
 CPU load is built in. NVIDIA temperature uses an available nvidia-smi; other temperatures require an existing Libre Hardware Monitor server at 127.0.0.1:8085. No sensor driver is bundled. Missing readings stay unavailable. Microphone controls target the default Windows communications input.
@@ -24,7 +38,7 @@ Connections offers original L1+P, L1+/ and overlay restoration. Other intentiona
 
 Share the public GitHub release link or its installer. The older personal portable folder may contain private backups. Never upload AppData, diagnostics or hardware-backup. Read PRIVACY.md. Test your configured actions before a live stream; account and sensor integrations need their own live validation.
 
-Keyboard language defaults to QWERTY. Choose another Windows-supported layout, including Russian or Korean, to change desktop and keyboard labels. Actual typing still uses the selected Windows language or IME; use Win+Space to switch it. The physical keyboard remains a 68-key layout.
+Keyboard language defaults to QWERTY. Firmware-supported languages use native legends; other mapped layouts use Companion legends while the app runs. Original native legend visibility is restored on normal exit, with a recovery record for interrupted sessions. Actual typing still uses the selected Windows language or IME; use Win+Space to switch it. Function labels may remain English, and IME composition does not assign every written character to a key. The physical keyboard remains a 68-key layout, so selecting a language cannot add ISO/JIS keys that are not present.
 
 Community requests use browser Discord sign-in. Users authorize the configured community application; they do not register developer accounts. Skin submissions are moderated HTTPS links opened in a browser, not automatic installation of user files. Updates require a published GitHub release and an installed app; this preview is unsigned.
 

@@ -1,5 +1,10 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.35": Object.freeze([
+    "Fixed updates getting stuck on a misleading app-cannot-close error when Companion is installed in a protected folder. Setup now requests Windows permission before replacing files.",
+    "Update downloads automatically use a writable account cache if the preferred folder becomes unavailable. Your preferred location and saved settings are preserved.",
+    "Improved installer error messages and retry handling, and preserved the selected update-download folder during upgrades."
+]),
   "0.3.0-preview.34": Object.freeze([
     "Updated the bundled image-processing library to its latest security patch.",
     "Screenshot and Print key actions apply immediately, with Undo, larger adjustable icons and a selectable screenshot folder.",

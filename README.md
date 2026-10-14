@@ -209,7 +209,7 @@ Original project code is available under the [MIT license](LICENSE). Service nam
 
 **Sharing with other owners? Send them the [public download page](https://github.com/lilwoii/centerpiece-companion/releases), not your personal app-data folder.**
 
-If Windows denies access to your selected update folder, the app asks you to choose another writable folder on your preferred drive and remembers that choice for your Windows account. Cancel leaves the current app installed.
+If Windows denies access to your selected update folder, Companion automatically tries a writable cache in your Windows account without replacing your preferred location. If both locations are unavailable, it asks for another folder. The installer checks the app folder before removing the old version and requests Windows approval when needed. Approve using the same Windows account; cancelling leaves the existing installation intact.
 
 ### Quiet automatic startup
 

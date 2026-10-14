@@ -33,6 +33,28 @@ Var InstallLocationField
 Var UpdateLocationField
 Var UpdateRoot
 
+; Builder defines its install-mode variables and process helpers before this hook.
+!macro customHeader
+  !include "${BUILD_RESOURCES_DIR}\install-access.nsh"
+!macroend
+
+Function CompanionLoadUpdateRoot
+  ; Read before old-version removal, preferring the user's current choice.
+  ReadINIStr $UpdateRoot "$APPDATA\centerpiece-companion\update-location.ini" "Storage" "UpdateRoot"
+  ${If} $UpdateRoot == ""
+    ReadINIStr $UpdateRoot "$INSTDIR\install-locations.ini" "Storage" "UpdateRoot"
+  ${EndIf}
+  ${If} $UpdateRoot == ""
+    StrCpy $UpdateRoot "$LOCALAPPDATA\centerpiece-companion-updates"
+  ${EndIf}
+FunctionEnd
+
+!macro customInit
+  Call CompanionLoadUpdateRoot
+  Call CompanionAcceptElevation
+  Call CompanionRequireInstallAccess
+!macroend
+
 !macro customPageAfterChangeDir
   Page custom CompanionLocations CompanionLocationsLeave
 
@@ -41,7 +63,7 @@ Function CompanionLocations
   ${If} $UpdateRoot == ""
     ReadINIStr $UpdateRoot "$INSTDIR\install-locations.ini" "Storage" "UpdateRoot"
     ${If} $UpdateRoot == ""
-      StrCpy $UpdateRoot "$INSTDIR-updates"
+      StrCpy $UpdateRoot "$LOCALAPPDATA\centerpiece-companion-updates"
     ${EndIf}
   ${EndIf}
   nsDialogs::Create 1018
@@ -102,6 +124,8 @@ Function CompanionLocationsLeave
   ${If} $2 != "${APP_FILENAME}"
     StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
   ${EndIf}
+  ; This also covers a new protected location chosen in the folder page.
+  Call CompanionRequireInstallAccess
   ClearErrors
   CreateDirectory "$UpdateRoot\.centerpiece-companion-updates"
   FileOpen $0 "$UpdateRoot\.centerpiece-companion-updates\write-check.tmp" w
@@ -120,7 +144,7 @@ FunctionEnd
     ReadINIStr $UpdateRoot "$INSTDIR\install-locations.ini" "Storage" "UpdateRoot"
   ${EndIf}
   ${If} $UpdateRoot == ""
-    StrCpy $UpdateRoot "$INSTDIR-updates"
+    StrCpy $UpdateRoot "$LOCALAPPDATA\centerpiece-companion-updates"
   ${EndIf}
   FileOpen $0 "$INSTDIR\install-locations.ini" w
   FileWriteWord $0 0xFEFF

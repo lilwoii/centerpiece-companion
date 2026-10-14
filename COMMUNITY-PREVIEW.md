@@ -4,7 +4,7 @@
 
 Free, unofficial Windows companion for the 68-key Centerpiece Pro. Original code is MIT licensed. This is a community preview tested on one keyboard, not replacement firmware or a complete Stream Deck runtime.
 
-Run the Windows installer from this project's GitHub Releases on Windows 10/11 x64. The location page lets you choose the app folder and future update-download folder on separate local drives. Updates use a dedicated subfolder there. Windows still requires some free space on its system drive; personal settings remain in your Windows account. No administrator account is required. The executable is unsigned. Close XPANEL before setup or binding edits, and save or discard its pending changes.
+Run the Windows installer from this project's GitHub Releases on Windows 10/11 x64. The location page lets you choose the app folder and future update-download folder on separate local drives. Updates use a dedicated subfolder there. Windows still requires some free space on its system drive; personal settings remain in your Windows account. The default per-user folder needs no administrator access. Updating an app in a protected folder requests Windows approval using the same account. The executable is unsigned. Close XPANEL before setup or binding edits, and save or discard its pending changes.
 
 The first visible launch automatically sets up a connected, unconfigured keyboard. Pending keyboard settings open a review before saving the current configuration. Setup backs up the original keymap in your Windows profile and uses free overlay slots among 2–10, leaving existing overlays stored and untouched. At least two free slots are needed. **Set up my keyboard** remains available for manual retry; automatic setup never loops after a failure or canceled review. Your installed keyboard skin remains in place; Companion's overlay is active while running.
 
@@ -13,6 +13,10 @@ Choose four logo slots. L1+P enters plugin mode; release L1, use Up/Down, then E
 Keyboard editor uses the physical layout. Click a key or arm **Press a key to select** for ten seconds. Bindings are backed up and read back after saving. L1, L1+P and L1+/ are reserved. Press L1+/ to cycle screen widgets and save the selection while the app runs in the tray.
 
 The small screen above Up supports Spotify artwork/progress, clock, weather, CPU/GPU readings, microphone state, Twitch text and custom text. The idle display refreshes up to twice per second when USB is ready; navigation uses a still snapshot. Sensors are sampled separately. Small-screen text is truncated. Position and size are adjustable.
+
+## Fixed in preview.35
+
+Upgrades check app-folder permissions before removing the previous version and request Windows approval when the folder is protected. Update downloads fall back to a writable account cache if the preferred folder is unavailable, without replacing that preference. Saved plugins, widgets, appearance settings and keyboard backups remain in the same Windows account.
 
 ## Added in preview.34
 

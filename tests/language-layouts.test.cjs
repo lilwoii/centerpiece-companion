@@ -3,7 +3,7 @@ test('language labels fall back safely while a lookup is pending',()=>{const {la
 test('Windows Russian, Korean and automatic layouts produce usable labels',{skip:process.platform!=='win32'},async()=>{const ru=await languages.map('00000419'),ko=await languages.map('korean-2'),auto=await languages.map('auto');assert.equal(ru.labels[17],'й');assert.equal(ru.labels.length,68);assert.equal(ko.labels[17],'ㅂ');assert.equal(auto.id,'auto');assert.equal(auto.labels.length,68);assert.ok(auto.resolvedId);});
 test('language IDs reject paths and commands',async()=>{await assert.rejects(languages.map('../layout'));await assert.rejects(languages.map('00000409;whoami'));});
 test('the selector exposes the requested layouts with both Japanese input modes',async()=>{
- const choices=await languages.list();assert.deepEqual(choices.map(c=>c.id),['qwerty','00000809','korean-2','00000411','japanese-kana','00000419','00000804','00000407']);
+ const choices=await languages.list();assert.deepEqual(choices.map(c=>c.id),['qwerty','00000409','00000809','korean-2','00000411','japanese-kana','00000419','00000804','00000407']);
  choices[0].name='changed';assert.notEqual((await languages.list())[0].name,'changed');
 });
 test('all eight layouts have complete four-state labels and correct input keys',{skip:process.platform!=='win32'},async()=>{

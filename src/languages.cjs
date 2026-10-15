@@ -2,7 +2,8 @@ const{spawn}=require('node:child_process'),path=require('node:path');
 const {physical}=require('./keymap.cjs');
 function invoke(action,id){return new Promise((resolve,reject)=>{const child=spawn(path.join(process.env.SystemRoot||'C:/Windows','System32/WindowsPowerShell/v1.0/powershell.exe'),['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.join(__dirname,'languages.ps1')],{windowsHide:true});let out='',failed=false;const timer=setTimeout(()=>{failed=true;child.kill();reject(Error('Windows layout lookup timed out.'));},8000);child.stdout.setEncoding('utf8');child.stdout.on('data',b=>{out+=b;if(out.length>200000){failed=true;child.kill();reject(Error('Layout response too large.'));}});child.stderr.resume();child.on('error',()=>{clearTimeout(timer);reject(Error('Windows layout lookup is unavailable.'));});child.on('exit',code=>{clearTimeout(timer);if(failed)return;try{if(code)throw Error();resolve(JSON.parse(out));}catch{reject(Error('Windows could not read that layout.'));}});child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify({action,id}));});}
 const supported=Object.freeze([
- {id:'qwerty',name:'English · US QWERTY (default)'},
+ {id:'qwerty',name:'Default · My XPANEL layout'},
+ {id:'00000409',name:'English · US QWERTY'},
  {id:'00000809',name:'English · UK QWERTY'},
  {id:'korean-2',name:'한국어 · Korean 2-set',ime:true},
  {id:'00000411',name:'日本語 · Japanese Romaji',ime:true},

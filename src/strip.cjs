@@ -58,14 +58,23 @@ class StripController extends DisplayCache {
   return states;
  }
  async apply(config,locks){
+  let previousLanguage,changedLanguage=false;
   try{
    if(config.physicalLanguage===true&&require('./native-language.cjs').nativeId({id:config.languageId})===undefined){
     const language=this.legends.model?.language?.id===config.languageId?this.legends.model.language:await require('./languages.cjs').map(config.languageId);
     await this.legends.prepare(this.som,language);
-   }else await this.legends.restore(this.som);
+   }else{
+    await this.legends.restore(this.som);
+    const native=require('./native-language.cjs').nativeId({id:config.languageId});
+    if(native!==undefined){
+     previousLanguage=await this.som.language();
+     if(previousLanguage!==native){changedLanguage=true;await this.som.language(native);}
+     if(await this.som.language()!==native)throw Error('The keyboard did not confirm the selected legend language.');
+    }
+   }
    await super.apply(config,locks);
    if(this.legends.model)await this.legends.commit(this.som);
-  }catch(error){if(this.som)try{await this.legends.restore(this.som);}catch(restoreError){throw Error(error.message+' '+restoreError.message);}throw error;}
+  }catch(error){if(this.som)try{await this.legends.restore(this.som);if(changedLanguage){await this.som.language(previousLanguage);if(await this.som.language()!==previousLanguage)throw Error('The previous legend language could not be restored.');}}catch(restoreError){throw Error(error.message+' '+restoreError.message);}throw error;}
  }
  async close(){if(this.som)await this.legends.restore(this.som);return super.close();}
 }

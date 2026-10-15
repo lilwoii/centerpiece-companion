@@ -12,3 +12,15 @@ test('another keyboard cannot consume the restoration backup',async t=>{const {d
 test('renderer uses recorded positions, real binding letters and no opaque backgrounds',()=>{const positions=Array.from({length:68},(_,i)=>({x:50+i*20,y:40})),labels=Array(68).fill('字');labels[33]='ф';const rendered=svg({positions,language:{id:'ru',labels}},{keyIcons:{}},{layer:false},{bindingLayers:{0:Array(68).fill({behaviorId:50397,param1:0x70004})}});assert.match(rendered,/>ф<\/text>/);assert.match(rendered,/x="50" y="40"/);assert.doesNotMatch(rendered,/<rect|fill-opacity/);assert.equal((rendered.match(/data-legend=/g)||[]).length,68);});
 test('transparent L1 bindings inherit the actual base key',()=>{const rendered=svg({positions:[{x:25,y:35}],language:{id:'qwerty',labels:[]}},{keyIcons:{}},{layer:true},{bindingLayers:{0:[{behaviorId:50397,param1:0x70004}],1:[{behaviorId:56811}]}});assert.match(rendered,/>A<\/text>/);assert.doesNotMatch(rendered,/Use base/);});
 test('failed replacement frame restores native legends and leaves no pending journal',async t=>{const {dir,som,writes}=fixture(t);const {StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');const strip=new StripController(dir);strip.som=som;strip.legends.model={language:{id:'00000809',labels:Array(68).fill('A')}};strip.render=()=>{throw Error('Upload preparation failed');};const config=Workspace.prototype.validate({...defaults(),physicalLanguage:true,languageId:'00000809'});await assert.rejects(strip.apply(config,{caps:false}),/Upload preparation failed/);assert.ok(!writes.includes(false));assert.equal(writes.at(-1),true);assert.equal(fs.existsSync(strip.legends.file),false);});
+test('saved native layouts are reapplied on reconnect without replacing custom key bindings',async t=>{
+ const {dir,som}=fixture(t),{StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');let language=0;const changes=[];
+ som.language=async value=>{if(value!==undefined){changes.push(value);language=value;}return language;};som.uploadOverlay=async()=>{};som.selectSlot=()=>{};
+ const strip=new StripController(dir);strip.som=som;
+ for(const [id,value]of [['00000419',3],['00000407',2],['00000411',0],['00000804',0],['qwerty',0]]){await strip.apply(Workspace.prototype.validate({...defaults(),languageId:id}),{caps:false});assert.equal(language,value);assert.equal(strip.legends.model,null);}
+ assert.deepEqual(changes,[3,2,0]);
+});
+test('native language is restored if replacement frames fail',async t=>{
+ const {dir,som}=fixture(t),{StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');let language=2;
+ som.language=async value=>{if(value!==undefined)language=value;return language;};const strip=new StripController(dir);strip.som=som;strip.render=()=>{throw Error('Frame failed');};
+ await assert.rejects(strip.apply(Workspace.prototype.validate({...defaults(),languageId:'00000419'}),{caps:false}),/Frame failed/);assert.equal(language,2);
+});

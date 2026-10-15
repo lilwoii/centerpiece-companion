@@ -244,19 +244,16 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('choose-screenshot-folder',async()=>{const result=await dialog.showOpenDialog({title:'Choose Windows screenshot folder',properties:['openDirectory','createDirectory']});if(result.canceled||!result.filePaths[0])return desk.system.request('screenshot-folder');return desk.system.request('set-screenshot-folder',result.filePaths[0]);});
     handle('set-language',async(id,save=true)=>{
       if(typeof save!=='boolean')throw Error('Invalid layout setting');if(save&&desk.settingsError)throw Error(desk.settingsError);
-      const language=await require('./languages.cjs').map(id);desk.referenceLanguage=language;
-      if(!save)return {...language,native:null};
+      const language=await require('./languages.cjs').map(id);
+      if(!save){desk.referenceLanguage=language;return {...language,native:null};}
       if(!state.strip)throw Error('Connect the keyboard and wait for the display to be ready before applying a language.');
       const previous=desk.config;
-      let native;
-      if(require('./native-language.cjs').nativeId(language)!==undefined){
-        await displayTasks.run(()=>strip.legends.restore(strip.som));
-        native=await require('./native-language.cjs').apply(language,{run:fn=>displayTasks.run(fn),createSom:()=>new(require('./som.cjs').Som)()});
-      }else native={applied:true,renderer:'companion'};
+      const previousNative=await displayTasks.run(()=>strip.som.language());
+      const native=require('./native-language.cjs').nativeId(language)!==undefined?{applied:true,renderer:'native'}:{applied:true,renderer:'companion'};
       try{
         desk.config=desk.validate({...previous,languageId:id,physicalLanguage:native.renderer==='companion'});
-        appliedAppearance='';await syncAppearance();desk.save(desk.config);send();
-      }catch(error){desk.config=previous;appliedAppearance='';try{await syncAppearance();}catch{}throw error;}
+        appliedAppearance='';await syncAppearance();if(!state.strip||appliedAppearance!==JSON.stringify(desk.config))throw Error('The keyboard disconnected before the layout could be applied. Reconnect and retry.');desk.save(desk.config);desk.referenceLanguage=language;send();
+      }catch(error){desk.config=previous;appliedAppearance='';try{await displayTasks.run(async()=>{if(!strip.som)throw Error('Keyboard disconnected');await strip.som.language(previousNative);if(await strip.som.language()!==previousNative)throw Error('Legend language readback differed');});await syncAppearance();}catch(restoreError){throw Error(error.message+' The previous layout could not be restored: '+restoreError.message);}throw error;}
       return {...language,native};
     });
     handle('language-settings',()=>shell.openExternal('ms-settings:regionlanguage'));

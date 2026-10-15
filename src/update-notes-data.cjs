@@ -1,5 +1,15 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.36": Object.freeze([
+    "Keyboard language choices are now US QWERTY, UK QWERTY, Korean 2-set, Japanese Romaji and Kana, Russian, Chinese Pinyin and German QWERTZ. Saved layouts reapply on reconnect, with Shift/Caps Lock labels and verified physical application.",
+    "Added FPS, RAM, VRAM and network plugin readings and monitoring widgets. Market watchlist supports up to four symbols, matching brand colors and prices refreshed every 60 seconds.",
+    "Star favorites directly inside the widget menu. L1 + / cycles your favorites, or all widgets when none are starred.",
+    "Display sleep offers supported timers, a Never option while Companion runs, and Test sleep. A key press wakes the display.",
+    "Screenshot and Print key actions apply immediately with Undo. Choose a screenshot folder and resize or position custom key icons.",
+    "Replace functional plugin logos with custom images or 302 picture presets. Convert images and choose larger icons or full-tile artwork without changing the plugin action.",
+    "Improved overlay initialization checks, update installation in protected folders, writable download-cache fallback and preservation of saved settings.",
+    "Update checks now explain when a release download has been withdrawn or is temporarily unavailable instead of incorrectly blaming your internet connection."
+  ]),
   "0.3.0-preview.35": Object.freeze([
     "Fixed updates getting stuck on a misleading app-cannot-close error when Companion is installed in a protected folder. Setup now requests Windows permission before replacing files.",
     "Update downloads automatically use a writable account cache if the preferred folder becomes unavailable. Your preferred location and saved settings are preserved.",

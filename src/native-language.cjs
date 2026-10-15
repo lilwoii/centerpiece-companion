@@ -1,5 +1,6 @@
 // Native IDs from XPANEL's Legends page. Never substitute a nearby language.
-const nativeIds=Object.freeze({qwerty:0,'00000409':0,'00000813':1,'00000407':2,'00000419':3,'00000411':4});
+// Romaji/Pinyin on the 68-key ANSI keyboard use the US input-key legends.
+const nativeIds=Object.freeze({qwerty:0,'00000409':0,'00000813':1,'00000407':2,'00000419':3,'00000411':0,'00000804':0});
 function nativeId(language){return nativeIds[language.resolvedId||language.id];}
 async function apply(language,{run,createSom}){
  const value=nativeId(language);

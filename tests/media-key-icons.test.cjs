@@ -25,7 +25,7 @@ test('only the active layer and still-matching real binding receive the icon',()
  assert.equal(mediaKeySVG(config,{layer:false},special),'');
 });
 test('all icon designs rasterize and remain within their physical key',async()=>{
- for(const item of M.items)for(const style of ['outline','solid','badge']){
+ for(const item of M.items)for(const style of ['outline','solid','badge','glossy']){
   const config=validate({...defaults(),keyIcons:{'0:14':{code:item.code,style,color:'#00cc88',background:'#142536'}}});
   const svg=configuredSVG('idle',config,{caps:false},map(0,14,item.code|((item.mods||0)<<24)));
   assert.match(svg,/data-media-key="0:14"/);assert.ok(!/NaN|undefined/.test(svg));

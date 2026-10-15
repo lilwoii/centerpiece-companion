@@ -17,7 +17,7 @@ function svg(model,config,locks,data){
   const custom=config.keyIcons?.[active+':'+i],customEntry=custom&&media.find(custom.code);
   if(customEntry&&binding?.behaviorId===50397&&(binding.param1&0xffffff)===customEntry.code&&(customEntry.mods===undefined||(binding.param1>>>24)===customEntry.mods))return '';
   const icon=binding?.behaviorId===50397?media.find(binding.param1&0xffffff):null;
-  if(icon&&(icon.mods===undefined||(binding.param1>>>24)===icon.mods))return `<g data-legend="${i}" transform="translate(${p.x-16} ${p.y-16})">${media.svg(icon.code,{color:'#ffffff',background:'#000000',style:'solid',size:32}).replace(/<svg /,'<svg width="32" height="32" ')}</g>`;
+  if(icon&&(icon.mods===undefined||(binding.param1>>>24)===icon.mods))return `<g data-legend="${i}" transform="translate(${p.x-16} ${p.y-16})">${media.svg(icon.code,{color:'#ffffff',background:'#000000',style:'glossy',size:32}).replace(/<svg /,'<svg width="32" height="32" ')}</g>`;
   text=languageLabel(text,model.language,locks);
   const size=Array.from(text).length>3?12:22;
   return `<text data-legend="${i}" x="${p.x}" y="${p.y}" dy=".35em" text-anchor="middle" font-family="Segoe UI,Nirmala UI,Leelawadee UI,Microsoft YaHei,Yu Gothic,Malgun Gothic,Arial,sans-serif" font-weight="bold" font-size="${size}" fill="#ffffff">${escape(text)}</text>`;

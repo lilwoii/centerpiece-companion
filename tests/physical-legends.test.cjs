@@ -24,3 +24,12 @@ test('native language is restored if replacement frames fail',async t=>{
  som.language=async value=>{if(value!==undefined)language=value;return language;};const strip=new StripController(dir);strip.som=som;strip.render=()=>{throw Error('Frame failed');};
  await assert.rejects(strip.apply(Workspace.prototype.validate({...defaults(),languageId:'00000419'}),{caps:false}),/Frame failed/);assert.equal(language,2);
 });
+test('firmware rejecting a native language falls back to transparent physical legends',async t=>{
+ const {dir,som}=fixture(t),{StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');
+ som.language=async()=>0;som.uploadOverlay=async()=>{};som.selectSlot=()=>{};
+ const strip=new StripController(dir);strip.som=som;
+ await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'00000419'}),{caps:false});
+ assert.equal(strip.legends.model.language.id,'00000419');assert.equal(await som.legends(),false);
+ await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'qwerty'}),{caps:false});
+ assert.equal(strip.legends.model,null);assert.equal(await som.legends(),true);
+});

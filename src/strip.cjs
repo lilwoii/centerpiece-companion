@@ -69,7 +69,12 @@ class StripController extends DisplayCache {
     if(native!==undefined){
      previousLanguage=await this.som.language();
      if(previousLanguage!==native){changedLanguage=true;await this.som.language(native);}
-     if(await this.som.language()!==native)throw Error('The keyboard did not confirm the selected legend language.');
+     if(await this.som.language()!==native){
+      // Some firmware accepts the command but retains its current language.
+      // Restore that state and use the same transparent renderer as UK/Kana.
+      if(changedLanguage){await this.som.language(previousLanguage);if(await this.som.language()!==previousLanguage)throw Error('The previous legend language could not be restored.');changedLanguage=false;}
+      await this.legends.prepare(this.som,await require('./languages.cjs').map(config.languageId));
+     }
     }
    }
    await super.apply(config,locks);

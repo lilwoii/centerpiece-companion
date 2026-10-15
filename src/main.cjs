@@ -248,6 +248,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       if(!save){desk.referenceLanguage=language;return {...language,native:null};}
       if(!state.strip)throw Error('Connect the keyboard and wait for the display to be ready before applying a language.');
       const previous=desk.config;
+      await displayTasks.run(async()=>{if(!strip.legends.model)await strip.languageDefault.capture(strip.som);else if(!strip.languageDefault.read(strip.som)){if(id!=='qwerty')throw Error('Choose Default first to restore your XPANEL artwork and save it before switching languages.');await strip.legends.restore(strip.som);await strip.languageDefault.capture(strip.som);}});
       const previousNative=await displayTasks.run(()=>strip.som.language());
       const native={applied:true,renderer:id==='qwerty'?'original':'companion'};
       try{

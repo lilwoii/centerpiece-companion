@@ -50,3 +50,8 @@ test('explicit companion language preserves firmware language and original artwo
  await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'qwerty'}),{caps:false});
  assert.equal(strip.legends.model,null);assert.equal(await som.legends(),true);
 });
+test('saved personal language default is captured once and never replaced by a later language',async t=>{
+ const {dir,som}=fixture(t),{LanguageDefault}=require('../src/language-default.cjs');let language=2;som.language=async value=>{if(value!==undefined)language=value;return language;};
+ const saved=new LanguageDefault(dir);await saved.capture(som);language=3;await saved.capture(som);assert.equal(saved.read(som).language,2);await saved.restore(som);assert.equal(language,2);assert.equal(await som.legends(),true);
+ const other={...som,identity:'another keyboard'};assert.throws(()=>saved.read(other),/does not match/);
+});

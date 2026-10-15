@@ -45,7 +45,7 @@ function stripSVG(selected = 'idle') {
 async function renderStrip(selected) { return sharp(Buffer.from(stripSVG(selected))).png().toBuffer(); }
 const{DisplayCache}=require('./display-cache.cjs');
 class StripController extends DisplayCache {
- constructor(directory){super(directory,configuredSVG);this.legends=new(require('./physical-legends.cjs').PhysicalLegends)(directory);}
+ constructor(directory){super(directory,configuredSVG);this.legends=new(require('./physical-legends.cjs').PhysicalLegends)(directory);this.languageDefault=new(require('./language-default.cjs').LanguageDefault)(directory);}
  key(...args){return super.key(...args)+(this.legends?.model?':letters-'+Number(args[1]??this.caps)+((args[3]??this.shift)?':shift':''):'');}
  setLocks(locks){this.shift=!!locks.shift;super.setLocks(locks);}
  frame(selected,caps,layer,shift=this.shift){const base=super.frame(selected,caps,layer);return base.slice(0,-6)+require('./physical-legends.cjs').svg(this.legends.model,this.config,{caps,layer,shift:!!shift},this.data)+'</svg>';}
@@ -65,6 +65,7 @@ class StripController extends DisplayCache {
     await this.legends.prepare(this.som,language);
    }else{
     await this.legends.restore(this.som);
+    if(config.languageId==='qwerty')await this.languageDefault.restore(this.som);
     const native=config.languageId==='qwerty'?undefined:require('./native-language.cjs').nativeId({id:config.languageId});
     if(native!==undefined){
      previousLanguage=await this.som.language();

@@ -60,12 +60,12 @@ class StripController extends DisplayCache {
  async apply(config,locks){
   let previousLanguage,changedLanguage=false;
   try{
-   if(config.physicalLanguage===true&&require('./native-language.cjs').nativeId({id:config.languageId})===undefined){
+   if(config.languageId!=='qwerty'&&config.physicalLanguage===true){
     const language=this.legends.model?.language?.id===config.languageId?this.legends.model.language:await require('./languages.cjs').map(config.languageId);
     await this.legends.prepare(this.som,language);
    }else{
     await this.legends.restore(this.som);
-    const native=require('./native-language.cjs').nativeId({id:config.languageId});
+    const native=config.languageId==='qwerty'?undefined:require('./native-language.cjs').nativeId({id:config.languageId});
     if(native!==undefined){
      previousLanguage=await this.som.language();
      if(previousLanguage!==native){changedLanguage=true;await this.som.language(native);}

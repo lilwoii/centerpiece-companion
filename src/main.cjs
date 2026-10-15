@@ -249,10 +249,10 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       if(!state.strip)throw Error('Connect the keyboard and wait for the display to be ready before applying a language.');
       const previous=desk.config;
       const previousNative=await displayTasks.run(()=>strip.som.language());
-      const native=require('./native-language.cjs').nativeId(language)!==undefined?{applied:true,renderer:'native'}:{applied:true,renderer:'companion'};
+      const native={applied:true,renderer:id==='qwerty'?'original':'companion'};
       try{
         desk.config=desk.validate({...previous,languageId:id,physicalLanguage:native.renderer==='companion'});
-        appliedAppearance='';await syncAppearance();if(!state.strip||appliedAppearance!==JSON.stringify(desk.config))throw Error('The keyboard disconnected before the layout could be applied. Reconnect and retry.');native.renderer=strip.legends.model?'companion':'native';desk.save(desk.config);desk.referenceLanguage=language;send();
+        appliedAppearance='';await syncAppearance();if(!state.strip||appliedAppearance!==JSON.stringify(desk.config))throw Error('The keyboard disconnected before the layout could be applied. Reconnect and retry.');native.renderer=strip.legends.model?'companion':id==='qwerty'?'original':'native';desk.save(desk.config);desk.referenceLanguage=language;state.error='';send();
       }catch(error){desk.config=previous;appliedAppearance='';try{await displayTasks.run(async()=>{if(!strip.som)throw Error('Keyboard disconnected');await strip.som.language(previousNative);if(await strip.som.language()!==previousNative)throw Error('Legend language readback differed');});await syncAppearance();}catch(restoreError){throw Error(error.message+' The previous layout could not be restored: '+restoreError.message);}throw error;}
       return {...language,native};
     });

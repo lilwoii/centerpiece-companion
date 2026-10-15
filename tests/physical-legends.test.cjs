@@ -33,3 +33,20 @@ test('firmware rejecting a native language falls back to transparent physical le
  await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'qwerty'}),{caps:false});
  assert.equal(strip.legends.model,null);assert.equal(await som.legends(),true);
 });
+test('default restores personal XPANEL artwork without selecting a firmware language',async t=>{
+ const {dir,som}=fixture(t),{StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');
+ som.language=async()=>{throw Error('Must not replace personal native legends');};som.uploadOverlay=async()=>{};som.selectSlot=()=>{};
+ const strip=new StripController(dir);strip.som=som;
+ await strip.legends.prepare(som,{id:'korean-2'});await strip.legends.commit(som);
+ await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'qwerty',physicalLanguage:false}),{caps:false});
+ assert.equal(strip.legends.model,null);assert.equal(await som.legends(),true);
+});
+test('explicit companion language preserves firmware language and original artwork for return',async t=>{
+ const {dir,som}=fixture(t),{StripController}=require('../src/strip.cjs'),{Workspace,defaults}=require('../src/workspace.cjs');
+ som.language=async()=>{throw Error('Must not change firmware artwork');};som.uploadOverlay=async()=>{};som.selectSlot=()=>{};
+ const strip=new StripController(dir);strip.som=som;
+ await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'00000419',physicalLanguage:true}),{caps:false});
+ assert.equal(strip.legends.model.language.id,'00000419');
+ await strip.apply(Workspace.prototype.validate({...defaults(),languageId:'qwerty'}),{caps:false});
+ assert.equal(strip.legends.model,null);assert.equal(await som.legends(),true);
+});

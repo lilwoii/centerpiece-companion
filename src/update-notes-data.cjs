@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.37": Object.freeze([
+    "Separate green Plugins, amber Caps Lock and purple Widget transparency switches sit above the keyboard preview. Each starts off and saves immediately; switching off restores your saved appearance.",
+    "Transparent Caps Lock stays invisible while off and lights the full key with your saved color while on. Plugin text, icons and navigation highlights stay visible over your skin.",
+    "Adjust strip, plugin background, widget and Caps Lock fill opacity. Display sleep controls remain on the right of the preview toolbar.",
+    "Record a key combination in Keyboard editor, then save it to your selected key. Added US and UK # presets, numpad bindings and Right Windows. Character output follows your Windows keyboard layout."
+  ]),
   "0.3.0-preview.36": Object.freeze([
     "Keyboard language choices are now US QWERTY, UK QWERTY, Korean 2-set, Japanese Romaji and Kana, Russian, Chinese Pinyin and German QWERTZ. Saved layouts reapply on reconnect with Shift/Caps Lock labels. Default restores your own XPANEL lettering and media icons.",
     "Added FPS, RAM, VRAM and network plugin readings and monitoring widgets. Market watchlist supports up to four symbols, matching brand colors and prices refreshed every 60 seconds.",

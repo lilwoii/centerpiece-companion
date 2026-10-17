@@ -123,3 +123,5 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 .music-playback-note .music-setup-footnote{color:var(--muted);font-size:12px}
 .music-playback-note .music-setup-optional{color:var(--primary)}
 @media(forced-colors:active){.music-playback-note{border-color:CanvasText}.music-playback-note strong,.music-playback-note p,.music-playback-note .music-setup-optional{color:CanvasText}}
+
+.mention-badge{background:#ffda59;color:#211b00;border-radius:999px;min-width:22px;padding:2px 6px;text-align:center;font-weight:700;margin-left:auto}.mention-notifications{margin-left:auto}.mention-notifications.has-mentions{background:#ffda59;color:#211b00;border-color:#ffda59;font-weight:700}.mention-composer{margin-top:12px}.mention-composer summary{color:#ffda59;cursor:pointer}.mention-composer textarea{width:100%;margin-block:8px}.mention-inbox{max-height:80vh;overflow:auto;width:min(620px,90vw)}.mention-inbox .community-message{display:block}.mention-inbox p{white-space:pre-wrap;overflow-wrap:anywhere}

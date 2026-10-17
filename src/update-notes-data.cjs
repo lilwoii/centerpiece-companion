@@ -1,5 +1,13 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.38": Object.freeze([
+    "Fixed Companion staying disconnected after keyboard settings were restored. Startup now backs up and reinstalls its shortcuts automatically when the current keyboard configuration passes verification.",
+    "Owner @mentions on feature requests now notify the request author with a yellow unread badge and a Notifications inbox. Sign in with Discord to receive mentions.",
+    "Separate green Plugins, amber Caps Lock and purple Widget transparency switches sit above the keyboard preview. Each starts off and saves immediately; switching off restores your saved appearance.",
+    "Transparent Caps Lock stays invisible while off and lights the full key with your saved color while on. Plugin text, icons and navigation highlights stay visible over your skin.",
+    "Adjust strip, plugin background, widget and Caps Lock fill opacity. Display sleep controls remain on the right of the preview toolbar.",
+    "Record a key combination in Keyboard editor, then save it to your selected key. Added US and UK # presets, numpad bindings and Right Windows. Character output follows your Windows keyboard layout."
+  ]),
   "0.3.0-preview.37": Object.freeze([
     "Separate green Plugins, amber Caps Lock and purple Widget transparency switches sit above the keyboard preview. Each starts off and saves immediately; switching off restores your saved appearance.",
     "Transparent Caps Lock stays invisible while off and lights the full key with your saved color while on. Plugin text, icons and navigation highlights stay visible over your skin.",

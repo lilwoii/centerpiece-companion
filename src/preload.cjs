@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('companion', {
   communityCancelLogin:()=>ipcRenderer.invoke('community-cancel-login'),
   communityLogout:()=>ipcRenderer.invoke('community-logout'),
   communitySubmit:input=>ipcRenderer.invoke('community-submit',input),
+  communityMention:input=>ipcRenderer.invoke('community-mention',input),
+  communityMentionsRead:ids=>ipcRenderer.invoke('community-mentions-read',ids),
   communityReview:(id,status)=>ipcRenderer.invoke('community-review',id,status),
   communityColor:color=>ipcRenderer.invoke('community-color',color),
   communitySkin:id=>ipcRenderer.invoke('community-skin',id),

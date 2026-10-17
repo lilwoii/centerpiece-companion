@@ -6,3 +6,6 @@ CREATE INDEX IF NOT EXISTS submission_feed ON submissions(kind,created);
 CREATE TABLE IF NOT EXISTS rate_limits (bucket TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS notifications (submission_id TEXT PRIMARY KEY, sent INTEGER NOT NULL DEFAULT 0, attempts INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS profiles (user_id TEXT PRIMARY KEY, color TEXT NOT NULL DEFAULT '#9bb9ff');
+
+CREATE TABLE IF NOT EXISTS mentions (id TEXT PRIMARY KEY, submission_id TEXT NOT NULL, recipient_id TEXT NOT NULL, sender_id TEXT NOT NULL, sender_name TEXT NOT NULL, body TEXT NOT NULL, created INTEGER NOT NULL, read_at INTEGER);
+CREATE INDEX IF NOT EXISTS mentions_recipient ON mentions(recipient_id,created);

@@ -1,9 +1,9 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),{randomBytes,createHash}=require('node:crypto');
 const config=require('./distribution.json');
 class Community{
- constructor(directory,shell,safeStorage){this.shell=shell;this.safeStorage=safeStorage;this.file=path.join(directory,'community-session.bin');this.token='';this.server=null;this.cancelLogin=null;this.state={configured:false,user:null,features:[],skins:[],queue:[],error:''};try{const u=new URL(config.communityOrigin);if(u.protocol==='https:'&&u.origin===config.communityOrigin&&!u.username&&!u.password){this.origin=u.origin;this.state.configured=true;}}catch{}try{if(safeStorage.isEncryptionAvailable())this.token=safeStorage.decryptString(fs.readFileSync(this.file));}catch{}}
+ constructor(directory,shell,safeStorage){this.shell=shell;this.safeStorage=safeStorage;this.file=path.join(directory,'community-session.bin');this.token='';this.server=null;this.cancelLogin=null;this.state={configured:false,user:null,features:[],skins:[],queue:[],mentions:[],error:''};try{const u=new URL(config.communityOrigin);if(u.protocol==='https:'&&u.origin===config.communityOrigin&&!u.username&&!u.password){this.origin=u.origin;this.state.configured=true;}}catch{}try{if(safeStorage.isEncryptionAvailable())this.token=safeStorage.decryptString(fs.readFileSync(this.file));}catch{}}
  async request(route,method='GET',data){if(!this.origin)throw Error('Community hosting is not configured in this build yet.');const requestToken=this.token;const r=await fetch(this.origin+route,{method,headers:{...(this.token?{Authorization:'Bearer '+this.token}:{}),...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined,redirect:'error',signal:AbortSignal.timeout(12000)});const reader=r.body.getReader();let size=0,chunks=[];try{while(true){const{done,value}=await reader.read();if(done)break;size+=value.length;if(size>1024*1024){await reader.cancel();throw Error('Community response is too large.');}chunks.push(value);}}finally{reader.releaseLock();}let result;try{result=JSON.parse(Buffer.concat(chunks).toString());}catch{throw Error('Community service returned an invalid response.');}if(!r.ok){if(r.status===401&&this.token===requestToken)this.clear();throw Error(typeof result.error==='string'?result.error.slice(0,200):'Community request failed.');}return result;}
- clear(){this.token='';this.state.user=null;this.state.queue=[];try{fs.unlinkSync(this.file);}catch{}}
+ clear(){this.token='';this.state.user=null;this.state.queue=[];this.state.mentions=[];try{fs.unlinkSync(this.file);}catch{}}
  async refresh(){
   if(!this.origin)return this.state;
   if(this.refreshPromise&&this.refreshToken===this.token)return this.refreshPromise;
@@ -14,9 +14,11 @@ class Community{
    if(user)this.state.user=this.profile(user);
    const [features,skins]=await Promise.all([this.request('/feed'),this.request('/feed?kind=skin')]);
    if(token!==this.token)return this.state;
+   const mentions=token?(await this.request('/mentions')).items:[];
+   if(!Array.isArray(mentions)||mentions.length>100)throw Error('Invalid notifications.');
    const queue=this.state.user?.isAdmin?this.items((await this.request('/admin/queue')).items):[];
    if(token!==this.token)return this.state;
-   this.state.features=this.items(features.items);this.state.skins=this.items(skins.items);this.state.queue=queue;this.state.error='';
+   this.state.mentions=mentions.map(m=>{if(!/^[a-f0-9-]{36}$/.test(m.id||'')||!/^[a-f0-9]{64}$/.test(m.submission_id||'')||typeof m.body!=='string'||m.body.length>1000||typeof m.sender_name!=='string'||typeof m.title!=='string'||!Number.isFinite(m.created))throw Error('Invalid notification.');return {...m,sender_name:m.sender_name.slice(0,80),title:m.title.slice(0,100)};});this.state.features=this.items(features.items);this.state.skins=this.items(skins.items);this.state.queue=queue;this.state.error='';
   }catch(e){if(token===this.token)this.state.error=e.message;}return this.state;})();
   this.refreshPromise=operation;
   try{return await operation;}finally{if(this.refreshPromise===operation){this.refreshPromise=null;this.refreshToken=null;}}
@@ -32,6 +34,8 @@ class Community{
  }
  async logout(){this.close();if(this.token)await this.request('/logout','POST',{}).catch(()=>{});this.clear();return this.state;}
  async submit(input){if(!this.state.user)throw Error('Sign in with Discord first.');if(!input||!['feature','skin'].includes(input.kind)||typeof input.title!=='string'||input.title.trim().length<3||input.title.length>100||typeof input.body!=='string'||input.body.trim().length<10||input.body.length>2000)throw Error('Use 3–100 characters for the title and 10–2,000 characters for the description.');const result=await this.request('/submit','POST',{kind:input.kind,title:input.title,body:input.body,skinUrl:typeof input.skinUrl==='string'?input.skinUrl:'',ownsRights:input.ownsRights===true});await this.refresh();return{...this.state,submitted:result};}
+ async mention(input){if(!this.state.user?.isAdmin)throw Error('Owner access required.');await this.request('/admin/mention','POST',input);return this.state;}
+ async readMentions(ids){await this.request('/mentions/read','POST',{ids});return this.refresh();}
  async review(id,status){if(!this.state.user?.isAdmin)throw Error('Owner access required.');await this.request('/admin/review','POST',{id,status});return this.refresh();}
  async color(color){if(!/^#[a-f0-9]{6}$/i.test(color))throw Error('Choose a display color.');await this.request('/profile','POST',{color});if(this.state.user)this.state.user.color=color;return this.refresh();}
  async openSkin(id){const item=this.state.skins.find(i=>i.id===id&&i.status==='approved');if(!item)throw Error('Choose an approved skin.');let u;try{u=new URL(item.skin_url);}catch{throw Error('Invalid skin link.');}if(u.protocol!=='https:'||u.username||u.password)throw Error('Invalid skin link.');await this.shell.openExternal(u.href);}

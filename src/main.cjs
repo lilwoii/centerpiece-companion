@@ -189,6 +189,8 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('community-cancel-login',()=>{community.close();send();return state;});
     handle('community-logout',async()=>{await community.logout();send();return state;});
     handle('community-submit',async input=>{await community.submit(input);send();return state;});
+    handle('community-mention',async input=>{await community.mention(input);send();return state;});
+    handle('community-mentions-read',async ids=>{await community.readMentions(ids);send();return state;});
     handle('community-review',async(id,status)=>{await community.review(id,status);send();return state;});
     handle('community-color',async color=>{await community.color(color);send();return state;});
     handle('community-skin',id=>community.openSkin(id));
@@ -291,7 +293,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
           if(quitting)return state;
         }
         if(initialize){state.strip=strip.connect();appliedAppearance='';send();try{await desk.live.sample();}catch{}if(quitting)return state;try{await syncAppearance();if(quitting)return state;monitor.start();}catch(error){error.configurationVerified=true;error.writesAttempted=true;error.code='KEYBOARD_DISPLAY_INITIALIZATION_FAILED';error.stage='initialize_display';error.message='Shortcuts were saved, but the display could not initialize. '+error.message;throw error;}state.feedback='Keyboard setup complete. Original settings are backed up on this PC.';}
-        if(initialize){recoveryVerified=true;automaticSetupSuspended=false;}state.error='';if(initialize&&backup?.preservedSlots?.length)state.feedback+=' Existing display overlays were preserved.';if(initialize&&backup?.pendingAfterSetup)state.feedback+=' The firmware still reports a pending flag, but saving and the current settings were verified.';send();return initialize?state:result;
+        if(initialize){recoveryVerified=true;automaticSetupSuspended=false;connectionRecovery?.reset();state.deviceError="";}state.error='';if(initialize&&backup?.preservedSlots?.length)state.feedback+=' Existing display overlays were preserved.';if(initialize&&backup?.pendingAfterSetup)state.feedback+=' The firmware still reports a pending flag, but saving and the current settings were verified.';send();return initialize?state:result;
       }catch(error){state.setupFailure=require('./keyboard-errors.cjs').setupFailure(error);state.error=state.setupFailure.message;send();throw error;}finally{setupBusy=false;state.setupRunning=false;try{send();}finally{completeSetup();}}
     }
     async function beginKeyboardSetup(){if(state.strip)return state;return setupOperation(()=>{setupPlan=null;state.setupRecovery=null;return require('./setup-transaction.cjs').startSetup(hardwareDirectory,{includeWidget:widgetShortcutReady});},true);}
@@ -307,7 +309,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
           if(quitting)throw Object.assign(Error('Companion is closing.'),{code:'APP_CLOSING'});
           if(!state.device.keyboard||!state.device.display)throw Object.assign(Error('Waiting for both keyboard USB interfaces. Reconnecting automatically…'),{code:'CONNECTION_UNAVAILABLE',writesAttempted:false});
           const file=path.join(hardwareDirectory,'hardware.json');
-          if(fs.existsSync(file)){const saved=JSON.parse(fs.readFileSync(file,'utf8'));if(saved.restored||saved.setupInProgress)throw Object.assign(Error(saved.restored?'Keyboard settings were restored. Review current settings to enable Companion again.':'An earlier setup did not finish. Review current settings before continuing.'),{code:'SETUP_REVIEW_REQUIRED',writesAttempted:false});}
+          if(fs.existsSync(file)){const saved=JSON.parse(fs.readFileSync(file,'utf8'));if(saved.setupInProgress)throw Object.assign(Error('An earlier setup did not finish. Review current settings before continuing.'),{code:'SETUP_REVIEW_REQUIRED',writesAttempted:false});}
           return require('./setup-transaction.cjs').startSetup(hardwareDirectory,{includeWidget:widgetShortcutReady});
         },true);
         recoveryVerified=!!state.strip&&!state.setupRecovery;
@@ -320,7 +322,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('prepare-setup-recovery',()=>{suspendAutomaticSetup();return setupOperation(async()=>{setupPlan=null;state.setupRecovery=null;const plan=await require('./setup-transaction.cjs').prepareSetup(hardwareDirectory,{includeWidget:widgetShortcutReady,reviewPending:true});if(plan.alreadyInstalled)return{alreadyInstalled:true};setupPlan=plan;state.setupRecovery=setupReview(plan);return state.setupRecovery;});});
     handle('confirm-setup-recovery',token=>{suspendAutomaticSetup();return setupOperation(()=>{if(typeof token!=='string'||!setupPlan||setupPlan.id!==token)throw Error('Review the current keyboard settings again before continuing.');const plan=setupPlan;setupPlan=null;state.setupRecovery=null;return require('./setup-transaction.cjs').commitSetup(hardwareDirectory,plan,{acceptPending:true});},true);});
     handle('cancel-setup-recovery',()=>{suspendAutomaticSetup();if(setupBusy)throw Error('Wait for the current keyboard operation.');setupPlan=null;state.setupRecovery=null;state.feedback='Setup review closed. You can start setup again.';send();return true;});
-    handle('restore-keyboard',async()=>{leaveMode();if(strip.updating)throw Error('Wait for the display update to finish.');await strip.close();state.strip=false;await require('./setup.cjs').restore(hardwareDirectory);state.feedback='Original plugin key and overlay restored. Your other remaps remain.';send();return state;});
+    handle('restore-keyboard',async()=>{suspendAutomaticSetup();leaveMode();if(strip.updating)throw Error('Wait for the display update to finish.');await strip.close();state.strip=false;await require('./setup.cjs').restore(hardwareDirectory);state.feedback='Original plugin key and overlay restored. Your other remaps remain.';send();return state;});
     handle('change-key',async data=>{await desk.editor.change(data.layer,data.position,data.value,data.mods,data.swap);const keys=desk.editor.view();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);desk.bindingLayers=Object.fromEntries(keys.layers.map(l=>[l.id,l.keys.map(k=>k.binding)]));send();refreshKeyAppearance();return keys;});
     handle('undo-key',async()=>{await desk.editor.undo();const keys=desk.editor.view();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);desk.bindingLayers=Object.fromEntries(keys.layers.map(l=>[l.id,l.keys.map(k=>k.binding)]));send();refreshKeyAppearance();return keys;});
     handle('save-key-icons',async icons=>{desk.save({...desk.config,keyIcons:require('./media-icons.js').normalize(icons)});refreshKeyAppearance();send();return desk.config.keyIcons;});

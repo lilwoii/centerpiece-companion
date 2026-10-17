@@ -12,7 +12,7 @@ test('profile refresh coalesces requests without losing the saved color',()=>fix
  client.request=async route=>{calls++;if(route==='/me')return new Promise(resolve=>finish=resolve);return{items:[]};};
  const first=client.refresh(),second=client.refresh();assert.equal(calls,1);
  finish({id:'111111111111111111',name:'Tester',color:'#dd88ee',isAdmin:false});
- await Promise.all([first,second]);assert.equal(calls,3);assert.equal(client.state.user.color,'#dd88ee');
+ await Promise.all([first,second]);assert.equal(calls,4);assert.equal(client.state.user.color,'#dd88ee');
 }));
 test('a pending profile refresh cannot restore a signed-out user',()=>fixture(async client=>{
  client.token='a'.repeat(64);let finish;

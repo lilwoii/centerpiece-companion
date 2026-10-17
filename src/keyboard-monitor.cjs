@@ -8,6 +8,7 @@ class KeyboardMonitor extends EventEmitter{
    // These are selected-sensor reports, not a complete multi-key pressed set.
    // P and slash belong to the L1 chord, so their reports must not hide its hint.
    // An L1 release or an unrelated sensor clears the hint.
+   if(position===63&&pressed)this.emit('layer-press');
    const layer=position===63?pressed:[26,55,this.pluginPosition??26].includes(position)?this.layer:false;if(this.layer!==layer){this.layer=layer;this.layerChanges++;this.emit('layer',layer);}
    if(pressed&&position>=0&&position<68&&Date.now()<this.captureUntil){this.captureUntil=0;this.emit('selected',position);}
   });this.handle.on('error',()=>this.disconnected());const tick=()=>{try{const packet=Buffer.alloc(64);packet[0]=3;packet[1]=2;packet[2]=240;packet[3]=29;this.handle?.write([...packet]);}catch{this.disconnected();}};tick();if(this.handle)this.timer=setInterval(tick,2500);

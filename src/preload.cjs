@@ -1,7 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
-  dksDraft:()=>ipcRenderer.invoke('dks-draft'),
-  saveDksDraft:value=>ipcRenderer.invoke('save-dks-draft',value),
   keyboardSkins:(action,input)=>ipcRenderer.invoke('keyboard-skins',action,input),
   openUnrealSetup:()=>ipcRenderer.invoke('open-unreal-setup'),
   openSupport:()=>ipcRenderer.invoke('open-support'),
@@ -23,7 +21,8 @@ contextBridge.exposeInMainWorld('companion', {
   pickProfileApp:()=>ipcRenderer.invoke('pick-profile-app'),
   setYoutubeMusicSource:source=>ipcRenderer.invoke('youtube-music-source',source),
   youtubeMusicTarget:target=>ipcRenderer.invoke('youtube-music-target',target),
-  saveWidget:widget=>ipcRenderer.invoke('save-widget',widget),
+  displayLayout:input=>ipcRenderer.invoke('display-layout',input),
+  saveWidget:(widget,index=0)=>ipcRenderer.invoke('save-widget',widget,index),
   setSlot:input=>ipcRenderer.invoke('set-slot',input),
   setStartup:enabled=>ipcRenderer.invoke('set-startup',enabled),
   xpanelRefresh:()=>ipcRenderer.invoke('xpanel-refresh'),
@@ -62,6 +61,9 @@ contextBridge.exposeInMainWorld('companion', {
   windowControl:action=>ipcRenderer.invoke('window-control',action),
   subscribeWindow:callback=>{const listener=(_e,value)=>callback(value);ipcRenderer.on('window-state',listener);return()=>ipcRenderer.removeListener('window-state',listener);},
   readTelemetry:()=>ipcRenderer.invoke('read-telemetry'),
+  readKeyTuning:()=>ipcRenderer.invoke('read-key-tuning'),
+  saveKeyTuning:input=>ipcRenderer.invoke('save-key-tuning',input),
+  saveKeyAppearance:input=>ipcRenderer.invoke('save-key-appearance',input),
   readKeymap: () => ipcRenderer.invoke('read-keymap'),
   captureKey: enabled => ipcRenderer.invoke('capture-key',enabled),
   capturePluginKey: enabled => ipcRenderer.invoke('capture-plugin-key',enabled),

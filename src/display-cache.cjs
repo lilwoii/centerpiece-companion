@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');const{Som}=require('./som.cjs');
 const DEFAULT_POOL=[2,3,4,5,6,7,8,9,10];
-const NAVIGATION=['previous','toggle','next','fourth'];
+const NAVIGATION=['previous','toggle','next','fourth','fifth'];
 const CONTENT_INTERVAL=250;
 function ownedPool(manifest){
  const pool=manifest?.ownedSlots===undefined?DEFAULT_POOL:manifest.ownedSlots;
@@ -30,18 +30,18 @@ class DisplayCache{
  async write(slot,selected,caps,layer=false,verify=true,shift){
   if(!this.pool.includes(slot)||slot===this.lastSlot)throw Error('The display upload target is not a free inactive companion slot.');
   const key=this.key(selected,caps,layer,shift),content=this.contentKey(),svg=this.frame(selected,caps,layer,shift),png=await sharp(Buffer.from(svg)).png().toBuffer();
-  await this.som.uploadOverlay(slot,png,'Companion strip',verify);
+  this.lastPngBytes=png.length;await this.som.uploadOverlay(slot,png,'Companion strip',verify);
   // The firmware activates a completed overlay upload. Record that transition
   // before dropping old cache entries, so the visible slot is never overwritten.
   this.lastSlot=slot;this.selectionAt=Date.now();
   this.cache.set(key,slot);this.frames.set(key,svg);this.frameContent.set(key,content);this.touch(key);this.trim();return svg;
  }
- setWidget(widget){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget)};this.liveUploadedAt=0;}
- animatedLive(){const c=this.config||{},w=c.widget||{};return c.weatherMotion!==false&&(w.type==='weather'||w.clockSeconds===true||c.appearance?.motion&&c.appearance.motion!=='off'||c.slots?.some(slot=>slot?.plugin==='weather'));}
- liveInterval(){if(!this.animatedLive())return 0;const c=this.config||{},w=c.widget||{},type=w.type==='follow'?c.slots?.[this.data.selected||0]?.plugin:w.type;return ['spotify','youtubemusic','youtube'].includes(type)?500:1500;}
+ setWidget(widget,extraWidgets){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget),...(extraWidgets?{extraWidgets:structuredClone(extraWidgets)}:{})};this.liveUploadedAt=0;}
+ animatedLive(){const c=this.config||{},w=c.widget||{};return c.weatherMotion!==false&&((c.extraWidgets||[]).some(w=>w.type==='weather'||w.clockSeconds===true)||w.type==='weather'||w.clockSeconds===true||c.appearance?.motion&&c.appearance.motion!=='off'||c.slots?.some(slot=>slot?.plugin==='weather'));}
+ liveInterval(){if(!this.animatedLive())return 0;const c=this.config||{},w=c.widget||{},type=w.type==='follow'?c.slots?.[this.data.selected||0]?.plugin:w.type;return ['spotify','youtubemusic','youtube'].includes(type)||(c.extraWidgets||[]).some(w=>['spotify','youtubemusic','youtube'].includes(w.type))?500:1500;}
  contentKey(){
   const c=this.config||{},w=c.widget||{},slot=c.slots?.[this.data.selected||0],type=w.type==='follow'?slot?.plugin:w.type;
-  if(!['spotify','youtubemusic','youtube'].includes(type))return null;
+  if(c.extraWidgets?.length){return JSON.stringify([c.widget,...c.extraWidgets].filter(w=>['spotify','youtubemusic','youtube'].includes(w.type)).map(w=>{const m=(w.type==='spotify'?this.data.media:w.type==='youtube'?this.data.youtube:this.data.youtubeMusic)||{};return[w.type,m.title,m.artist,m.art,!!m.available];}));}if(!['spotify','youtubemusic','youtube'].includes(type))return null;
   const target=type==='youtubemusic'?(w.type==='follow'?slot?.mediaTarget:null)||c.youtubeMusicTarget||'desktop':'';
   const media=(type==='spotify'?this.data.media:type==='youtube'?this.data.youtube:w.type==='follow'?(this.data.youtubeMusicByTarget?.[target]||this.data.youtubeMusic):this.data.youtubeMusic)||{};
   // Position, clock anchors and polling timestamps are deliberately excluded.
@@ -57,7 +57,7 @@ class DisplayCache{
   this.liveTimer?.unref?.();
  }
  initialStates(){
-  const idle=[['idle',false,false],['idle',true,false]],layer=[['idle',false,true],['idle',true,true]],nav=NAVIGATION.map(name=>[name,false,false]);
+  const idle=[['idle',false,false],['idle',true,false]],layer=[['idle',false,true],['idle',true,true]],nav=NAVIGATION.slice(0,this.config?.slots?.length||4).map(name=>[name,false,false]);
   if(this.capacity>=8)return [...idle,...layer,...nav];
   const desired=[this.desired,this.caps,this.desired==='idle'&&this.layer];
   const priority=[...idle,...nav,layer[this.caps?1:0],layer[this.caps?0:1]];
@@ -129,7 +129,7 @@ class DisplayCache{
   if(this.cache.has(key)&&interval&&this.liveUploadedAt&&remaining>0){this.deferLive(remaining);return;}
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.clearLiveTimer();this.livePending=false;this.updating=true;
-  try{this.lastFrame=await this.write(target,selected,caps,layer,false);this.liveUploadedAt=this.now();}
+  try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();}
   catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
  async reconcile(){if(!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300)return;this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}finally{this.watching=false;this.displayReady();}}

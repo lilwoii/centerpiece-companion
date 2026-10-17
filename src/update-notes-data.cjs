@@ -1,5 +1,14 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.40": Object.freeze([
+    "Added up to four screen widgets with simple position buttons. Place any extra beside the main widget or below it; occupied positions swap without replacing your widgets.",
+    "Choose a 50/50 or 60/40 main-area split, even with just one extra widget. Extra widgets retain their positions while L1 + / changes the main widget.",
+    "Cleaner additional widgets with thin dividers, larger market quote cards, colored logos, playback artwork and progress, and clearer waiting-for-source messages.",
+    "Added an optional fifth plugin beside Left Arrow, included in Up/Down navigation, plus a static single-tile carousel view.",
+    "Edit per-key colors and appearance, actuation and rapid trigger. Select WASD, arrows, modifiers or your own group; response changes use current-profile checks, backups and readback verification.",
+    "Press L1 once to exit plugin highlighting and return the music-control keys to normal. Fixed overlapping custom key legends on shifted bindings.",
+    "Removed the unfinished DKS draft controls. No firmware changes are included."
+]),
   "0.3.0-preview.39": Object.freeze([
     "L1 + Right Alt hides and restores keyboard legends with your original XPANEL artwork. The shortcut uses a bright red highlight with a customizable color and preserves conflicting custom assignments.",
     "When Spotify or YouTube Music is highlighted, Left and Right skip tracks and Right Shift plays or pauses. Music-control highlights default to Spotify green and can be customized.",

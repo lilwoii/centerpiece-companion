@@ -24,7 +24,7 @@
   }
   return {
    enqueue(index,slot){
-    if(!Number.isInteger(index)||index<0||index>3)throw Error('Choose a keyboard position.');
+    if(!Number.isInteger(index)||index<0||index>4)throw Error('Choose a keyboard position.');
     const snapshot=structuredClone(slot),number=++revision;latest.set(index,number);
     pending.get(index)?.resolve({superseded:true});
     const result=new Promise(resolve=>pending.set(index,{slot:snapshot,revision:number,generation,resolve}));

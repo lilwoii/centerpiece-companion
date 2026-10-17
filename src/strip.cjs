@@ -7,23 +7,23 @@ const { Som } = require('./som.cjs');
 const SLOTS = { idle: 2, previous: 3, toggle: 4, next: 5 };
 const {catalog}=require('./catalog.cjs');
 const icons=require('./icons.json');
-const{reading,weatherIcon,detailSVG}=require('./widgets.cjs');const layout=require('./layout.json');const{physical}=require('./keymap.cjs');
+const{reading,weatherIcon,panelSVG}=require('./widgets.cjs');const layout=require('./layout.json');const{physical}=require('./keymap.cjs');
 const{languageLabel}=require('./language-labels.js');
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 function configuredSVG(selected,config,locks,data={}){
  const theme=appearance.appearance(config.appearance),now=data.animationTime??data.now??Date.now();
  if(theme.transparentPlugins){theme.stripOpacity=0;theme.tileOpacity=0;}
- const selection=['previous','toggle','next','fourth'].indexOf(selected);if(selection>=0)theme.motion='off';
+ const selection=['previous','toggle','next','fourth','fifth'].indexOf(selected);if(selection>=0)theme.motion='off';
  const rows=config.slots.map((slot,index)=>{const plugin=catalog.find(p=>p.id===slot?.plugin);const svg=plugin?icons[plugin.icon]:null;
  const custom=slot?.visual,override=appearance.tileAppearance(slot?.appearance),palette={...theme,motion:selection>=0?'off':override.motion==='inherit'?theme.motion:override.motion,accent:override.motion==='inherit'?theme.accent:override.accent},background=index===selection?theme.selectedBackground:appearance.animated(override.background||theme.slotBackground,palette,now);if(custom&&custom.kind!=='default'&&!(custom.kind==='icon'&&slot.plugin!=='decoration'&&custom.imageMode!=='fill'))return `<svg x="1605" y="${15+index*86}" width="80" height="78" overflow="hidden"><rect width="80" height="78" rx="9" fill="${background}" fill-opacity="${theme.tileOpacity}" stroke-opacity="${index===selection?1:theme.tileOpacity}" stroke="${index===selection?'#9bb9ff':theme.tileBorder}" stroke-width="3"/>${appearance.visualSVG(custom)}</svg>`;
  const metric=reading(plugin?.id,{...data,clockSeconds:config.widget?.clockSeconds});if(metric)return `<g transform="translate(1605 ${15+index*86})"><rect width="80" height="78" rx="9" fill="${background}" fill-opacity="${theme.tileOpacity}" stroke-opacity="${index===selection?1:theme.tileOpacity}" stroke="${index===selection?'#9bb9ff':theme.tileBorder}" stroke-width="3"/>${custom?.kind==='icon'&&custom.icon?`<image x="25" y="1" width="30" height="30" href="${custom.icon}"/>`:metric.icon?`<g transform="translate(30 2) scale(.6)">${weatherIcon(metric.icon,config.weatherMotion===false?0:undefined,metric.windy)}</g>`:''}<text x="40" y="47" text-anchor="middle" fill="#edf2fa" font-family="Arial" font-size="${metric.value.length>6?17:24}" font-weight="bold">${escape(metric.value)}</text><text x="40" y="${metric.forecast?60:67}" text-anchor="middle" fill="#b8c8dc" font-family="Arial" font-size="9">${escape(metric.label)}</text>${metric.forecast?`<text x="40" y="73" text-anchor="middle" fill="#ffb45b" font-family="Arial" font-size="8">${escape(metric.forecast)}</text>`:""}</g>`;
- return `<g transform="translate(1605 ${15+index*86})"><rect width="80" height="78" rx="9" fill="${background}" fill-opacity="${theme.tileOpacity}" stroke-opacity="${index===selection?1:theme.tileOpacity}" stroke="${index===selection?'#9bb9ff':theme.tileBorder}" stroke-width="3"/>${custom?.kind==='icon'&&custom.icon?`<image x="16" y="1" width="48" height="48" href="${custom.icon}"/>`:svg?`<image x="24" y="8" width="32" height="32" href="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}"/>`:''}<text x="40" y="56" text-anchor="middle" font-family="Arial" font-size="11" fill="#edf2fa">${escape(plugin?.name.slice(0,11)||'EMPTY')}</text><text x="40" y="70" text-anchor="middle" font-family="Arial" font-size="9" fill="#b8c8dc">${escape(plugin?.actions.find(a=>a.id===slot?.action)?.label.slice(0,15)||'')}</text></g>`;}).join('');
+ return `<g transform="translate(1605 ${15+index*86})"><rect width="80" height="78" rx="9" fill="${background}" fill-opacity="${theme.tileOpacity}" stroke-opacity="${index===selection?1:theme.tileOpacity}" stroke="${index===selection?'#9bb9ff':theme.tileBorder}" stroke-width="3"/>${custom?.kind==='icon'&&custom.icon?`<image x="16" y="1" width="48" height="48" href="${custom.icon}"/>`:svg?`<image x="24" y="8" width="32" height="32" href="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}"/>`:''}<text x="40" y="56" text-anchor="middle" font-family="Arial" font-size="11" fill="#edf2fa">${escape(plugin?.name.slice(0,11)||'EMPTY')}</text><text x="40" y="70" text-anchor="middle" font-family="Arial" font-size="9" fill="#b8c8dc">${escape(plugin?.actions.find(a=>a.id===slot?.action)?.label.slice(0,15)||'')}</text></g>`;}).map((tile,index)=>{if(index===4)tile=tile.replaceAll('1605','1490').replaceAll(String(15+index*86),'451');return require('./plugin-motion.js').tile(tile,index,selection<0&&config.pluginCycling?.mode==='carousel'?(data.selected||0):selection,config.pluginCycling,data.pluginTransition,now);}).join('');
  const i=theme.transparentCaps?{...config.indicator,enabled:config.indicator.enabled&&locks.caps}:config.indicator;
  // Preserve XPANEL legends. Only Companion's two L1 shortcut hints are drawn.
  const legendHint=locks.layer&&config.pluginShortcuts?.hideLegendsShortcut?keyHighlight(62,config.legendShortcutColor||'#ff4040',''):'';
  const musicHint=selection>=0&&['spotify','youtubemusic'].includes(config.slots[selection]?.plugin)?[65,67,56].map(position=>keyHighlight(position,config.musicNavigationColor||'#1db954','')).join(''):'';
  const pluginPosition=config.pluginShortcuts?.custom?config.pluginShortcuts.position:26;const layer=locks.layer?[pluginPosition,55].filter(index=>index!==pluginPosition||config.stripEnabled!==false).map(index=>{const key=layout.keys[index],x=((key.x||0)+key.width/2)*1920/1800,y=((key.y||0)+key.height/2)*550/500,color=config.layerColor||i.on;return `<rect x="${x-44}" y="${y-40}" width="88" height="80" rx="8" fill="${color}" fill-opacity=".65" stroke="${color}" stroke-width="3"/><text x="${x}" y="${y+7}" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="${index===55?30:Math.min(30,Math.floor(110/physical[index].length))}" font-weight="bold" fill="#111820">${config.hideLegends?'':escape(index===pluginPosition?physical[index]:'/')}</text>`;}).join(''):'';
- return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">${config.stripEnabled===false?'':`<g><rect x="1597" y="5" width="96" height="397" rx="12" fill="${appearance.animated(theme.stripBackground,theme,now)}" fill-opacity="${theme.stripOpacity}" stroke-opacity="${theme.stripOpacity}" stroke="${theme.border}"/>${rows}${hintSVG(theme.hint,config.pluginShortcuts)}</g>`}${appearance.capsSVG(i,locks.caps)}${layer}${legendHint}${musicHint}${mediaKeySVG(config,locks,data)}${detailSVG(config,data)}</svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">${require('./key-appearance.cjs').svg(config,locks)}${config.stripEnabled===false?'':`<g><rect x="1597" y="5" width="96" height="397" rx="12" fill="${appearance.animated(theme.stripBackground,theme,now)}" fill-opacity="${theme.stripOpacity}" stroke-opacity="${theme.stripOpacity}" stroke="${theme.border}"/>${rows}${hintSVG(theme.hint,config.pluginShortcuts)}</g>`}${appearance.capsSVG(i,locks.caps)}${layer}${legendHint}${musicHint}${mediaKeySVG(config,locks,data)}${panelSVG(config,data)}</svg>`;
 }
 function keyHighlight(position,color,text){
  const key=layout.keys[position],x=(key.x||0)*1920/1800,y=(key.y||0)*550/500,w=key.width*1920/1800,h=key.height*550/500;
@@ -54,18 +54,23 @@ async function renderStrip(selected) { return sharp(Buffer.from(stripSVG(selecte
 const{DisplayCache}=require('./display-cache.cjs');
 class StripController extends DisplayCache {
  constructor(directory){super(directory,configuredSVG);this.legends=new(require('./physical-legends.cjs').PhysicalLegends)(directory);this.languageDefault=new(require('./language-default.cjs').LanguageDefault)(directory);}
+ setData(data){super.setData({...data,pluginTransition:this.pluginTransition});}
+ stopPluginAnimation(){clearTimeout(this.pluginAnimationTimer);this.pluginAnimationTimer=null;this.pluginAnimationEpoch=(this.pluginAnimationEpoch||0)+1;this.pluginTransition=null;this.data.pluginTransition=null;}
+ show(nav){if((nav.active?nav.id:'idle')===this.desired)return;this.stopPluginAnimation();super.show(nav);}
  key(...args){return super.key(...args)+(this.legends?.model?':letters-'+Number(args[1]??this.caps)+((args[3]??this.shift)?':shift':''):'');}
- setLocks(locks){this.shift=!!locks.shift;super.setLocks(locks);}
- frame(selected,caps,layer,shift=this.shift){const base=super.frame(selected,caps,layer);return base.slice(0,-6)+require('./physical-legends.cjs').svg(this.legends.model,this.config,{caps,layer,shift:!!shift},this.data)+'</svg>';}
+ setLocks(locks){if(this.caps!==!!locks.caps||this.shift!==!!locks.shift)this.stopPluginAnimation();this.shift=!!locks.shift;super.setLocks(locks);}
+ setLayer(active){if(this.layer!==!!active)this.stopPluginAnimation();super.setLayer(active);}
+ frame(selected,caps,layer,shift=this.shift){const saved=this.config;let base;try{this.config={...saved,pluginCycling:{...saved.pluginCycling,effect:'none',continuous:false}};base=super.frame(selected,caps,layer);}finally{this.config=saved;}return base.slice(0,-6)+require('./physical-legends.cjs').svg(this.legends.model,this.config,{caps,layer,shift:!!shift},this.data)+'</svg>';}
  evictionCandidates(choices){if(!this.legends.model)return super.evictionCandidates(choices);return choices.filter(([key])=>!key.includes('idle:'));}
  initialStates(){
   if(!this.legends.model)return super.initialStates();
-  const states=[["idle",false,false,false],["idle",true,false,false],["idle",false,false,true],["idle",true,false,true],...['previous','toggle','next','fourth'].map(n=>[n,this.caps,false,!!this.shift])].slice(0,this.capacity);
+  const states=[["idle",false,false,false],["idle",true,false,false],["idle",false,false,true],["idle",true,false,true],...['previous','toggle','next','fourth','fifth'].slice(0,this.config?.slots?.length||4).map(n=>[n,this.caps,false,!!this.shift])].slice(0,this.capacity);
   const desired=[this.desired,this.caps,this.desired==='idle'&&this.layer,!!this.shift];
   if(!states.some(s=>this.key(...s)===this.key(...desired)))states[states.length-1]=desired;
   return states;
  }
  async apply(config,locks){
+  this.stopPluginAnimation();
   let previousLanguage,changedLanguage=false;
   try{
    if(config.hideLegends){
@@ -92,6 +97,7 @@ class StripController extends DisplayCache {
    if(this.legends.model)await this.legends.commit(this.som);
   }catch(error){if(this.som)try{await this.legends.restore(this.som);if(changedLanguage){await this.som.language(previousLanguage);if(await this.som.language()!==previousLanguage)throw Error('The previous legend language could not be restored.');}}catch(restoreError){throw Error(error.message+' '+restoreError.message);}throw error;}
  }
- async close(){if(this.som)await this.legends.restore(this.som);return super.close();}
+ detach(){this.stopPluginAnimation();super.detach();}
+ async close(){this.stopPluginAnimation();await this.pluginAnimationPromise;if(this.som)await this.legends.restore(this.som);return super.close();}
 }
 module.exports={SLOTS,stripSVG,configuredSVG,renderStrip,StripController,mediaKeySVG};

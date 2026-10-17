@@ -10,6 +10,9 @@
   if(!base)return languageLabel(label,language,locks);
   const state={...locks,shift:!!locks.shift||!!(mods&2)};
   if(usage===50)return state.shift?'~':'#';
+  // ISO backslash is a different HID key from the ANSI backslash position.
+  // In UK layouts the latter contains #/~; looking both up by "\\" conflates them.
+  if(usage===100&&[language?.id,language?.resolvedId].includes('00000809'))return state.shift?'|':'\\';
   if(language?.labels&&names.includes(base))return languageLabel(base,language,state);
   if(/^[A-Z]$/.test(base))return !('caps' in locks)&&!('shift' in locks)?base:state.shift!==!!state.caps?base:base.toLowerCase();
   const shifted={'1':'!','2':'@','3':'#','4':'$','5':'%','6':'^','7':'&','8':'*','9':'(','0':')','-':'_','=':'+','[':'{',']':'}','\\':'|',';':':',"'":'"','`':'~',',':'<','.':'>','/':'?'};

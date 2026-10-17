@@ -54,3 +54,11 @@
 .transparency-toggles label[data-transparency="transparentPlugins"]{--toggle-color:var(--success)}.transparency-toggles label[data-transparency="transparentCaps"]{--toggle-color:var(--attention)}.transparency-toggles label[data-transparency="transparentWidget"]{--toggle-color:#d4b6ff}.transparency-toggles label{color:var(--toggle-color)}.transparency-toggles input{accent-color:var(--toggle-color)}
 
 .display-sleep-group{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-left:auto}.display-sleep-group .display-sleep-control{margin-left:0}
+
+.dks-control{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 12px;border:1px solid var(--attention);border-radius:8px}
+.dks-control label{display:flex;align-items:center;gap:6px;color:var(--attention);font-weight:700}
+.dks-control input{width:18px;height:18px;accent-color:var(--attention)}
+.dks-control span{font-size:12px;color:var(--muted)}
+.dks-control .button,.dks-capability{color:var(--attention)}
+.dks-settings{scroll-margin-top:24px}
+.dks-output-row{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}.dks-output-row label{min-width:110px;flex:1}.dks-draft-editor summary{color:var(--attention);font-weight:700}#dks-save,#save-navigation-colors{background:var(--success);color:var(--background);border-color:var(--success)}#legend-shortcut-color{accent-color:#ff4040}

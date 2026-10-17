@@ -1,11 +1,12 @@
 const{Studio}=require('./studio.cjs');const fs=require('node:fs'),path=require('node:path');
 const keyNames={40:'Enter',41:'Esc',42:'Backspace',43:'Tab',44:'Space',45:'-',46:'=',47:'[',48:']',49:'\\',51:';',52:"'",53:'`',54:',',55:'.',56:'/',57:'Caps Lock',73:'Insert',74:'Home',75:'Page Up',76:'Delete',77:'End',78:'Page Down',79:'Right',80:'Left',81:'Down',82:'Up',83:'Num Lock',71:'Scroll Lock',224:'Left Ctrl',225:'Left Shift',226:'Left Alt',227:'Windows',228:'Right Ctrl',229:'Right Shift',230:'Right Alt'};
 for(let i=4;i<=29;i++)keyNames[i]=String.fromCharCode(i+61);for(let i=30;i<=39;i++)keyNames[i]=String((i-29)%10);for(let i=58;i<=69;i++)keyNames[i]='F'+(i-57);for(let i=104;i<=115;i++)keyNames[i]='F'+(i-91);
-keyNames[70]='Screenshot / Print Screen';keyNames[72]='Pause / Break';keyNames[100]='ISO extra key';keyNames[101]='Context menu';
-keyNames[50]='# / ~ (UK layout)';keyNames[231]='Right Windows';
+keyNames[70]='Screenshot / Print Screen';keyNames[72]='Pause / Break';keyNames[100]='Backslash (UK ISO key)';keyNames[101]='Context menu';
+keyNames[50]='# / Hash (UK layout)';keyNames[231]='Right Windows';
 Object.assign(keyNames,{84:'Numpad /',85:'Numpad *',86:'Numpad -',87:'Numpad +',88:'Numpad Enter',98:'Numpad 0',99:'Numpad decimal',103:'Numpad ='});
 for(let i=89;i<=97;i++)keyNames[i]='Numpad '+(i-88);
 const choices=Object.entries(keyNames).map(([v,label])=>({value:0x70000+Number(v),label}));
+choices.unshift({value:0x02070020,label:'# / Hash (US · Shift + 3)'});
 choices.push(...[[0xb6,'Previous track'],[0xb5,'Next track'],[0xcd,'Play / pause'],[0xe9,'Volume up'],[0xea,'Volume down'],[0xe2,'Mute speakers']].map(([v,label])=>({value:0xc0000+v,label})));
 const physical=['Esc','1','2','3','4','5','6','7','8','9','0','-','=','Backspace','Previous','Next','Tab','Q','W','E','R','T','Y','U','I','O','P','[',']','\\','Play / pause','Volume','Caps Lock','A','S','D','F','G','H','J','K','L',';',"'",'Enter','Left Shift','Z','X','C','V','B','N','M',',','.','/','Right Shift','Up','Left Ctrl','Windows','Left Alt','Space','Right Alt','L1','Right Ctrl','Left','Down','Right'];
 function label(b){if(b.behaviorId===54567)return 'Layer '+b.param1;if(b.behaviorId===56811)return 'Use base key';if(b.behaviorId===29795)return 'Esc / `';if(b.behaviorId===50397){const mods=b.param1>>>24;return [(mods&1)?'Ctrl':null,(mods&2)?'Shift':null,(mods&4)?'Alt':null,(mods&8)?'Windows':null,choices.find(c=>c.value===(b.param1&0xffffff))?.label||'Key'].filter(Boolean).join('+');}return 'XPANEL special action';}
@@ -19,9 +20,9 @@ class KeymapEditor{
   return this.change(entry.layerId,entry.position,0,0,null,entry);
  }
  async change(layerId,position,value,mods,swapPosition,restore=null){
-  if(![0,1].includes(layerId)||!Number.isInteger(position)||position<0||position>67||position===63||(layerId===1&&[26,55].includes(position)))throw Error('This key is reserved for layer and plugin navigation.');
+  if(![0,1].includes(layerId)||!Number.isInteger(position)||position<0||position>67||position===63||(layerId===1&&[26,55,62].includes(position)))throw Error('This key is reserved for layer and plugin navigation.');
   if(!this.snapshot)throw Error('Read the keyboard before editing.');
-  if(swapPosition!==null&&(!Number.isInteger(swapPosition)||swapPosition<0||swapPosition>67||swapPosition===63||(layerId===1&&[26,55].includes(swapPosition))||swapPosition===position))throw Error('Choose a different, unreserved key to swap.');
+  if(swapPosition!==null&&(!Number.isInteger(swapPosition)||swapPosition<0||swapPosition>67||swapPosition===63||(layerId===1&&[26,55,62].includes(swapPosition))||swapPosition===position))throw Error('Choose a different, unreserved key to swap.');
   if(!restore&&swapPosition===null&&(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>15))throw Error('Choose a supported key and modifiers.');
   return this.use(async s=>{
    if(s.serial!==this.serial)throw Error('A different keyboard is connected. Read its bindings first.');

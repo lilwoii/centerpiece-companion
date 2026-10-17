@@ -9,7 +9,7 @@
  function stop(){capturing=false;clearTimeout(timer);void window.companion.capturePluginKey(false).catch(()=>{});controls();}
  function selectKey(next){
   if(!capturing||!Number.isInteger(next)||next<0||next>=names.length)return;
-  if([55,63].includes(next)||next===0&&recovery.checked){status.textContent='That key is reserved for L1, widgets or recovery. Press a different key.';return;}
+  if([55,62,63].includes(next)||next===0&&recovery.checked){status.textContent='That key is reserved for L1, widgets or recovery. Press a different key.';return;}
   position=next;dirty=true;stop();status.textContent='L1 + '+names[position]+' selected. Click Save shortcut to apply.';
  }
  function start(){if(box.disabled||pending)return;capturing=true;controls();status.textContent='Press one key without holding L1. Tab cancels.';clearTimeout(timer);timer=setTimeout(()=>{stop();status.textContent='Key capture timed out. Click the box to try again.';},10000);void window.companion.capturePluginKey(true).catch(()=>{});}

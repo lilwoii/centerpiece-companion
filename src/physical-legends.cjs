@@ -1,13 +1,13 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const {physical,label}=require('./keymap.cjs');
-const {languageLabel}=require('./language-labels.js');
+const {bindingLegend}=require('./language-labels.js');
 const media=require('./media-icons.js');
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 // No opaque rectangles: native legends are switched off only after all replacement
 // frames have been uploaded successfully. Positions are read, never rewritten.
 function svg(model,config,locks,data){
- if(!model)return '';
+ if(!model||config.hideLegends)return '';
  const active=locks.layer?1:0,bindings=data.bindingLayers?.[active]||data.bindingLayers?.[0];
  return model.positions.map((p,i)=>{
   let binding=bindings?.[i];if(binding?.behaviorId===56811)binding=data.bindingLayers?.[0]?.[i];
@@ -18,7 +18,7 @@ function svg(model,config,locks,data){
   if(customEntry&&binding?.behaviorId===50397&&(binding.param1&0xffffff)===customEntry.code&&(customEntry.mods===undefined||(binding.param1>>>24)===customEntry.mods))return '';
   const icon=binding?.behaviorId===50397?media.find(binding.param1&0xffffff):null;
   if(icon&&(icon.mods===undefined||(binding.param1>>>24)===icon.mods))return `<g data-legend="${i}" transform="translate(${p.x-16} ${p.y-16})">${media.svg(icon.code,{color:'#ffffff',background:'#000000',style:'glossy',size:32}).replace(/<svg /,'<svg width="32" height="32" ')}</g>`;
-  text=languageLabel(text,model.language,locks);
+  text=bindingLegend(text,binding,model.language,locks);
   const size=Array.from(text).length>3?12:22;
   return `<text data-legend="${i}" x="${p.x}" y="${p.y}" dy=".35em" text-anchor="middle" font-family="Segoe UI,Nirmala UI,Leelawadee UI,Microsoft YaHei,Yu Gothic,Malgun Gothic,Arial,sans-serif" font-weight="bold" font-size="${size}" fill="#ffffff">${escape(text)}</text>`;
  }).join('');
@@ -29,7 +29,7 @@ class PhysicalLegends{
  async restore(som){const record=this.read(som);if(record){await som.legends(record.enabled);if(await som.legends()!==record.enabled)throw Error('Could not restore original keyboard legends.');fs.unlinkSync(this.file);}this.model=null;this.session=null;}
  async prepare(som,language){
   if(this.session!==som){await this.restore(som);this.session=som;}
-  const positions=await som.legendPositions();
+  const positions=this.model?.positions||await som.legendPositions();
   if(!this.read(som)){const enabled=await som.legends();fs.mkdirSync(path.dirname(this.file),{recursive:true});fs.writeFileSync(this.file,JSON.stringify({format:1,identity:som.identity,enabled}),{flag:'wx',mode:0o600});}
   this.model={positions,language};return this.model;
  }

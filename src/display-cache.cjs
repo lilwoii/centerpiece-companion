@@ -70,6 +70,7 @@ class DisplayCache{
   // A slot edit needs one new visible frame, not eight sequential firmware
   // uploads. Other states are rebuilt when requested; keeping their old frame
   // mappings would briefly show the previous action or a stale highlight.
+  const legendToggle=this.config&&this.cache.size&&!this.error&&this.config.hideLegends!==config.hideLegends&&JSON.stringify({...this.config,hideLegends:false})===JSON.stringify({...config,hideLegends:false});
   const slotEdit=this.config&&this.cache.size&&!this.error&&Array.isArray(this.config.slots)&&Array.isArray(config.slots)&&JSON.stringify({...this.config,slots:[],keyIcons:{}})===JSON.stringify({...config,slots:[],keyIcons:{}});
   // A visibility toggle does not change the contents of the existing visible
   // frames. Retain them and render only the requested hidden/visible state.
@@ -85,7 +86,7 @@ class DisplayCache{
     this.lastSlot=active||null;
    }
    this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();
-   const states=slotEdit?[[this.desired,this.caps,this.desired==='idle'&&this.layer]]:this.initialStates();
+   const states=(slotEdit||legendToggle)?[[this.desired,this.caps,this.desired==='idle'&&this.layer]]:this.initialStates();
    for(const [selected,caps,layer,shift]of states){
     const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
     await this.write(target,selected,caps,layer,true,shift);

@@ -20,10 +20,17 @@ function configuredSVG(selected,config,locks,data={}){
  return `<g transform="translate(1605 ${15+index*86})"><rect width="80" height="78" rx="9" fill="${background}" fill-opacity="${theme.tileOpacity}" stroke-opacity="${index===selection?1:theme.tileOpacity}" stroke="${index===selection?'#9bb9ff':theme.tileBorder}" stroke-width="3"/>${custom?.kind==='icon'&&custom.icon?`<image x="16" y="1" width="48" height="48" href="${custom.icon}"/>`:svg?`<image x="24" y="8" width="32" height="32" href="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}"/>`:''}<text x="40" y="56" text-anchor="middle" font-family="Arial" font-size="11" fill="#edf2fa">${escape(plugin?.name.slice(0,11)||'EMPTY')}</text><text x="40" y="70" text-anchor="middle" font-family="Arial" font-size="9" fill="#b8c8dc">${escape(plugin?.actions.find(a=>a.id===slot?.action)?.label.slice(0,15)||'')}</text></g>`;}).join('');
  const i=theme.transparentCaps?{...config.indicator,enabled:config.indicator.enabled&&locks.caps}:config.indicator;
  // Preserve XPANEL legends. Only Companion's two L1 shortcut hints are drawn.
- const pluginPosition=config.pluginShortcuts?.custom?config.pluginShortcuts.position:26;const layer=locks.layer?[pluginPosition,55].filter(index=>index!==pluginPosition||config.stripEnabled!==false).map(index=>{const key=layout.keys[index],x=((key.x||0)+key.width/2)*1920/1800,y=((key.y||0)+key.height/2)*550/500,color=config.layerColor||i.on;return `<rect x="${x-44}" y="${y-40}" width="88" height="80" rx="8" fill="${color}" fill-opacity=".65" stroke="${color}" stroke-width="3"/><text x="${x}" y="${y+7}" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="${index===55?30:Math.min(30,Math.floor(110/physical[index].length))}" font-weight="bold" fill="#111820">${escape(index===pluginPosition?physical[index]:'/')}</text>`;}).join(''):'';
- return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">${config.stripEnabled===false?'':`<g><rect x="1597" y="5" width="96" height="397" rx="12" fill="${appearance.animated(theme.stripBackground,theme,now)}" fill-opacity="${theme.stripOpacity}" stroke-opacity="${theme.stripOpacity}" stroke="${theme.border}"/>${rows}${hintSVG(theme.hint,config.pluginShortcuts)}</g>`}${appearance.capsSVG(i,locks.caps)}${layer}${mediaKeySVG(config,locks,data)}${detailSVG(config,data)}</svg>`;
+ const legendHint=locks.layer&&config.pluginShortcuts?.hideLegendsShortcut?keyHighlight(62,config.legendShortcutColor||'#ff4040',''):'';
+ const musicHint=selection>=0&&['spotify','youtubemusic'].includes(config.slots[selection]?.plugin)?[65,67,56].map(position=>keyHighlight(position,config.musicNavigationColor||'#1db954','')).join(''):'';
+ const pluginPosition=config.pluginShortcuts?.custom?config.pluginShortcuts.position:26;const layer=locks.layer?[pluginPosition,55].filter(index=>index!==pluginPosition||config.stripEnabled!==false).map(index=>{const key=layout.keys[index],x=((key.x||0)+key.width/2)*1920/1800,y=((key.y||0)+key.height/2)*550/500,color=config.layerColor||i.on;return `<rect x="${x-44}" y="${y-40}" width="88" height="80" rx="8" fill="${color}" fill-opacity=".65" stroke="${color}" stroke-width="3"/><text x="${x}" y="${y+7}" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="${index===55?30:Math.min(30,Math.floor(110/physical[index].length))}" font-weight="bold" fill="#111820">${config.hideLegends?'':escape(index===pluginPosition?physical[index]:'/')}</text>`;}).join(''):'';
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">${config.stripEnabled===false?'':`<g><rect x="1597" y="5" width="96" height="397" rx="12" fill="${appearance.animated(theme.stripBackground,theme,now)}" fill-opacity="${theme.stripOpacity}" stroke-opacity="${theme.stripOpacity}" stroke="${theme.border}"/>${rows}${hintSVG(theme.hint,config.pluginShortcuts)}</g>`}${appearance.capsSVG(i,locks.caps)}${layer}${legendHint}${musicHint}${mediaKeySVG(config,locks,data)}${detailSVG(config,data)}</svg>`;
+}
+function keyHighlight(position,color,text){
+ const key=layout.keys[position],x=(key.x||0)*1920/1800,y=(key.y||0)*550/500,w=key.width*1920/1800,h=key.height*550/500;
+ return `<g data-navigation-key="${position}"><rect x="${x+4}" y="${y+4}" width="${w-8}" height="${h-8}" rx="8" fill="${color}" fill-opacity=".65"/><text x="${x+w/2}" y="${y+h/2+9}" text-anchor="middle" font-family="Segoe UI" font-size="26" fill="#111820">${text}</text></g>`;
 }
 function mediaKeySVG(config,locks,data={}){
+ if(config.hideLegends)return '';
  const active=locks.layer?1:0,bindings=data.bindingLayers?.[active];
  return Object.entries(config.keyIcons||{}).map(([id,style])=>{
   const [layer,position]=id.split(':').map(Number);if(layer!==active)return '';
@@ -61,7 +68,9 @@ class StripController extends DisplayCache {
  async apply(config,locks){
   let previousLanguage,changedLanguage=false;
   try{
-   if(config.languageId!=='qwerty'&&config.physicalLanguage===true){
+   if(config.hideLegends){
+    await this.legends.prepare(this.som,null);
+   }else if(config.languageId!=='qwerty'&&config.physicalLanguage===true){
     const language=this.legends.model?.language?.id===config.languageId?this.legends.model.language:await require('./languages.cjs').map(config.languageId);
     await this.legends.prepare(this.som,language);
    }else{

@@ -4,8 +4,9 @@ const {sameBinding,sameKeymap,assertBindingResult,assertSaveResult}=require('./k
 const plugin={behaviorId:50397,param1:0x05070013},recovery={behaviorId:60498};
 function normalize(value={}){
  const custom=value.custom===true,position=custom?value.position:26,engineRecovery=value.engineRecovery!==false;
+ if(custom&&position===62&&value.hideLegendsShortcut===true)throw Error('Right Alt is reserved for hiding keyboard legends.');
  if(!Number.isInteger(position)||position<0||position>=68||[55,63].includes(position)||engineRecovery&&position===0)throw Error('Choose a key other than L1, /, or the enabled recovery key (Esc).');
- return {custom,position,engineRecovery};
+ return {custom,position,engineRecovery,hideLegendsShortcut:value.hideLegendsShortcut!==false&&!(custom&&position===62)};
 }
 function label(value){return 'L1 + '+physical[normalize(value).position];}
 function read(directory){try{return JSON.parse(fs.readFileSync(path.join(directory,'plugin-shortcuts.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw Error('The shortcut backup could not be read.');}}
@@ -25,7 +26,7 @@ async function configure(directory,value,{Studio=require('./studio.cjs').Studio}
    if(!sameBinding(layer.bindings[entry.position],entry.installed))throw Error('A saved shortcut changed in XPANEL. Its current assignment was preserved.');
    nextLayer.bindings[entry.position]=entry.original;
   }
-  const targets=[...(settings.custom&&settings.position!==26?[{position:settings.position,installed:plugin}]:[]),...(settings.engineRecovery?[{position:0,installed:recovery}]:[])];
+  const targets=[...(settings.hideLegendsShortcut?[{position:62,installed:{behaviorId:50397,param1:0x05070044}}]:[]),...(settings.custom&&settings.position!==26?[{position:settings.position,installed:plugin}]:[]),...(settings.engineRecovery?[{position:0,installed:recovery}]:[])];
   const entries=targets.map(entry=>({...entry,original:nextLayer.bindings[entry.position]}));
   for(const entry of entries){
    if(prior?.entries?.some(old=>old.position===entry.position))continue;
@@ -34,7 +35,7 @@ async function configure(directory,value,{Studio=require('./studio.cjs').Studio}
   }
   for(const entry of entries)nextLayer.bindings[entry.position]=entry.installed;
   if(sameKeymap(map,expected)){write(directory,{serial:s.serial,settings,entries,inProgress:false});return settings;}
-  if(await require('./studio-response.cjs').pendingChanges(s))throw Object.assign(Error('Keyboard settings are pending. Save or review those settings before changing shortcuts.'),{code:'PLUGIN_SHORTCUT_PENDING',currentSettings:prior?.settings||normalize({engineRecovery:false})});
+  if(await require('./studio-response.cjs').pendingChanges(s))throw Object.assign(Error('Keyboard settings are pending. Save or review those settings before changing shortcuts.'),{code:'PLUGIN_SHORTCUT_PENDING',currentSettings:prior?.settings||normalize({engineRecovery:false,hideLegendsShortcut:false})});
   if(!sameKeymap(map,await get()))throw Error('Keyboard settings changed. Please retry.');
   fs.writeFileSync(path.join(directory,'shortcut-checkpoint-'+randomUUID()+'.json'),JSON.stringify({serial:s.serial,map,prior}),{flag:'wx'});
   write(directory,{serial:s.serial,settings:prior?.settings||normalize(),entries:prior?.entries||[],planned:{settings,entries},inProgress:true});
@@ -48,7 +49,8 @@ async function configure(directory,value,{Studio=require('./studio.cjs').Studio}
 async function configureStartup(directory,value,deps={}){
  try{
   try{return{settings:await configure(directory,value,deps),warning:''};}
-  catch(error){if(error.code!=='PLUGIN_SHORTCUT_CONFLICT'||error.position!==0)throw error;
+  catch(error){if(error.code==='PLUGIN_SHORTCUT_CONFLICT'&&error.position===62){const result=await configureStartup(directory,{...normalize(value),hideLegendsShortcut:false},deps);return {...result,warning:[result.warning,'L1 + Right Alt already has an XPANEL assignment. Hide legends shortcut was not installed.'].filter(Boolean).join(' ')};}
+   if(error.code!=='PLUGIN_SHORTCUT_CONFLICT'||error.position!==0)throw error;
    return {settings:await configure(directory,{...normalize(value),engineRecovery:false},deps),warning:'L1 + Esc already has an XPANEL assignment. Recovery was left off to preserve it.'};
   }
  }catch(error){

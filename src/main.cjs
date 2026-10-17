@@ -43,7 +43,7 @@ state.navigation = navigation.selection();
 const strip = new StripController(hardwareDirectory);
 const displayTasks=new(require('./display-tasks.cjs').DisplayTasks)(strip);
 state.strip = false;
-let modeTimeout;
+let modeTimeout;let musicCapture=false,musicCaptureAt=0;
 let pluginKeyCapture=false;
 const modeKeys = ['Left', 'Right', 'Up', 'Down', 'Return', 'Escape'];
 function leaveMode() {
@@ -51,6 +51,8 @@ function leaveMode() {
   for (const key of modeKeys) globalShortcut.unregister(key);
   navigation.active = false; state.navigation = navigation.selection(); send();
 }
+function musicSlot(){const slot=desk?.config.slots[navigation.action];return navigation.active&&['spotify','youtubemusic'].includes(slot?.plugin)?slot:null;}
+async function musicNavigation(action){const slot=musicSlot();if(!slot||executing)return;executing=true;armModeTimeout();try{if(slot.plugin==='spotify')await media.request(action);else await youtubeMusic.request(action,{target:slot.mediaTarget||desk.config.youtubeMusicTarget});state.error='';}catch(error){state.error=error.message;}finally{executing=false;send();}}
 function armModeTimeout() { clearTimeout(modeTimeout); modeTimeout = setTimeout(leaveMode, 45000); }
 function enterMode() {
   if(!state.strip||strip.error){state.error='Plugin navigation needs a working keyboard display. Companion is reconnecting; try L1 + P when the display is ready.';send();return;}
@@ -62,6 +64,7 @@ function enterMode() {
       if(!state.strip||strip.error){leaveMode();state.error='Plugin navigation stopped because the keyboard display is unavailable. Companion is reconnecting.';send();return;}
       armModeTimeout();
       if (key === 'Escape') { leaveMode(); return; }
+      if((key==='Left'||key==='Right')&&musicSlot()){void musicNavigation(key==='Left'?'previous':'next');return;}
       if (key === 'Return') { runSlot(navigation.action); return; }
       state.navigation = navigation.move(key); send();
     })) { leaveMode(); state.error = `Cannot capture ${key}. Plugin mode is off.`; send(); return; }
@@ -71,6 +74,7 @@ function enterMode() {
 const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 
 function send() {
+  const capture=!!musicSlot();if(desk&&(capture!==musicCapture||capture&&Date.now()-musicCaptureAt>1000)){musicCapture=capture;musicCaptureAt=Date.now();void desk.system.request('music-navigation',capture).catch(error=>{musicCapture=false;state.error=error.message;});}
   state.updateNotes=updateNotes.view();state.keyboardReady=!!(state.strip&&appliedAppearance);deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
   if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,youtubeMusic:state.youtubeMusic,youtubeMusicByTarget:state.youtubeMusicByTarget,youtube:state.youtube,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,bindingLayers:desk.bindingLayers,language:desk.language});
@@ -156,6 +160,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     desk.system.on('activity',()=>sleepService.activity());
     handle('test-display-sleep',async()=>{await sleepService.test();return true;});
     handle('set-display-sleep',async minutes=>{if(desk.settingsError)throw Error(desk.settingsError);const previous=desk.config.sleepMinutes;try{await sleepService.configure(minutes);desk.save({...desk.config,sleepMinutes:minutes});}catch(error){try{if(previous===null)await sleepService.close();else await sleepService.configure(previous);}catch{}throw error;}send();return state;});
+    desk.system.on('music-toggle',()=>{if(musicSlot())void musicNavigation('toggle');});
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{shortcutHealth.record('monitor-disconnected',{monitorConnected:false,displayConnected:state.strip});state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';state.strip=false;recoveryVerified=false;appliedAppearance='';send();});
     monitor.on('layer',active=>{state.layer=active;if(state.strip)strip.setLayer(active);send();});
@@ -223,6 +228,9 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('save-widget',async widget=>{leaveMode();try{if(widget?.type==='text'&&!widget.text?.trim())throw Error('Enter some custom text first.');let next={...desk.config,widget,widgetOrder:require('./widget-cycle.cjs').includeWidget(desk.config.widgetOrder,widget?.type)};if(widget?.type==='weather'&&!next.weather.location)try{next.weather={...next.weather,location:await desk.system.request('windows-location')};}catch{}desk.save(next);widgetSources?.sample(widget?.type);if(widget?.type==='weather'&&desk.config.weather.location)await desk.live.weather(true);state.widgetRotationRevision=(state.widgetRotationRevision||0)+1;state.widgetRevision=(state.widgetRevision||0)+1;await displayTasks.run(async()=>{if(!state.strip)return;strip.setWidget(desk.config.widget);await strip.refreshLive();appliedAppearance=JSON.stringify(desk.config);});state.error='';state.feedback=state.strip?'Screen widget saved and displayed.':'Widget saved. Reconnect the keyboard to display it.';}catch(e){state.error=e.message;}send();return state;});
     handle('save-desk', async config=>{config={...config,sleepMinutes:desk.config.sleepMinutes,languageId:desk.config.languageId,physicalLanguage:desk.config.physicalLanguage,youtubeMusicTarget:desk.config.youtubeMusicTarget,youtubeMusicSource:desk.config.youtubeMusicSource,pluginShortcuts:desk.config.pluginShortcuts};leaveMode();try{if(!config.weather?.location&&(config.slots?.some(s=>s?.plugin==='weather')||config.widget?.type==='weather'))try{config.weather={location:await desk.system.request('windows-location'),unit:config.weather?.unit||'auto'};}catch{}const weatherChanged=JSON.stringify(config.weather)!==JSON.stringify(desk.config.weather);desk.save(config);if(weatherChanged&&config.weather?.location)void desk.live.weather(true).then(send).catch(()=>{});updateNavigation();appliedAppearance='';await syncAppearance();state.error='';state.feedback=state.strip?'Saved to the companion and keyboard strip.':'Saved to the companion. Reconnect the keyboard to apply the strip.';}catch(e){state.error=`${e.message} Settings may be saved locally; retry Apply to refresh the keyboard.`;}send();return state;});
     handle('set-slot',async input=>{desk.saveSlot(input);leaveMode();updateNavigation();send();try{await syncAppearance();state.error='';state.feedback=state.strip?'Plugin action saved to keyboard.':'Plugin action saved. Reconnect the keyboard to display it.';}catch(error){state.error='Action saved locally, but the keyboard display could not update. '+error.message;}send();return state;});
+    const dksProfiles=new(require('./dks-profile.cjs').DksProfiles)(app.getPath('userData'));
+    handle('dks-draft',()=>dksProfiles.read());
+    handle('save-dks-draft',value=>dksProfiles.save(value));
     handle('run-slot', index=>runSlot(index));
     handle('media-key',async action=>{const codes={previous:177,next:176,toggle:179,volumeup:175,volumedown:174,volumemute:173};if(!Object.hasOwn(codes,action))throw Error('Unknown media control');await desk.system.request('keys',[codes[action]]);return state;});
     handle('pick-app',()=>desk.pick());
@@ -345,6 +353,8 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     try { const config = JSON.parse(fs.readFileSync(configPath(), 'utf8')); if (config.shortcuts === true && !process.argv.includes('--verify')) setShortcuts(true, false); } catch {}
     await win.loadFile(path.join(__dirname, 'index.html'));
     if(!(widgetShortcutReady=globalShortcut.register('Control+Alt+F12',()=>{try{widgetCycle.press();}catch(e){state.error=e.message;send();}})))state.error='The widget shortcut is in use by another app.';
+    let legendToggleBusy=false;
+    if(!globalShortcut.register('Control+Alt+F11',async()=>{if(legendToggleBusy||!desk.config.pluginShortcuts.hideLegendsShortcut||!state.strip)return;legendToggleBusy=true;const previous=desk.config;try{desk.config=desk.validate({...previous,hideLegends:!previous.hideLegends});appliedAppearance='';await syncAppearance();desk.save(desk.config);state.feedback=desk.config.hideLegends?'Keyboard legends hidden. L1 + Right Alt restores them.':'Keyboard legends restored.';}catch(error){desk.config=previous;appliedAppearance='';try{await syncAppearance();}catch{}state.error=error.message;}finally{legendToggleBusy=false;send();}}))state.error='Hide legends shortcut is in use by another app.';
     if (!globalShortcut.register('Control+Alt+P', enterMode)) state.error = 'L1+P’s companion signal is in use. Use the Enter plugin mode button instead.';
     try { state.device = await inspectDevice(true); } catch (error) { state.deviceError = error.message; }
     await refresh();

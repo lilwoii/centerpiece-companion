@@ -10,6 +10,16 @@ public class CompanionInput {
  [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
  public static string ForegroundApp(){uint id;GetWindowThreadProcessId(GetForegroundWindow(),out id);if(id==0)return "";try{using(var p=System.Diagnostics.Process.GetProcessById((int)id)){return p.ProcessName+".exe";}}catch{return "";}}
+ public static void ConfigureMusic(bool value){MusicExpiry=unchecked(Environment.TickCount+3000);MusicNavigation=value;}
+ public static volatile bool MusicNavigation; public static volatile int MusicExpiry; static bool musicDown;
+ public static bool HandleMusicKey(int key,int message){
+  if(key!=161)return false;
+  bool press=message==0x100||message==0x104,release=message==0x101||message==0x105;
+  if(!press&&!release)return false;
+  if(!((MusicNavigation&&unchecked(Environment.TickCount-MusicExpiry)<0&&press&&!rightShift)||musicDown))return false;
+  if(press&&!musicDown){musicDown=true;Console.WriteLine("{\"event\":\"music-toggle\"}");}else if(release)musicDown=false;
+  return true;
+ }
  public static volatile bool Caps, Shift; static bool leftShift,rightShift;
  static void EmitLocks(){Console.WriteLine("{\"event\":\"locks\",\"caps\":"+(Caps?"true":"false")+",\"shift\":"+(Shift?"true":"false")+"}");}
  static long lastActivity; static bool down; static IntPtr hook; static Hook callback=OnKey;
@@ -22,6 +32,8 @@ public class CompanionInput {
  static IntPtr OnKey(int code,IntPtr message,IntPtr data){
   // Emit a throttled activity signal without recording or transmitting key identities.
   if(code>=0&&(message.ToInt32()==0x100||message.ToInt32()==0x104)){long now=Environment.TickCount; if(now-lastActivity>100||now<lastActivity){lastActivity=now;Console.WriteLine("{\"event\":\"activity\"}");}}
+  // Consume only Right Shift while the selected music plugin owns navigation.
+  if(code>=0&&HandleMusicKey(Marshal.ReadInt32(data),message.ToInt32()))return new IntPtr(1);
   // Caps Lock state remains separate.
   if(code>=0 && Marshal.ReadInt32(data)==20){int m=message.ToInt32();if(m==0x100||m==0x104){if(!down){Caps=!Caps;EmitLocks();}down=true;}else if(m==0x101||m==0x105)down=false;}
   if(code>=0){int key=Marshal.ReadInt32(data),m=message.ToInt32();if(key==160||key==161||key==16){bool press=m==0x100||m==0x104;if(press||m==0x101||m==0x105){if(key==161)rightShift=press;else leftShift=press;bool next=leftShift||rightShift;if(next!=Shift){Shift=next;EmitLocks();}}}}
@@ -37,6 +49,7 @@ while($null -ne ($line=[Console]::ReadLine())){
  try{
   $r=$line|ConvertFrom-Json
   if($r.action -eq 'locks'){ $result=@{caps=[CompanionInput]::Caps;shift=[CompanionInput]::Shift} }
+  elseif($r.action -eq 'music-navigation'){ [CompanionInput]::ConfigureMusic([bool]$r.codes); $result=$true }
   elseif($r.action -eq 'foreground-app'){ $result=[CompanionInput]::ForegroundApp() }
   elseif($r.action -eq 'screenshot-folder'){ $result=[CompanionInput]::ScreenshotFolder($null) }
   elseif($r.action -eq 'set-screenshot-folder'){ $result=[CompanionInput]::ScreenshotFolder([string]$r.codes) }

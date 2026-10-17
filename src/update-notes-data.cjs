@@ -1,5 +1,12 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.39": Object.freeze([
+    "L1 + Right Alt hides and restores keyboard legends with your original XPANEL artwork. The shortcut uses a bright red highlight with a customizable color and preserves conflicting custom assignments.",
+    "When Spotify or YouTube Music is highlighted, Left and Right skip tracks and Right Shift plays or pauses. Music-control highlights default to Spotify green and can be customized.",
+    "Added clearly labeled US/UK hash (#) and backslash binding choices, with accurate modifier labels and reversible key changes.",
+    "Fixed keyboard keys appearing in a corner when changing editor layers. Legend toggles now update one display frame instead of rebuilding all navigation frames.",
+    "Added a DKS customization draft editor. DKS remains disabled: drafts do not alter firmware or activate travel-based inputs."
+]),
   "0.3.0-preview.38": Object.freeze([
     "Fixed Companion staying disconnected after keyboard settings were restored. Startup now backs up and reinstalls its shortcuts automatically when the current keyboard configuration passes verification.",
     "Owner @mentions on feature requests now notify the request author with a yellow unread badge and a Notifications inbox. Sign in with Discord to receive mentions.",

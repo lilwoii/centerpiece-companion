@@ -27,8 +27,16 @@ function detailSingle(config,data,bare=false){const w=config.widget;if(!w||w.typ
  }else{const r=reading(type,{...data,clockSeconds:config.widget?.clockSeconds});if(r){if(r.value==='—'){content+=require('./waiting.cjs').render('Waiting for '+(type==='gpu'||type==='cpu'?'sensor':type==='weather'?'weather source':type+' source'),width,height,data.now??Date.now());}else{if(r.icon)content+=`<g transform="translate(10 25)">${weatherIcon(r.icon,config.weatherMotion===false?0:undefined,r.windy)}</g>`;content+=txt(r.label,8,17,10,'#a8b5c9')+txt(r.value,r.icon?55:8,61,r.value.length>7?24:32)+(r.forecast?txt(r.forecast,8,height-6,10,'#ffb45b'):'');}}else content+=txt('Select a live widget',8,35,14);}
  return `<svg x="${x}" y="${y}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" overflow="hidden">${bare?'':`<rect width="${width}" height="${height}" rx="9" fill="${appearance.appearance(config.appearance).widgetBackground}" fill-opacity="${appearance.appearance(config.appearance).transparentWidget?0:appearance.appearance(config.appearance).widgetOpacity}" stroke-opacity="${appearance.appearance(config.appearance).transparentWidget?0:appearance.appearance(config.appearance).widgetOpacity}" stroke="${appearance.appearance(config.appearance).border}"/>`}${content}</svg>`;
 }
+
+function freeWidgetSVG(config,w,data={}){
+ if(!w||w.type==='off')return '';
+ const zoom=w.zoom||1,theme=appearance.appearance(config.appearance);
+ // Render at the widget's logical size so changing box size and text zoom are independent.
+ const width=Math.max(80,w.width/zoom),height=Math.max(50,w.height/zoom);
+ return `<svg data-widget-free="true" x="${w.x}" y="${w.y}" width="${w.width}" height="${w.height}" viewBox="0 0 ${w.width} ${w.height}" overflow="hidden"><rect x=".5" y=".5" width="${w.width-1}" height="${w.height-1}" rx="7" fill="${theme.widgetBackground}" fill-opacity="${theme.transparentWidget?0:theme.widgetOpacity}" stroke="${theme.border}" stroke-opacity="${theme.transparentWidget?0:theme.widgetOpacity}" stroke-width=".65"/><g transform="scale(${zoom})">${compact(w,config,data,width,height)}</g></svg>`;
+}
 function panelSVG(config,data={}){
- const extra=config.extraWidgets||[];if(!extra.length)return detailSVG(config,data);
+ const extra=config.extraWidgets||[];if(config.widgetLayout==='free')return [config.widget,...extra].map(w=>freeWidgetSVG(config,w,data)).join('');if(!extra.length)return detailSVG(config,data);
  const {bounds,placements,outline,topOutline}=require('./widget-panel.cjs'),theme=appearance.appearance(config.appearance),widgets=[config.widget,...extra];
  const positions=placements(widgets,config.widgetSplit,config.widgetPositions);
  const separators=positions.slice(1).map(cell=>cell.y===0?`M${cell.x} 3V91`:`M${cell.x+3} ${cell.y+.5}H${cell.x+cell.width-3}`).join(' ');
@@ -90,4 +98,4 @@ function dense(w,config,data,width,height){
 function calendarSVG(width,height,date){const year=date.getFullYear(),month=date.getMonth(),today=date.getDate(),offset=(new Date(year,month,1).getDay()+6)%7,days=new Date(year,month+1,0).getDate(),rows=Math.ceil((offset+days)/7),top=height*.35,cellW=width/7,cellH=(height-top-2)/rows;let out=`<text x="${width/2}" y="${height*.13}" text-anchor="middle" font-family="Arial" font-size="${Math.max(9,height*.12)}" fill="#edf2fa">${esc(date.toLocaleDateString(undefined,{weekday:'long'}))}</text><text x="${width/2}" y="${height*.24}" text-anchor="middle" font-family="Arial" font-size="${Math.max(8,height*.09)}" fill="#a8b5c9">${esc(date.toLocaleDateString(undefined,{month:'long',year:'numeric'}))}</text>`;
  for(let d=0;d<7;d++)out+=`<text x="${(d+.5)*cellW}" y="${height*.34}" text-anchor="middle" font-family="Arial" font-size="${Math.max(7,height*.08)}" fill="#a8b5c9">${['M','T','W','T','F','S','S'][d]}</text>`;
  for(let day=1;day<=days;day++){const n=offset+day-1,x=(n%7+.5)*cellW,y=top+Math.floor(n/7)*cellH;if(day===today)out+=`<rect data-today="true" x="${x-cellW*.36}" y="${y}" width="${cellW*.72}" height="${cellH}" rx="2" fill="#c93243"/>`;out+=`<text x="${x}" y="${y+cellH*.78}" text-anchor="middle" font-family="Arial" font-size="${Math.max(7,Math.min(cellH*.8,cellW*.5))}" fill="#edf2fa">${day}</text>`;}return out;}
-module.exports={clockReading,esc,weatherIcon,reading,detailSVG,panelSVG,calendarSVG};
+module.exports={clockReading,esc,weatherIcon,reading,detailSVG,panelSVG,freeWidgetSVG,calendarSVG};

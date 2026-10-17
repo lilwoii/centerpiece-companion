@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.41": Object.freeze([
+    "Added optional Free placement for up to four widgets. Drag any widget anywhere on the keyboard display, including the spacebar area.",
+    "Resize each widget independently with its corner handle or exact position and size controls. Moving extra widgets keeps the main widget in place.",
+    "Added separate content zoom from 50% to 300%, making watchlist prices, text and artwork easier to read.",
+    "Placement saves when dragging ends. Original layout remains the default, and L1 + / continues cycling only the main widget."
+]),
   "0.3.0-preview.40": Object.freeze([
     "Added up to four screen widgets with simple position buttons. Place any extra beside the main widget or below it; occupied positions swap without replacing your widgets.",
     "Choose a 50/50 or 60/40 main-area split, even with just one extra widget. Extra widgets retain their positions while L1 + / changes the main widget.",

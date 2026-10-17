@@ -17,7 +17,7 @@ async function preview(config,data={},flags={}){
  if(flags.widgetOnly&&previewWidget&&previewWidget.type!=='off'){
   // Rasterize vector text at the preview's display density. Enlarging a crop of
   // the keyboard's native 194px widget also enlarges its antialiasing blur.
-  const w=c.extraWidgets.length?require('./widget-panel.cjs').bounds:previewWidget,previewWidth=582,previewHeight=previewWidth*w.height/w.width;
+  const w=c.widgetLayout!=='free'&&c.extraWidgets.length?require('./widget-panel.cjs').bounds:previewWidget,previewWidth=582,previewHeight=previewWidth*w.height/w.width;
   const detail=image.replace('width="1920" height="550"',`width="${previewWidth}" height="${previewHeight}" viewBox="${w.x} ${w.y} ${w.width} ${w.height}"`);
   rendered=sharp(Buffer.from(detail),{density:144});
  }else rendered=sharp(Buffer.from(image)).resize(1280);

@@ -81,3 +81,13 @@ label[for="widget-picker"]{color:#ffc66d;font-weight:700}
 .key-group-toolbar .form-actions>label{display:flex;flex-direction:row;align-items:center;gap:8px}
 
 #widget-placement {flex-basis:100%;color:#ffbd69} .widget-placement-map {display:grid;grid-template-columns:minmax(100px,1fr) minmax(140px,1fr);gap:6px;max-width:460px;margin-top:8px}.widget-placement-map>span {padding:12px;border:1px solid #48607a;border-radius:7px;color:#a8b5c9}.widget-placement-map [data-widget-place="lower"],.widget-placement-map [data-widget-place="bottom"] {grid-column:2}.widget-placement-map .button {white-space:normal;border-color:#b08043}.widget-placement-map .button[aria-pressed="true"] {background:#395443;color:#edfff3;border-color:#83dbba} #widget-placement[hidden] {display:none}
+.widget-free-controls {border:1px solid var(--success);border-radius:8px;padding:12px;margin:12px 0;background:var(--surface)}
+.widget-free-controls>label {display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-weight:700;color:var(--success)}
+#widget-free-tools {margin-top:10px} #widget-free-tools>label {display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--attention);font-weight:700}
+#widget-content-zoom {accent-color:var(--attention);width:180px} #widget-zoom-value {min-width:4ch}
+.widget-drag-stage {position:relative;line-height:0}.widget-drag-stage>img {display:block;width:100%;height:auto}
+.widget-drag-overlay {position:absolute;inset:0;pointer-events:none}.widget-drag-box {position:absolute;border:1px dashed var(--attention);box-sizing:border-box;pointer-events:auto;line-height:normal}
+.widget-drag-box.selected {border:2px solid var(--success)}
+.widget-drag-move {position:absolute;inset:0;width:100%;height:100%;padding:2px;background:rgba(17,21,29,.18);color:var(--attention);font-size:10px;text-shadow:0 1px 2px #000;cursor:move;border:0;border-radius:0;touch-action:none;overflow:hidden;display:flex;align-items:flex-start;text-align:left}
+.widget-drag-resize {position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;min-height:0;padding:0;background:var(--success);color:var(--background);border:1px solid var(--background);border-radius:3px;cursor:nwse-resize;touch-action:none;font-size:18px}
+.widget-drag-box:focus-within {outline:2px solid var(--attention);outline-offset:2px}

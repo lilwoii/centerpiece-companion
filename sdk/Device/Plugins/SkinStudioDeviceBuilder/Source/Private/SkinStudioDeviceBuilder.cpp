@@ -153,6 +153,22 @@ FString USkinStudioDeviceBuilder::RunLayerSmokeTest(TSubclassOf<AActor> ActorCla
         Report->SetBoolField(TEXT("newPressAccepted"),FloatValue(TEXT("FleeTime"))>PressTime);Report->SetBoolField(TEXT("finiteTransform"),!Actor->GetActorTransform().ContainsNaN());
         Receiver->OnKeyEvent.Broadcast(0,false,0);
         }
+        // Verify held-key curiosity in the generated Blueprint, including release.
+        for(int32 RuleIndex=0;RuleIndex<32;RuleIndex++){
+            const FString Prefix=FString::Printf(TEXT("Curious%d_"),RuleIndex),BlendName=Prefix+TEXT("Blend");
+            if(!FindFProperty<FFloatProperty>(Actor->GetClass(),*BlendName))continue;
+            auto* Receiver=USkinCreatorLibrary::GetKeyEventReceiver();const FVector Current=Actor->GetActorLocation();const FVector2D Point(Current.X+960,Current.Y+275);
+            USkinCreatorLibrary::SetPreviewPositionForTests(Point);Receiver->OnKeyEvent.Broadcast(17,true,100);
+            for(int32 I=0;I<20;I++)Step(.05f);Report->SetBoolField(TEXT("curiosityWaits"),FloatValue(*BlendName)<.001f);
+            for(int32 I=0;I<140;I++)Step(.05f);Report->SetNumberField(TEXT("curiosityHeldBlend"),FloatValue(*BlendName));
+            const FVector Near=Actor->GetActorLocation();Report->SetNumberField(TEXT("curiosityApproachDistance"),FVector2D::Distance(FVector2D(Near.X+960,Near.Y+275),Point));
+            Receiver->OnKeyEvent.Broadcast(17,false,0);for(int32 I=0;I<50;I++)Step(.05f);Report->SetNumberField(TEXT("curiosityReleasedBlend"),FloatValue(*BlendName));break;
+        }
+        if(Actor->ActorHasTag(TEXT("StudioSwimmer"))){
+            auto* Receiver=USkinCreatorLibrary::GetKeyEventReceiver();double MaxStep=0,MaxTurn=0,MinForward=1000;const FVector Start=Actor->GetActorLocation();
+            for(int32 Frame=0;Frame<360;Frame++){const FVector Previous=Actor->GetActorLocation();const float Heading=Actor->GetActorRotation().Yaw;if(Frame%6==0){USkinCreatorLibrary::SetPreviewPositionForTests(FVector2D(Previous.X+990,Previous.Y+275));Receiver->OnKeyEvent.Broadcast(24,true,100);Receiver->OnKeyEvent.Broadcast(24,false,0);}Step(1.f/60.f);const FVector Delta=Actor->GetActorLocation()-Previous;MaxStep=FMath::Max(MaxStep,double(Delta.Size2D()));MaxTurn=FMath::Max(MaxTurn,double(FMath::Abs(FMath::FindDeltaAngleDegrees(Heading,Actor->GetActorRotation().Yaw))));MinForward=FMath::Min(MinForward,double(FVector::DotProduct(Delta,Actor->GetActorForwardVector())));}
+            Report->SetNumberField(TEXT("swimMaxStep"),MaxStep);Report->SetNumberField(TEXT("swimMaxTurn"),MaxTurn);Report->SetNumberField(TEXT("swimMinForward"),MinForward);Report->SetNumberField(TEXT("swimTravel"),FVector::Dist2D(Start,Actor->GetActorLocation()));
+        }
         Actor->Destroy();
     }
     else Report->SetStringField(TEXT("error"),TEXT("Test actor could not be created."));
@@ -193,9 +209,9 @@ bool USkinStudioDeviceBuilder::CaptureRuntimePreview(float Seconds,bool PressKey
     USkinCreatorLibrary::SetPreviewReceiverAvailableForTests(true);Step();Step();
     auto* Receiver=USkinCreatorLibrary::GetKeyEventReceiver();for(int32 I=0;I<FMath::Clamp(PressCount,1,4);I++){if(PressKey&&Receiver){USkinCreatorLibrary::SetPreviewPositionForTests(FVector2D(FMath::Clamp(KeyX+I*400,0.f,1920.f),FMath::Clamp(KeyY,0.f,550.f)));Receiver->OnKeyEvent.Broadcast(I,true,100);Receiver->OnKeyEvent.Broadcast(I,false,0);}Step();Step();Step();}
     for(int32 I=0;I<FMath::CeilToInt(Seconds*60);I++)Step();
-    auto* Target=NewObject<UTextureRenderTarget2D>(GetTransientPackage());Target->InitCustomFormat(1920,550,PF_B8G8R8A8,false);Target->UpdateResourceImmediate(true);
+    auto* Target=NewObject<UTextureRenderTarget2D>(GetTransientPackage());Target->InitCustomFormat(1920,550,PF_FloatRGBA,true);Target->UpdateResourceImmediate(true);
     auto* Camera=World->SpawnActor<ASceneCapture2D>(FVector(0,0,1500),FRotator(-90,-90,0));bool Good=false;
-    if(Camera){auto* Capture=Camera->GetCaptureComponent2D();Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->OrthoWidth=1920;Capture->TextureTarget=Target;Capture->CaptureSource=SCS_FinalColorLDR;Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;Capture->ShowFlags.SetPostProcessing(false);Capture->CaptureScene();FlushRenderingCommands();FReadSurfaceDataFlags Flags(RCM_UNorm);Flags.SetLinearToGamma(false);TArray<FColor> Pixels;Good=Target->GameThread_GetRenderTargetResource()->ReadPixels(Pixels,Flags)&&Pixels.Num()==1920*550;if(Good){TArray<uint8> Png;FImageUtils::CompressImageArray(1920,550,Pixels,Png);Good=FFileHelper::SaveArrayToFile(Png,*(FPaths::ProjectSavedDir()/TEXT("StudioRuntimePreview.png")));}}
+    if(Camera){auto* Capture=Camera->GetCaptureComponent2D();Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->OrthoWidth=1920;Capture->TextureTarget=Target;Capture->CaptureSource=SCS_SceneColorHDR;Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;Capture->ShowFlags.SetPostProcessing(false);Capture->CaptureScene();FlushRenderingCommands();FReadSurfaceDataFlags Flags(RCM_UNorm);Flags.SetLinearToGamma(true);TArray<FColor> Pixels;Good=Target->GameThread_GetRenderTargetResource()->ReadPixels(Pixels,Flags)&&Pixels.Num()==1920*550;if(Good){TArray<uint8> Png;FImageUtils::CompressImageArray(1920,550,Pixels,Png);Good=FFileHelper::SaveArrayToFile(Png,*(FPaths::ProjectSavedDir()/TEXT("StudioRuntimePreview.png")));}}
     USkinCreatorLibrary::SetPreviewPositionForTests(FVector2D::ZeroVector);GEngine->DestroyWorldContext(World);World->DestroyWorld(false);FlushRenderingCommands();return Good;
 }
 bool USkinStudioDeviceBuilder::CaptureDevicePreview()
@@ -209,10 +225,10 @@ bool USkinStudioDeviceBuilder::CaptureDevicePreview()
         for(auto* Component:Components)Component->ReregisterComponent();
     }
     World->SendAllEndOfFrameUpdates();FlushRenderingCommands();
-    auto* Target=NewObject<UTextureRenderTarget2D>(GetTransientPackage());Target->InitCustomFormat(1920,550,PF_B8G8R8A8,false);Target->UpdateResourceImmediate(true);
+    auto* Target=NewObject<UTextureRenderTarget2D>(GetTransientPackage());Target->InitCustomFormat(1920,550,PF_FloatRGBA,true);Target->UpdateResourceImmediate(true);
     auto* Camera=World->SpawnActor<ASceneCapture2D>(FVector(0,0,1500),FRotator(-90,-90,0));if(!Camera)return false;
-    auto* Capture=Camera->GetCaptureComponent2D();Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->OrthoWidth=1920;Capture->TextureTarget=Target;Capture->CaptureSource=SCS_FinalColorLDR;Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;Capture->ShowFlags.SetPostProcessing(false);Capture->CaptureScene();FlushRenderingCommands();
-    FReadSurfaceDataFlags ReadFlags(RCM_UNorm);ReadFlags.SetLinearToGamma(false);
+    auto* Capture=Camera->GetCaptureComponent2D();Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->OrthoWidth=1920;Capture->TextureTarget=Target;Capture->CaptureSource=SCS_SceneColorHDR;Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;Capture->ShowFlags.SetPostProcessing(false);Capture->CaptureScene();FlushRenderingCommands();
+    FReadSurfaceDataFlags ReadFlags(RCM_UNorm);ReadFlags.SetLinearToGamma(true);
     TArray<FColor> Pixels;bool Good=Target->GameThread_GetRenderTargetResource()->ReadPixels(Pixels,ReadFlags);Camera->Destroy();
     if(!Good||Pixels.Num()!=1920*550)return false;TArray<uint8> Png;FImageUtils::CompressImageArray(1920,550,Pixels,Png);return FFileHelper::SaveArrayToFile(Png,*(FPaths::ProjectSavedDir()/TEXT("StudioDevicePreview.png")));
 }

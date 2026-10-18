@@ -1,0 +1,41 @@
+{
+  "method": "built-in image_gen",
+  "prompts": [
+    [
+      "rainforest",
+      "Ancient rainforest stream at dawn, low cinematic view over clear dark water, immense mossy roots, ferns and wet stone, shafts of soft warm sunlight in mist. No animals. Leave open middle for animated motes and falling leaves."
+    ],
+    [
+      "storm-coast",
+      "Dramatic realistic North Atlantic rocky coast at blue hour, offshore lighthouse far left, rolling dark teal sea and towering storm clouds, fine spray, wet basalt. No lightning baked into the image; it will be animated separately."
+    ],
+    [
+      "alpine-lake",
+      "Photorealistic alpine glacial lake at nightfall, distant snowy peaks reflected in deep navy glassy water, stony shoreline at bottom corners, restrained faint green auroral sky, magnificent wide vista, no people."
+    ],
+    [
+      "deep-sea",
+      "Photorealistic underwater deep ocean abyss, dark cobalt open water, subtle distant bioluminescent plankton, delicate shafts of light from upper left, rocky reef only in bottom corners. NO jellyfish, they will be animated separately."
+    ],
+    [
+      "volcanic-basin",
+      "Photorealistic volcanic caldera at twilight, black fractured basalt with narrow incandescent lava channels across lower middle, distant crater glowing through smoke, dramatic charcoal clouds and copper light. No cartoon flames, no people."
+    ],
+    [
+      "desert-ruins",
+      "Photorealistic ancient sandstone ruins amid vast windswept desert dunes at blue-hour moonlight, intricately weathered columns toward outer thirds, open sandy floor center, distant dune silhouettes and realistic crisp stars. No people."
+    ],
+    [
+      "rain-city",
+      "Photorealistic rain-soaked modern city alley at night, luminous magenta and turquoise shop lighting without readable lettering, wet asphalt reflecting lights, distant traffic bokeh, elegant cinematic lens, no people."
+    ],
+    [
+      "frozen-cavern",
+      "Photorealistic vast blue glacial ice cavern, translucent sculpted ice arches, deep sapphire cracks, crystalline snow, open dark glassy frozen floor, soft turquoise light refracting through ice, no people."
+    ],
+    [
+      "orbital-vista",
+      "Photorealistic cinematic view from low Earth orbit, curved blue Earth limb across lower third, intricate clouds and night city lights, subtle atmospheric golden sunrise at far right, dark star field above, no spacecraft or text."
+    ]
+  ]
+}

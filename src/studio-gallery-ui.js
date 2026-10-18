@@ -30,7 +30,7 @@
         createAsync: typeof item.createAsync === 'function' ? item.createAsync.bind(item) : undefined
       });
     }
-    return entries.slice(0,24);
+    return entries;
   }
 
   function filterEntries(entries, query = '', style = 'all') {
@@ -52,7 +52,7 @@
   function mount(host, doc) {
     const page = doc.querySelector('[data-page="skins"]'), heading = page?.querySelector('.page-heading');
     if (!heading || doc.getElementById('studio-collection')) return;
-    const entries = collectionEntries(host.StudioCollectionPresets, host.StudioPresets);
+    const entries = collectionEntries({list:[...(host.StudioPhotoPresets?.list||[]),...(host.StudioCollectionPresets?.list||[])]}, host.StudioPresets);
     const make = (tag, text, className) => {
       const element = doc.createElement(tag);
       if (text !== undefined) element.textContent = text;
@@ -67,7 +67,7 @@
     title.id = 'studio-collection-title';
     const badge = make('span', 'Interactive', 'studio-collection-category');
     top.append(title, badge);
-    section.append(top, make('p', 'Explore and edit these projects in Skin Studio. Keyboard-ready .pak builds are still pending.', 'note studio-collection-note'));
+    section.append(top, make('p', 'Open a skin to preview, customize or use it on your keyboard. Included builds need no Unreal installation; edited designs need a new build.', 'note studio-collection-note'));
     const toolbar = make('div', undefined, 'skin-toolbar studio-collection-toolbar');
     const searchLabel = make('label', 'Find a Studio project');
     const search = make('input');
@@ -104,6 +104,7 @@
     section.append(toolbar, status, grid, more);
     heading.after(section);
     let pageSize = PAGE_SIZE;
+    const included = new Set();
 
     const report = (message, error = false) => {
       if (typeof announce === 'function') announce(message, error);
@@ -127,7 +128,7 @@
       status.classList.remove('error');
       status.textContent = !entries.length ? 'The Studio collection could not load. Reopen the app to try again.'
         : !visible.length ? 'No Studio projects match. Clear the search or choose another visual style.'
-          : 'Showing ' + Math.min(pageSize, visible.length) + ' of ' + visible.length + ' interactive projects · Stored with this test build';
+          : 'Showing ' + Math.min(pageSize, visible.length) + ' of ' + visible.length + ' interactive projects';
       more.hidden = visible.length <= pageSize;
       for (const entry of visible.slice(0, pageSize)) {
         const article = make('article', undefined, 'skin-card studio-project-card');
@@ -145,7 +146,7 @@
         visual.append(image, unavailable);
         const body = make('div', undefined, 'skin-card-body');
         const meta = make('div', undefined, 'studio-project-meta');
-        meta.append(make('span', 'Studio project', 'studio-project-format'), make('span', entry.original ? 'Original launch' : entry.style, 'note'));
+        meta.append(make('span', included.has(entry.id) ? 'Included keyboard build' : 'Editable project', 'studio-project-format'), make('span', entry.original ? 'Original launch' : entry.style, 'note'));
         const name = make('h3', entry.name);
         const description = make('p', entry.description, 'studio-project-description');
         const interaction = make('p', entry.interaction, 'studio-project-interaction');
@@ -169,7 +170,7 @@
           link.click();
           link.remove();
           setTimeout(() => URL.revokeObjectURL(url), 30000);
-          report(entry.name + ' project downloaded. Open the .cpskin file in Skin Studio; keyboard .pak export still needs a verified native build.');
+          report(entry.name + ' project downloaded. Open the .cpskin file in Skin Studio to edit or use it on your keyboard.');
         }));
         actions.append(open, download);
         body.append(meta, name, description, interaction, actions);
@@ -187,6 +188,7 @@
       grid.children[previous]?.querySelector('button')?.focus({ preventScroll: true });
     });
     draw();
+    if(host.companion?.studioRequest)host.companion.studioRequest('collection-builds',null).then(items=>{for(const item of items)if(SAFE_ID.test(item.id))included.add(item.id);draw();}).catch(()=>{});
   }
   return { collectionEntries, filterEntries, projectDownload, mount };
 });

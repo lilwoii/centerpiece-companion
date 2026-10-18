@@ -28,8 +28,8 @@ test('invalid projects fail before reading tools and never accept a path or a de
  let calls=0;for(const input of [{path:'D:\\Koi.pak'},{command:48,slot:4},{format:'invalid'},null])await assert.rejects(check(input,{detect:async()=>{calls++;return readyTools;}}));assert.equal(calls,0);
 });
 test('native cloud gameplay is available while unfinished games remain preview-only',()=>{
- const p={layers:[{type:'fish',motion:{type:'swim'}},{type:'image',motion:{type:'none'}},{type:'collection',text:'cloud-courier'},{type:'collection',text:'lighthouse-watch'},{type:'collection',text:'atlas-launch'}],rules:[{effect:'flee'}]};
- assert.deepEqual(native.describe(p),{nativeSceneSources:['cloud-courier'],previewOnlyScenes:['lighthouse-watch','atlas-launch'],previewOnlyBehaviors:[]});
+ const p={layers:[{type:'fish',motion:{type:'swim'}},{type:'image',motion:{type:'none'}},{type:'collection',text:'cloud-courier'},{type:'collection',text:'future-scene'},{type:'collection',text:'atlas-launch'}],rules:[{effect:'flee'}]};
+ assert.deepEqual(native.describe(p),{nativeSceneSources:['cloud-courier','atlas-launch'],previewOnlyScenes:['future-scene'],previewOnlyBehaviors:[]});
  assert.deepEqual(native.describe({layers:[{type:'image',motion:{type:'none'}}],rules:[]}).previewOnlyBehaviors,[]);
 });
 test('physical check does not expose local engine folders or detector internals',async()=>{

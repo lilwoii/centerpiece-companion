@@ -11,18 +11,18 @@ def prefix():
 def suffix(mode,opacity):
     formulas={
       'source-over':'source',
-      'lighter':'min(float3(1.0,1.0,1.0),back+source*alpha)',
+      'lighter':'min(float3(1.0,1.0,1.0),back+source*blendAlpha)',
       'multiply':'back*source',
       'screen':'back+source-back*source',
       'overlay':'lerp(2.0*back*source,1.0-2.0*(1.0-back)*(1.0-source),step(.5,back))',
       'soft-light':'lerp(back-(1.0-2.0*source)*back*(1.0-back),back+(2.0*source-1.0)*(lerp(((16.0*back-12.0)*back+4.0)*back,sqrt(back),step(.25,back))-back),step(.5,source))'
     }
     if mode not in formulas:raise RuntimeError('Unknown native blend mode.')
-    code='float alpha=saturate(a*('+opacity+'));float3 source=saturate(c),back=saturate(previous.rgb);'
+    code='float blendAlpha=saturate(a*('+opacity+'));float3 source=saturate(c),back=saturate(previous.rgb);'
     # Canvas uses sRGB compositing; material and render-target values are linear.
     for name in ['source','back']:
         code+=name+'=lerp('+name+'*12.92,1.055*pow(max('+name+',0.0),1.0/2.4)-.055,step(.0031308,'+name+'));'
     code+='float3 blended='+formulas[mode]+';'
-    code+='float3 result='+('blended' if mode=='lighter' else 'lerp(back,blended,alpha)')+';'
+    code+='float3 result='+('blended' if mode=='lighter' else 'lerp(back,blended,blendAlpha)')+';'
     code+='result=lerp(result/12.92,pow((max(result,0.0)+.055)/1.055,2.4),step(.04045,result));return float4(result,1.0);'
     return code

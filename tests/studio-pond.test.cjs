@@ -2,12 +2,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const M=require('../studio/model.js'),P=require('../studio/pond-presets.js');
 
-test('original pond preset distinguishes an editable Studio project from a native skin',()=>{
+test('pond preset offers an included build without claiming physical verification',()=>{
  assert.equal(P.list.length,1);const entry=P.list[0],p=entry.create();
- assert.equal(entry.nativeVerified,false);assert.equal(entry.nativeStatus,'browser-project');
+ assert.equal(entry.nativeVerified,false);assert.equal(entry.nativeStatus,'included-build');
  assert.ok(entry.tags.includes('Nature'));assert.ok(entry.tags.includes('Ocean & water'));
  assert.match(p.description,/only fish close/);assert.match(p.description,/Select a koi in Layers/);
- assert.match(p.description,/not a compiled keyboard skin/);assert.deepEqual(M.validate(p),p);
+ assert.match(p.description,/included keyboard build/);assert.deepEqual(M.validate(p),p);
 });
 
 test('five koi are independently editable and continuously swim with varied appearances',()=>{

@@ -1,6 +1,6 @@
 {
   "name": "centerpiece-companion",
-  "version": "0.3.0-preview.41",
+  "version": "0.3.0-preview.42",
   "description": "Unofficial local companion for Finalmouse Centerpiece Pro",
   "main": "src/main.cjs",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "package": "node scripts/package.cjs",
     "dist": "node scripts/dist-clean.cjs",
     "preview:customization": "node scripts/customization-preview.cjs",
-    "test:studio": "node --test tests/studio-model.test.cjs tests/studio-history.test.cjs tests/studio-render.test.cjs tests/studio-sdk.test.cjs tests/studio-server.test.cjs tests/skin-library.test.cjs tests/keyboard-skins.test.cjs tests/unreal-tools.test.cjs tests/studio-collection.test.cjs tests/studio-project-loader.test.cjs tests/studio-gallery.test.cjs tests/studio-scene-library.test.cjs tests/studio-interactions.test.cjs tests/studio-games.test.cjs tests/my-skins.test.cjs tests/studio-motion.test.cjs tests/studio-pond.test.cjs tests/studio-physical.test.cjs tests/studio-reaction-presets.test.cjs tests/studio-build.test.cjs tests/studio-service.test.cjs tests/studio-device-loader.test.cjs tests/studio-device-service.test.cjs tests/studio-device-native.test.cjs tests/studio-dependencies.test.cjs tests/studio-pak.test.cjs tests/studio-image-converter.test.cjs tests/studio-text.test.cjs tests/studio-restoration.test.cjs tests/studio-photo.test.cjs tests/studio-unreal-edit.test.cjs"
+    "test:studio": "node --test tests/studio-photoreal.test.cjs tests/studio-prebuilt.test.cjs tests/studio-model.test.cjs tests/studio-history.test.cjs tests/studio-render.test.cjs tests/studio-sdk.test.cjs tests/studio-server.test.cjs tests/skin-library.test.cjs tests/keyboard-skins.test.cjs tests/unreal-tools.test.cjs tests/studio-collection.test.cjs tests/studio-project-loader.test.cjs tests/studio-gallery.test.cjs tests/studio-scene-library.test.cjs tests/studio-interactions.test.cjs tests/studio-games.test.cjs tests/my-skins.test.cjs tests/studio-motion.test.cjs tests/studio-pond.test.cjs tests/studio-physical.test.cjs tests/studio-reaction-presets.test.cjs tests/studio-build.test.cjs tests/studio-service.test.cjs tests/studio-device-loader.test.cjs tests/studio-device-service.test.cjs tests/studio-device-native.test.cjs tests/studio-dependencies.test.cjs tests/studio-pak.test.cjs tests/studio-image-converter.test.cjs tests/studio-text.test.cjs tests/studio-restoration.test.cjs tests/studio-photo.test.cjs tests/studio-unreal-edit.test.cjs"
   },
   "dependencies": {
     "electron-updater": "6.8.9",

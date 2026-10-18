@@ -1,5 +1,11 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.42": Object.freeze([
+    "Skin Studio now starts with a blank custom scene, with clearer creation guidance and optional ready-made scenes.",
+    "Added 10 distinct animated reactive scenes, including Living Koi Sanctuary, with larger koi, fast nearby-key escape reactions and held-key investigation.",
+    "Included ready-to-use keyboard builds for all 58 library scenes, avoiding an Unreal compile when applying an unchanged library skin.",
+    "Improved native scene rendering, interaction translation and build cancellation. Edited native skins still use Unreal Engine 4.27 and the guided dependency setup."
+]),
   "0.3.0-preview.41": Object.freeze([
     "Added optional Free placement for up to four widgets. Drag any widget anywhere on the keyboard display, including the spacebar area.",
     "Resize each widget independently with its corner handle or exact position and size controls. Moving extra widgets keeps the main widget in place.",

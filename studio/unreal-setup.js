@@ -17,7 +17,7 @@
   if(hideCallout&&bar?.contains(document.activeElement))get('show-unreal-tools').focus({preventScroll:true});
   if(bar)bar.hidden=hideCallout;
   get('native-tools-status').textContent=view.message;
-  get('creator-setup-summary').textContent=view.installed?view.message:'Install Unreal Engine 4.27 through Epic Games Launcher to build your skin for the keyboard. Companion will detect it automatically and remove this notice.';
+  get('creator-setup-summary').textContent=view.installed?view.message:'Included skins work without Unreal. To build an edited reactive skin, install Unreal Engine 4.27 through Epic Games Launcher; Companion will detect it automatically and remove this notice.';
   get('native-tools-heading').textContent=view.installed?'Installed tools':'Creator setup';
   get('native-install-instructions').hidden=view.installed;
   get('unreal-setup-link').textContent=view.launcherLabel;

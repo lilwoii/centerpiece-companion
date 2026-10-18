@@ -1,8 +1,8 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const {StudioBuilder,cookFiles}=require('../src/studio-build.cjs'),M=require('../studio/model.js');
-test('deferred scenes and manual preview beats fail before creating any build job',async t=>{
+test('unimplemented collection surfaces and manual preview beats fail before creating any build job',async t=>{
  const {builder}=setup(t);
- const scene=M.createProject('Deferred scene');scene.layers=[M.createLayer('collection',{text:'atlas-launch'})];
+ const scene=M.createProject('Deferred scene');scene.layers=[M.createLayer('collection',{text:'storm-meadow'})];
  const before=JSON.stringify(scene);
  await assert.rejects(builder.start(scene),{code:'STUDIO_BUILD_PREVIEW_SCENE'});
  assert.equal(JSON.stringify(scene),before);assert.equal(builder.jobs.size,0);
@@ -116,4 +116,10 @@ test('scene and cache errors retain an actionable reason after long shutdown log
   const script="process.stdout.write("+JSON.stringify(message+"\n")+");process.stdout.write('shutdown'.repeat(2000));process.exitCode=1;";
   await assert.rejects(run(process.execPath,['-e',script],{cwd:root,logFile:path.join(root,'reason-'+index+'.log')}),{code});
  }
+});
+
+test('collection blend incompatibility fails before allocating a native job',async t=>{
+ const {builder}=setup(t),scene=M.createProject('Collection blend');scene.layers=[M.createLayer('collection',{text:'jellyfish-ballet',blend:'screen'})];
+ const before=JSON.stringify(scene);await assert.rejects(builder.start(scene),{code:'STUDIO_BUILD_COLLECTION_BLEND'});
+ assert.equal(JSON.stringify(scene),before);assert.equal(builder.jobs.size,0);
 });

@@ -10,6 +10,7 @@
   {id:'sparkle',name:'Sparkles',icon:'✦',description:'Scatter bright sparks around a key.'},
   {id:'launch',name:'Launch / activate',icon:'↗',description:'Activate the scene’s special motion, where supported.'},
   {id:'flee',name:'Move away nearby',icon:'↝',description:'Nearby objects move away from the keys you press.'},
+  {id:'investigate',name:'Investigate held key',icon:'◌',description:'Nearby fish approach a key after it is held, then swim away on release.'},
   {id:'lightning',name:'Cloud lightning',icon:'ϟ',description:'Send a branching bolt from a different cloud position with every press.'}
  ];
  const triggers=[{value:'keyDown',label:'When a key is pressed'},{value:'keyUp',label:'When a key is released'},{value:'pointer',label:'When the preview is clicked'},{value:'beat',label:'On a test beat'},{value:'caps',label:'When Caps Lock is pressed'}];

@@ -12,7 +12,7 @@ import device_games as games
 import device_collections as collections
 
 LAYER_TYPES={'solid','gradient','image','text','fish','wave','plasma','particles','stars','rain','snow','fireflies','rings','ripple','aurora','grid','orbit','nebula','meteors','heatmap','lightning','tornado','rocket'}
-EFFECTS={'ripple','burst','flash','pulse','toggle','heat','shockwave','sparkle','flee','lightning','launch'}
+EFFECTS={'ripple','burst','flash','pulse','toggle','heat','shockwave','sparkle','flee','investigate','lightning','launch'}
 TARGET='/Game/Companion'
 EDIT=unreal.MaterialEditingLibrary
 
@@ -64,7 +64,7 @@ def validate(project, calibration):
             raise RuntimeError('Native interaction is not implemented for '+rule['effect']+'.')
         if rule['trigger'] not in ['keyDown','keyUp','pointer','caps']:
             raise RuntimeError('Native key down/up interactions are implemented. '+rule['trigger']+' requires its own native event source.')
-        if rule['effect']=='launch' and rule.get('target','all')!='all' and not any(l['id']==rule['target'] and l['type']=='rocket' for l in project['layers']):
+        if rule['effect']=='launch' and rule.get('target','all')!='all' and not any(l['id']==rule['target'] and (l['type']=='rocket' or l['type']=='collection' and l.get('text')=='atlas-launch') for l in project['layers']):
             raise RuntimeError('Choose a rocket layer for Launch. Use Move away for other objects.')
         keys=rule.get('keys') or ([] if rule.get('key','any')=='any' else [rule['key']])
         if rule['trigger']=='caps':keys=['CapsLock']
@@ -80,7 +80,7 @@ def layer_rules(project, layer, calibration):
             continue
         if source.get('target','all') not in ['all',layer['id']]:
             continue
-        if source['effect']=='flee' and source.get('target','all')=='all' and not moving:
+        if source['effect'] in ['flee','investigate'] and source.get('target','all')=='all' and not moving:
             continue
         if source['effect']=='flee' and (source.get('distance',180)<=0 or layer.get('reactivity',1)<=0):
             continue
@@ -198,7 +198,12 @@ def base_code(layer):
     if kind=='meteors':return code+particles.meteors(layer,size,literal)
     if kind in patterns.TYPES:return code+patterns.shader(layer,size,literal,timeline_value)
     if kind=='rocket':return code+rocket_code(layer)
-    if kind=='image':return code+'c=TextureColor.rgb; a=TextureColor.a;\n'
+    if kind=='image':
+        if layer.get('imageMotion') in ['water','heat','swim']:
+            if layer['imageMotion']=='swim':warp='float2 photoUV=uv;photoUV.y-=sin(t*5.0-uv.x*5.0)*pow(1.0-uv.x,2.0)*.12;'
+            else:warp='float2 photoUV=uv;photoUV.x-=(sin(uv.y*70.0+t*1.5)+.4*sin(uv.y*133.0-t))*.0018*saturate((uv.y-'+literal(layer.get('imageMotionStart',0))+')*12.0);'
+            return code+warp+'float4 photo=Texture2DSample(PhotoSurface,PhotoSurfaceSampler,saturate(photoUV));c=photo.rgb;a=photo.a*step(0.0,photoUV.x)*step(photoUV.x,1.0)*step(0.0,photoUV.y)*step(photoUV.y,1.0);\n'
+        return code+'c=TextureColor.rgb; a=TextureColor.a;\n'
     if kind=='text' and layer.get('nativeTextRaster'):
         if layer.get('nativeTextLayout'):return code+text_renderer.shader(layer,size,literal,timeline_value)
         code+='float textBlur=0.0;float2 textStep=float2('+literal(1/number(layer.get('width',1920)))+','+literal(1/number(layer.get('height',550)))+')*min(30.0,('+size+')*.4)*.5;\n'
@@ -262,6 +267,7 @@ def heatmap_vertex(offset):
     return code+('return float3((target-(AB+SpriteUV-.5))*100.0,0.0);' if offset else 'return target;')
 
 def make_material(name,layer,rules,collection,texture=None):
+    layer=dict(layer);layer['nativeLaunchRules']=[(i,rule.get('duration',1.4)) for i,rule in enumerate(rules) if rule['effect']=='launch']
     material=unreal.AssetToolsHelpers.get_asset_tools().create_asset(name,TARGET+'/Materials',unreal.Material,unreal.MaterialFactoryNew())
     if not material:raise RuntimeError('Could not create native material '+name)
     material.set_editor_property('shading_model',unreal.MaterialShadingModel.MSM_UNLIT);material.set_editor_property('two_sided',True)
@@ -278,6 +284,9 @@ def make_material(name,layer,rules,collection,texture=None):
         inputs['UV']=expression(material,unreal.MaterialExpressionTextureCoordinate,coordinate_index=6)
         vertex_inputs={'SpriteUV':expression(material,unreal.MaterialExpressionTextureCoordinate,coordinate_index=0),'AB':expression(material,unreal.MaterialExpressionTextureCoordinate,coordinate_index=1),'CD':expression(material,unreal.MaterialExpressionTextureCoordinate,coordinate_index=2),'Index':expression(material,unreal.MaterialExpressionTextureCoordinate,coordinate_index=3),'Time':inputs['Time']}
         if layer.get('nativeGameSprites'):vertex_inputs.update({field:inputs[field] for field in games.vector_parameters(layer)})
+        if layer.get('nativeCollectionPart')=='atlas-smoke':
+            for index,duration in layer['nativeLaunchRules']:
+                field='R'+str(index)+'_Time';vertex_inputs[field]=parameter(material,collection,field)
         inputs.update(vertex_inputs)
         material.set_editor_property('num_customized_u_vs',7)
         if layer.get('nativeHeatSprites'):
@@ -297,6 +306,9 @@ def make_material(name,layer,rules,collection,texture=None):
                 offset_node=transform
             else:coordinate_node=v
         if not unreal.SkinStudioDeviceBuilder.connect_particle_vertex(material,offset_node,coordinate_node):raise RuntimeError('Particle vertex material could not be connected.')
+    if texture and layer.get('text')=='atlas-launch':
+        layer['nativeAtlasTexture']=True
+        inputs['AtlasSurface']=expression(material,unreal.MaterialExpressionTextureObject,texture=texture)
     if texture:
         sample=expression(material,unreal.MaterialExpressionTextureSample,texture=texture)
         rgba=expression(material,unreal.MaterialExpressionAppendVector)
@@ -309,6 +321,8 @@ def make_material(name,layer,rules,collection,texture=None):
         sample=expression(material,unreal.MaterialExpressionFontSampleParameter,font=font,parameter_name='Font')
         rgba=expression(material,unreal.MaterialExpressionAppendVector)
         connect(sample,rgba,'A');connect(sample,rgba,'B','A');inputs['TextureColor']=rgba
+    if layer.get('imageMotion') in ['water','heat','swim']:
+        inputs['PhotoSurface']=expression(material,unreal.MaterialExpressionTextureObject,texture=texture)
     if layer.get('nativeTextRaster'):
         if not texture:raise RuntimeError('Prepared text texture is missing.')
         inputs['TextSurface']=expression(material,unreal.MaterialExpressionTextureObject,texture=texture)
@@ -327,7 +341,7 @@ def make_material(name,layer,rules,collection,texture=None):
         code=composite.prefix()+extra+code.replace('float2 uv=UV;','float2 uv=LayerUV;')
     if layer['type']=='image' and not texture:raise RuntimeError('An imported image layer has no validated texture.')
     for index,rule in enumerate(rules):
-        if rule['effect'] in ['flee','pulse','toggle']:continue
+        if rule['effect'] in ['flee','investigate','pulse','toggle']:continue
         for prefix in (['R'+str(index)+'_'] if rule['effect']=='launch' else ['R'+str(index)+'_H'+str(history)+'_' for history in range(4)]):
             for field in ['Time','X','Y','Strength']:inputs[prefix+field]=parameter(material,collection,prefix+field)
             if rule['effect']=='launch':continue
@@ -337,8 +351,13 @@ def make_material(name,layer,rules,collection,texture=None):
                 continue
             code+='{float age='+age+';[branch] if(age>=0.0 && age<'+duration+'){float p=saturate(age/'+duration+');float fade=pow(1.0-p,1.6);float2 delta=World.xy-float2('+prefix+'X-960.0,'+prefix+'Y-275.0);float intensity='+prefix+'Strength;float light=0.0;\n'
             effect=rule['effect']
+            if layer.get('nativeCollectionPart')=='drops' and effect=='ripple':
+                code+='a*=step(p*160.0,length(delta)); }}\n'
+                continue
             if effect=='flash':code+='light=fade*.45;\n'
             elif effect=='heat':code+='[branch] if(all(abs(delta)<400.0))light=exp(-dot(delta,delta)/10000.0)*fade;\n'
+            elif effect=='ripple' and layer.get('imageMotion')=='water':
+                code+='float radius=p*210.0;[branch] if(all(abs(delta)<radius+18.0)){float radial=length(delta);float crest=0.0;[unroll] for(int ring=0;ring<3;ring++){float d=radial-max(0.0,radius-ring*17.0);crest+=sin(d*.55)*exp(-d*d/90.0)*(1.0-ring*.22);}float2 bend=delta/max(radial,1.0)*crest*fade*intensity*4.5/float2(1920.0,550.0);float3 refracted=Texture2DSample(PhotoSurface,PhotoSurfaceSampler,saturate(photoUV+bend)).rgb;c=lerp(c,refracted,saturate(abs(crest)*fade));c*=1.0+crest*fade*intensity*.12;light=max(0.0,crest)*fade*.12;}\n'
             elif effect in ['ripple','shockwave']:code+='float radius=p*'+('650.0' if effect=='shockwave' else '320.0')+';[branch] if(all(abs(delta)<radius+28.0)){float distance=length(delta)-radius;light=exp(-distance*distance/49.0)*fade;}\n'
             elif effect in ['burst','sparkle']:code+='[branch] if(all(abs(delta)<p*170.0+72.0)){float angle=atan2(delta.y,delta.x);float ray=pow(abs(cos(angle*12.0)),18.0);float distance=length(delta)-p*170.0;light=ray*exp(-distance*distance/324.0)*fade;}\n'
             code+='c+=('+rgb(rule.get('color','#83efff'))+')*light*intensity;a=max(a,saturate(light*intensity)); }}\n'

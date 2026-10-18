@@ -9,7 +9,9 @@ function entries(archive){const result=[];let at=0;while(archive.readUInt32LE(at
 test('preview is bound to loopback and exposes only fixed static files',async t=>{
  const server=await preview(t);assert.equal(server.server.address().address,'127.0.0.1');
  const health=await request(server,{path:'/api/health'});assert.equal(health.status,200);assert.deepEqual(JSON.parse(health.text),{app:'Centerpiece Skin Studio',localOnly:true,hardwareAccess:false,updatesEnabled:false});
- const page=await request(server);assert.equal(page.status,200);assert.match(page.headers['content-security-policy'],/frame-ancestors 'none'/);assert.equal(page.headers['cross-origin-resource-policy'],'same-origin');assert.equal(page.headers['x-content-type-options'],'nosniff');
+ const root=await request(server);assert.equal(root.status,302);assert.equal(root.headers.location,'/studio/index.html');
+ const page=await request(server,{path:root.headers.location});assert.equal(page.status,200);
+ for(const match of page.text.matchAll(/(?:src|href)="(\.[^"]+)"/g)){const asset=new URL(match[1],server.origin+root.headers.location);assert.equal((await request(server,{path:asset.pathname})).status,200,asset.pathname);}assert.match(page.headers['content-security-policy'],/frame-ancestors 'none'/);assert.equal(page.headers['cross-origin-resource-policy'],'same-origin');assert.equal(page.headers['x-content-type-options'],'nosniff');
  for(const address of ['/package.json','/src/main.cjs','/studio/main.cjs','/studio/server.cjs','/studio/../../.git/config','/sdk/README.md','/C:/Users/private.json'])assert.equal((await request(server,{path:address})).status,404,address);
  assert.equal((await request(server,{path:'http://example.com/api/health'})).status,400);
  const fixed=await startServer();assert.match(fixed.url,/^http:\/\/127\.0\.0\.1:\d+$/);await new Promise(resolve=>fixed.server.close(resolve));

@@ -4,7 +4,7 @@
   return{id,name,category,description,colors:[...colors],create(){
    const p=M.createProject(name);p.description=description;p.canvas.background=colors[0];
    p.layers=layers.map(([type,settings],i)=>M.createLayer(type,{name:settings.name||type.charAt(0).toUpperCase()+type.slice(1),color:colors[1],color2:colors[2]||colors[1],seed:173+i*271,...settings}));
-   p.rules=[M.createRule({trigger:'keyDown',effect:reaction,color:colors[2]||colors[1],duration:reaction==='heat'?4:1.8,strength:1.1}),M.createRule({trigger:'pointer',effect:'ripple',color:colors[1],duration:2,strength:.9}),M.createRule({trigger:'beat',effect:'pulse',color:colors[2]||colors[1],duration:.7,strength:.45})];
+   p.rules=[M.createRule({trigger:'keyDown',effect:reaction,color:colors[2]||colors[1],duration:reaction==='heat'?4:1.8,strength:1.1}),M.createRule({trigger:'pointer',effect:'ripple',color:colors[1],duration:2,strength:.9})];
    return M.validate(p);
   }};
  }
@@ -33,5 +33,6 @@
  const launch=make('ignition','Ignition · orbital launch','Interactive','A silver orbiter on a midnight launchpad. Press Space or click the canvas to ignite, lift off and return.',['#040912','#ffb755','#fa633b'],[['gradient',{color:'#030810',color2:'#12213a'}],['nebula',{color:'#427ccc',color2:'#963c75',speed:.25}],['stars',{density:160,size:1.6,speed:.25,color:'#b7d9ff',color2:'#97cff7'}],['meteors',{density:15,size:15,speed:.25,opacity:.45,color:'#accfff'}],['rocket',{name:'Orbiter & launchpad',color:'#ffbb57',color2:'#ff633b',speed:1,size:60}]]);
  const original=launch.create;launch.create=()=>{const p=original(),rocket=p.layers.find(l=>l.type==='rocket');p.duration=18;p.rules=[M.createRule({key:'Space',target:rocket.id,effect:'launch',duration:7,color:'#ffb755'}),M.createRule({trigger:'pointer',target:rocket.id,effect:'launch',duration:7,color:'#ffb755'}),M.createRule({keys:['KeyW','KeyA','KeyS','KeyD'],effect:'sparkle',duration:1.4,color:'#9edbff',strength:.7})];return M.validate(p);};list.unshift(launch);
  list.push(make('deep-orbit','Deep orbit','Atmospheric','Colored nebulae and meteor trails respond with wide orbital shockwaves.',['#030a14','#5d9de4','#aa76ff'],[['nebula',{speed:.2}],['stars',{density:140,size:2}],['meteors',{density:45,size:38,speed:.5}]],'shockwave'));
+ for(const preset of list)preset.createAsync=async()=>{if(globalThis.studioHost?.send)return M.validate(await globalThis.studioHost.send('collection',preset.id));if(globalThis.companion?.studioRequest)return M.validate(await globalThis.companion.studioRequest('collection',preset.id));if(typeof document!=='undefined'){const response=await fetch('./examples/community-collection/'+preset.id+'.cpskin');if(!response.ok)throw Error('This preset could not load. Reopen it after updating Companion.');return M.validate(await response.json());}return preset.create();};
  return{list};
 });

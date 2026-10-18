@@ -63,6 +63,7 @@ class StudioBuilder{
   const project=M.validate(input);if(project.engineTarget!=='4.27')throw failure('STUDIO_BUILD_ENGINE','Select Unreal 4.27 for a keyboard skin. UE5 cooked assets are not compatible with this target.');
   const capabilities=require('../studio/native-compatibility.cjs').describe(project);
   if(capabilities.previewOnlyScenes.length)throw failure('STUDIO_BUILD_PREVIEW_SCENE','This release supports these scenes in the app preview only: '+capabilities.previewOnlyScenes.join(', ')+'. Keep the editable project for a future update, or choose a supported skin to build for your keyboard.');
+  if(capabilities.previewOnlyBehaviors.includes('collection-compositing'))throw failure('STUDIO_BUILD_COLLECTION_BLEND','This scene uses native particle geometry. Use Normal, Add light or Multiply for its layers before building; Screen, Overlay and Soft light currently work in the app preview only for these collection scenes. Your project has not been changed.');
   if(capabilities.previewOnlyBehaviors.includes('beat-events'))throw failure('STUDIO_BUILD_PREVIEW_BEAT','Test beat is an app-preview trigger, not a live music connection. Change those interactions to a key press or another supported keyboard trigger before building. Your project has not been changed.');
   const json=JSON.stringify(project,null,2)+'\n';if(Buffer.byteLength(json)>M.limits.projectBytes)throw failure('STUDIO_BUILD_SIZE','Choose a project smaller than 32 MB.');
   const id=crypto.randomUUID(),folder=inside(this.directory,id);fs.mkdirSync(folder,{recursive:false});

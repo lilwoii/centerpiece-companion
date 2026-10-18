@@ -5,7 +5,7 @@ async function studioRequest(action,input){
  if(action==='layout')return require('./layout.json');
  if(action==='collection'){
   const M=require('../studio/model.js'),fs=require('node:fs'),path=require('node:path');
-  if(typeof input!=='string'||![...M.collectionScenes,'ignition'].includes(input))throw Error('Choose a collection project.');
+  if(typeof input!=='string'||![...M.collectionScenes,...require('../studio/presets.js').list.map(p=>p.id),...require('../studio/pond-presets.js').list.map(p=>p.id),...require('../studio/photo-presets.js').list.map(p=>p.id)].includes(input))throw Error('Choose a collection project.');
   const file=path.join(__dirname,'../studio/examples/community-collection',input+'.cpskin');
   if(fs.statSync(file).size>M.limits.projectBytes)throw Error('This collection project is too large.');
   return M.validate(JSON.parse(fs.readFileSync(file,'utf8')));
@@ -24,9 +24,11 @@ async function studioRequest(action,input){
  }
  throw Error('This Studio action is not supported.');
 }
-function createStudioService(directory,{builder,runExclusive,trustedBackups=[],editorDock}={}){
+function createStudioService(directory,{builder,runExclusive,trustedBackups=[],editorDock,prebuilt}={}){
  const nativeBuilder=builder||new(require('./studio-build.cjs').StudioBuilder)(require('node:path').join(directory,'native-builds'));
- const device=runExclusive?new(require('./studio-device-service.cjs').StudioDeviceService)(directory,{builder:{artifact:(id,hash)=>cook.has(id)?cook.artifact(id,hash):nativeBuilder.artifact(id,hash),status:id=>cook.has(id)?cook.status(id):nativeBuilder.status(id)},runExclusive,trustedBackups,restorationProvider:require('./studio-restoration.cjs').createRestorationProvider(directory)}):null;
+ const included=prebuilt||new(require('./studio-prebuilt.cjs').StudioPrebuilt)();
+ const builds={artifact:(id,hash)=>cook.has(id)?cook.artifact(id,hash):included.has(id)?included.artifact(id,hash):nativeBuilder.artifact(id,hash),status:id=>cook.has(id)?cook.status(id):included.has(id)?included.status(id):nativeBuilder.status(id)};
+ const device=runExclusive?new(require('./studio-device-service.cjs').StudioDeviceService)(directory,{builder:builds,runExclusive,trustedBackups,restorationProvider:require('./studio-restoration.cjs').createRestorationProvider(directory)}):null;
  let dependencies=null;
  const creatorTools=()=>dependencies||(dependencies=new(require('./studio-dependencies.cjs').StudioDependencies)(require('node:path').join(directory,'creator-tools')));
  const preferences=require('node:path').join(directory,'creator-setup.json');
@@ -34,6 +36,7 @@ function createStudioService(directory,{builder,runExclusive,trustedBackups=[],e
  const unreal=new(require('./studio-unreal-workspace.cjs').UnrealWorkspace)(directory,{builder:nativeBuilder});
  const cook=new(require('./studio-unreal-cook.cjs').UnrealCook)(directory,unreal);
  return async function request(action,input){
+  if(action==='collection-builds')return [...included.entries.values()].map(e=>({id:e.collectionId,sceneSha256:e.sceneSha256}));
   if(action==='unreal-capabilities')return{embedded:!!editorDock};
   if(action==='unreal-undock'){if(!editorDock)return{ok:true};return editorDock.detach();}
   if(action==='unreal-dock'){if(!editorDock)throw Error('Embedded Unreal editing is not available in this build.');let pid=unreal.processes.get(input?.id);if(!pid){await unreal.open({id:input?.id,embedded:true});return{waiting:true};}return editorDock.attach(pid,input?.bounds);}
@@ -62,11 +65,11 @@ function createStudioService(directory,{builder,runExclusive,trustedBackups=[],e
    return device.request(action,input);
   }
   if(action==='build-start'){if(cook.active)throw Error('An edited Unreal project is already building. Wait for it to finish.');return nativeBuilder.start(input);}
-  if(action==='build-latest')return nativeBuilder.latest(input?.sceneSha256);
-  if(action==='build-status')return nativeBuilder.status(input?.id);
+  if(action==='build-latest'){const local=nativeBuilder.latest(input?.sceneSha256);return local&&['ready','queued','building'].includes(local.state)?local:included.latest(input?.sceneSha256)||local;}
+  if(action==='build-status')return builds.status(input?.id);
   if(action==='build-cancel')return nativeBuilder.cancel(input?.id);
   if(action==='build-download'){
-   const artifact=nativeBuilder.artifact(input?.id,input?.sceneSha256);
+   const artifact=builds.artifact(input?.id,input?.sceneSha256);
    return new Uint8Array(require('node:fs').readFileSync(artifact.file));
   }
   return studioRequest(action,input);

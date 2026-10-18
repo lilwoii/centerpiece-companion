@@ -22,7 +22,7 @@ test('Editable download is validated JSON with a .cpskin extension, never a .pak
  const p=M.validate(JSON.parse(file.text));
  assert.equal(p.canvas.width,1920);
  assert.ok(p.rules.length>0);
- await assert.rejects(()=>G.projectDownload({...entry,create:()=>({})},M));
+ await assert.rejects(()=>G.projectDownload({...entry,createAsync:undefined,create:()=>({})},M));
 });
 test('Gallery rejects invalid IDs and duplicate entries before constructing local asset paths',async()=>{
  const make=id=>({id,name:'Item',create:()=>M.createProject('Item')});

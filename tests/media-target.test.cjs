@@ -104,3 +104,9 @@ test('Mode-filtered source discovery is empty for only incompatible or closed pl
 [pscustomobject]@{desktop=@(Get-CompanionMediaSources @($desktop,$pwa,$chrome,$spotify) 'desktop' $ids).Count;web=@(Get-CompanionMediaSources @($desktop,$pwa,$chrome,$spotify) 'web' $ids).Count;legacy=@(Get-CompanionMediaSources @($desktop,$edge,$spotify)).Count}|ConvertTo-Json -Compress`);
  assert.deepEqual(results,{desktop:0,web:0,legacy:1});
 });
+
+
+test('Spotify recovers from closed/unreadable sessions and prefers the live player',{skip:process.platform!=='win32'},()=>{
+ const results=runSelection(`$closed=Session 'Spotify.exe' 'Closed';$paused=Session 'Spotify.exe' 'Paused';$live=Session 'SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify' 'Playing';$broken=Session 'Spotify.exe';$broken|Add-Member -Force ScriptMethod GetPlaybackInfo { throw 'Disconnected' };$other=Session 'other.exe' 'Playing';function Spotify($items){$r=Get-CompanionMediaSelection $items 'spotify' '';[pscustomobject]@{id=$r.session.SourceAppUserModelId;reason=$r.reason}};@((Spotify @($closed,$paused,$live)),(Spotify @($broken,$live)),(Spotify @($closed,$paused)),(Spotify @($closed,$broken,$other)),(Spotify @($live,(Session 'Spotify.exe' 'Playing'))))|ConvertTo-Json -Compress`);
+ assert.deepEqual(results,[{id:'SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify',reason:''},{id:'SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify',reason:''},{id:'Spotify.exe',reason:''},{id:null,reason:'no-session'},{id:null,reason:'ambiguous'}]);
+});

@@ -17,6 +17,7 @@ while ($null -ne ($line = [Console]::ReadLine())) {
   try {
     $request = $line | ConvertFrom-Json
     $sources=@(); $label=if($request.provider -eq 'youtube'){'YouTube'}else{'Spotify'}
+    if(!$manager){$manager=Await-WinRT ($managerType::RequestAsync()) $managerType;$managerRefreshed=[datetime]::UtcNow}
     $sessions=@($manager.GetSessions())
     $target=if($request.target){[string]$request.target}else{'auto'}
     if($request.provider -eq 'youtubemusic') {
@@ -91,6 +92,9 @@ while ($null -ne ($line = [Console]::ReadLine())) {
     }
     @{ id=$request.id; ok=$true; result=$result } | ConvertTo-Json -Depth 5 -Compress | ForEach-Object { [Console]::WriteLine($_) }
   } catch {
+    # Drop a stale manager after a failed read/control; rediscover on the next
+    # request without replaying a playback command.
+    $manager=$null
     @{ id=$request.id; ok=$false; error=$_.Exception.Message } | ConvertTo-Json -Compress | ForEach-Object { [Console]::WriteLine($_) }
   }
 }

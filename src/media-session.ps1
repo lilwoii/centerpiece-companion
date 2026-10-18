@@ -78,8 +78,13 @@ function Select-CompanionMediaCandidate($candidates) {
 }
 function Get-CompanionMediaSelection($sessions, $provider, $source, $installedMusicIds=@(), $target='auto') {
   if($provider -eq 'spotify') {
-    $session=$sessions | Where-Object { $_.SourceAppUserModelId -match '(?i)spotify' } | Select-Object -First 1
-    return [pscustomobject]@{session=$session;reason=$(if($session){''}else{'no-session'})}
+    # A restarted Spotify can coexist with its stale/closed Windows session.
+    # Prefer a uniquely playing session; never let the first closed entry win.
+    $live=@($sessions | Where-Object {
+      if($_.SourceAppUserModelId -notmatch '(?i)spotify'){return $false}
+      try { return $_.GetPlaybackInfo().PlaybackStatus.ToString() -ne 'Closed' } catch { return $false }
+    })
+    return Select-CompanionMediaCandidate $live
   }
   # Discard only Closed: paused/stopped tracks remain readable and controllable.
   # Filter before grouping so a stale duplicate ID cannot create ambiguity or

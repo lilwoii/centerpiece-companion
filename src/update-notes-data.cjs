@@ -1,5 +1,19 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.43": Object.freeze([
+    "Move the Caps Lock indicator to any key, including Space, with adjustable size, position, color and transparency. Typing and Caps Lock behavior stay unchanged.",
+    "Improved Spotify recovery: ignore closed or unreadable sessions and reconnect the Windows media service after errors.",
+    "Skin Studio starts with a blank custom scene, clearer creation guidance and optional ready-made scenes. Improved rendering, key reactions and build cancellation.",
+    "Added 10 unique animated reactive scenes, including Living Koi Sanctuary: larger fish, fast nearby-key escape and held-key investigation.",
+    "All 58 library scenes include ready-to-use keyboard builds. Unchanged library skins need no Unreal compile; edited native skins use Unreal Engine 4.27 with guided setup.",
+    "Use up to four widgets with simple position controls, 50/50 or 60/40 splits and thin dividers. Improved compact watchlists, artwork, progress and source-status messages.",
+    "Optional Free placement lets you drag and resize each widget anywhere, including under Space. Exact sizing and 50–300% content zoom improve readability; placements save after dragging.",
+    "Extra widgets keep their positions while L1 + / cycles the main widget. Original placement stays the default.",
+    "Added an optional fifth plugin beside Left Arrow with seamless navigation, plus a static single-tile carousel view.",
+    "Edit per-key colors, appearance, actuation and rapid trigger. Select WASD, arrows, modifiers or custom groups; response changes include backups and readback verification.",
+    "L1 + Right Alt hides/restores legends and original XPANEL artwork with a customizable red highlight. Highlight Spotify or YouTube Music for Left/Right track skip and Right Shift play/pause; press L1 once to exit.",
+    "Added explicit US/UK # and backslash binding choices, reversible changes and customizable green music highlights. Fixed overlapping shifted legends and editor keys appearing in a corner after changing layers."
+]),
   "0.3.0-preview.42": Object.freeze([
     "Skin Studio now starts with a blank custom scene, with clearer creation guidance and optional ready-made scenes.",
     "Added 10 distinct animated reactive scenes, including Living Koi Sanctuary, with larger koi, fast nearby-key escape reactions and held-key investigation.",

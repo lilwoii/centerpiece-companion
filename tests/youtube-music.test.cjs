@@ -46,6 +46,7 @@ test('Windows selector isolates providers and refuses ambiguous or missing brows
  const file=path.join(__dirname,'../src/media-session.ps1').replace(/'/g,"''");
  const script=`. '${file}'
  $sessions=@([pscustomobject]@{SourceAppUserModelId='Spotify.exe'},[pscustomobject]@{SourceAppUserModelId='chrome.exe'},[pscustomobject]@{SourceAppUserModelId='YouTube Music.exe'})
+ $sessions | ForEach-Object { $_ | Add-Member ScriptMethod GetPlaybackInfo { [pscustomobject]@{PlaybackStatus="Paused"} } }
  $results=@()
  $results+=(Find-CompanionMediaSession $sessions 'spotify' '').SourceAppUserModelId
  $results+=(Find-CompanionMediaSession $sessions 'youtubemusic' '').SourceAppUserModelId
@@ -72,6 +73,7 @@ test('automatic source priority follows playing desktop/browser and refuses simu
  const script=`. '${file}'
  function Session($id,$playing){$s=[pscustomobject]@{SourceAppUserModelId=$id;State=$playing};$s|Add-Member ScriptMethod GetPlaybackInfo { [pscustomobject]@{PlaybackStatus=$this.State} };return $s}
  $desktop=Session 'YouTube Music.exe' 'Playing';$browser=Session 'chrome.exe' 'Playing';$edge=Session 'msedge.exe' 'Playing'
+
  $results=@()
  $results+=(Find-CompanionMediaSession @($browser,$desktop) 'youtubemusic' '').SourceAppUserModelId
  $desktop.State='Paused'

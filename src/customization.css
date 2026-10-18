@@ -91,3 +91,5 @@ label[for="widget-picker"]{color:#ffc66d;font-weight:700}
 .widget-drag-move {position:absolute;inset:0;width:100%;height:100%;padding:2px;background:rgba(17,21,29,.18);color:var(--attention);font-size:10px;text-shadow:0 1px 2px #000;cursor:move;border:0;border-radius:0;touch-action:none;overflow:hidden;display:flex;align-items:flex-start;text-align:left}
 .widget-drag-resize {position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;min-height:0;padding:0;background:var(--success);color:var(--background);border:1px solid var(--background);border-radius:3px;cursor:nwse-resize;touch-action:none;font-size:18px}
 .widget-drag-box:focus-within {outline:2px solid var(--attention);outline-offset:2px}
+
+.caps-target-controls{border:1px solid #ffb45b;border-radius:10px;padding:12px;margin:12px 0;background:#29231c}.caps-target-controls>label{display:block;color:#ffb45b;font-weight:700}.caps-target-controls select{display:block;width:100%;margin:8px 0 12px}.caps-target-controls .note{margin-bottom:0}.caps-target-controls button{color:#ffcf91;border-color:#ffb45b}

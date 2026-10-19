@@ -309,7 +309,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
-    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};state.setupReport.sleep=sleepService.status();if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
+    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};state.setupReport.sleep=sleepService.status();state.setupReport.startup=startup.diagnostics();state.setupReport.windowsRelease=require('node:os').release();state.setupReport.displayTiming={lastTransferMs:strip.lastTransferMs??null,lastPngBytes:strip.lastPngBytes??null};if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
     handle('dismiss-update-notes',version=>{const next=updateNotes.dismiss(version);send();return next;});
     handle('set-plugin-shortcuts',async settings=>{
       leaveMode();
@@ -341,7 +341,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     async function recoverKeyboardConnection(){
       if(desk.settingsError){state.error=desk.settingsError;send();return;}
       if(quitting||setupBusy||displayTasks.paused||desk.editor.busy||state.setupRecovery||automaticSetupSuspended)return;
-      leaveMode();state.connectionRecovering=true;send();
+      leaveMode();state.connectionRecovering=true;shortcutHealth.record('recovery-start',{monitorConnected:monitor.status().connected,displayConnected:state.strip});send();
       try{
         await setupOperation(async()=>{
           monitor.close();strip.detach();state.strip=false;appliedAppearance='';
@@ -355,8 +355,8 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
         },true);
         recoveryVerified=!!state.strip&&!state.setupRecovery;
         if(state.setupRecovery&&win.isVisible())win.webContents.send('automatic-setup-review',state.setupRecovery);
-        if(recoveryVerified){state.deviceError='';state.setupFailure=null;state.feedback='Keyboard connected. Saved plugins and widgets are live.';}
-      }catch(error){recoveryVerified=false;throw error;}
+        if(recoveryVerified){shortcutHealth.record('recovery-complete',{monitorConnected:monitor.status().connected,displayConnected:state.strip});state.deviceError='';state.setupFailure=null;state.feedback='Keyboard connected. Saved plugins and widgets are live.';}
+      }catch(error){recoveryVerified=false;shortcutHealth.record('recovery-failed',{monitorConnected:monitor.status().connected,displayConnected:state.strip});throw error;}
       finally{state.connectionRecovering=false;send();}
     }
     handle('setup-keyboard',()=>{suspendAutomaticSetup();return beginKeyboardSetup();});
@@ -404,7 +404,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();const visibleWidgets=[desk.config.widget,...(desk.config.extraWidgets||[])];const needPerformance=visibleWidgets.some(w=>w.type==='performance')||desk.config.slots.some(s=>s?.plugin==='performance');const foreground=needPerformance?await desk.system.request('foreground-app').catch(()=>''):'';if(needPerformance)widgetSources?.sample('performance',foreground);for(const w of visibleWidgets)if(w.type!=='performance')widgetSources?.sample(w.type,foreground,needPerformance);Object.assign(desk.live.state,widgetSources?.state||{});await desk.sampleObs();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke')){
-      connectionRecovery=new(require('./connection-recovery.cjs').ConnectionRecovery)();let lastBindingCheck=0,checkingConnection=false;
+      connectionRecovery=new(require('./connection-recovery.cjs').ConnectionRecovery)();const bindingHealth=new(require('./connection-recovery.cjs').BindingCheckHealth)();let lastBindingCheck=0,checkingConnection=false;
       async function maintainConnection(){
         if(checkingConnection||quitting||setupBusy||displayBusy||displayTasks.paused||desk.editor.busy||state.setupRecovery||automaticSetupSuspended)return;
         checkingConnection=true;
@@ -412,7 +412,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
           if(state.strip&&recoveryVerified&&!monitor.status().connected){shortcutHealth.record('monitor-stopped',{displayConnected:true,monitorConnected:false});state.strip=false;recoveryVerified=false;state.deviceError='Keyboard input monitoring stopped. Reconnecting automatically…';}
           if(state.strip&&recoveryVerified&&!strip.error&&Date.now()-lastBindingCheck>60000){
             lastBindingCheck=Date.now();
-            const keys=await desk.editor.read();
+            let keys;try{keys=await desk.editor.read();bindingHealth.success();}catch(error){if(bindingHealth.defer(error,{monitorConnected:monitor.status().connected,displayConnected:state.strip,displayError:strip.error})){lastBindingCheck=Date.now()-50000;shortcutHealth.record('binding-check-deferred',{monitorConnected:true,displayConnected:true});return;}throw error;}
             shortcutHealth.record('binding-check',{shortcuts:require('./shortcut-status.cjs').shortcutStatus(keys),monitorConnected:monitor.status().connected,displayConnected:state.strip});
             if(!require('./shortcut-status.cjs').shortcutsReady(keys,widgetShortcutReady)){state.strip=false;recoveryVerified=false;state.deviceError='Keyboard shortcuts changed. Checking L1, L1 + P and L1 + /…';}
           }
@@ -443,3 +443,4 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     await require('./hid.cjs').shutdown();
   },()=>app.quit(),error=>{state.error='Keyboard cleanup did not finish. Please retry Quit from the tray menu.';send();}));
 }
+

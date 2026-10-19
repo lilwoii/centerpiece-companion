@@ -5,4 +5,12 @@ class ConnectionRecovery{
  reset(){this.blocked=false;this.failures=0;this.next=0;}
  async run({eligible,recover,now=Date.now()}){if(!eligible||this.running||this.blocked||now<this.next)return false;this.running=true;try{await recover();this.failures=0;this.next=now+10000;return true;}catch(error){this.failures++;this.next=now+Math.min(60000,10000*2**Math.min(3,this.failures-1));if(!retryable(error))this.blocked=true;throw error;}finally{this.running=false;}}
 }
-module.exports={ConnectionRecovery,retryable};
+class BindingCheckHealth{
+ constructor(){this.failures=0;}
+ success(){this.failures=0;}
+ defer(error,{monitorConnected,displayConnected,displayError}){
+  if(!monitorConnected||!displayConnected||displayError||!retryable(error)||error?.configurationVerified){this.failures=0;return false;}
+  return ++this.failures<=2;
+ }
+}
+module.exports={ConnectionRecovery,retryable,BindingCheckHealth};

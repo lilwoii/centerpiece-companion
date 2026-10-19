@@ -1,5 +1,10 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.46": Object.freeze([
+    "Start with Windows now repairs missing or outdated startup registrations when the saved preference is enabled, while respecting entries disabled in Windows. Failed changes no longer overwrite the saved preference.",
+    "Temporary shortcut-check read failures now retry before rebuilding an otherwise healthy keyboard connection, reducing unnecessary display reloads. Real disconnections and persistent failures still recover automatically.",
+    "Check setup reports now include Windows startup state, recovery events and display-transfer timing to help diagnose intermittent connection problems."
+]),
   "0.3.0-preview.45": Object.freeze([
     "Attach images and videos to feature requests by choosing files or dragging them into the form. Attachments are public and automatically expire after 10 days; authors and the owner can remove them sooner.",
     "Removed an unwanted black circle from preset skins. Fixed koi steering that could tilt a fish edge-on or move it behind the pond; artwork, fish sizes and intended swimming reactions are preserved.",

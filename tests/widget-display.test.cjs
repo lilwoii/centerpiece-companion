@@ -209,3 +209,8 @@ test('metadata changes outside visible labels do not delay selecting an identica
  set('Changed metadata with the same rendered frame');cache.show({active:true,id:'toggle'});await settled(cache);
  assert.equal(device.uploads.length,before);assert.equal(device.active,cache.cache.get('nav:toggle'));
 });
+
+test('sleep suppresses live uploads and slot reconciliation while retaining current data',async()=>{
+ const c=new DisplayCache('.',()=>'<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"/>');
+ let writes=0;c.som={close(){},selectSlot(){writes++;},currentSlot:async()=>{writes++;return 2;},uploadOverlay:async()=>{writes++;}};c.config={indicator:{},widget:{type:'clock'}};c.lastSlot=2;c.cache.set('idle:0',3);c.setSleepPaused(true);c.setData({now:5000});c.show({active:false});c.setLocks({caps:false});await c.refreshLive();await c.reconcile();assert.equal(writes,0);assert.equal(c.data.now,5000);c.setSleepPaused(false);assert.equal(writes,1);c.detach();
+});

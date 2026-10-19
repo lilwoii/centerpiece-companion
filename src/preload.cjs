@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('companion', {
+  configBackup:action=>ipcRenderer.invoke('config-backup',action),
   indicatorPositions:()=>ipcRenderer.invoke('indicator-positions'),
   keyboardSkins:(action,input)=>ipcRenderer.invoke('keyboard-skins',action,input),
   openUnrealSetup:()=>ipcRenderer.invoke('open-unreal-setup'),

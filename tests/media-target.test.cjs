@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {execFileSync}=require('node:child_process'),path=require('node:path');
-const {MediaBridge}=require('../src/media.cjs');
+const {MediaBridge,MediaTransport}=require('../src/media.cjs');
 const selector=path.join(__dirname,'../src/media-session.ps1').replace(/'/g,"''");
 function runSelection(script){
  const setup=`. '${selector}'
@@ -61,8 +61,8 @@ test('Ambiguity, missing sources and empty sessions report why no session was ch
  assert.deepEqual(results,[{id:null,reason:'ambiguous'},{id:null,reason:'ambiguous'},{id:null,reason:'source-unavailable'},{id:null,reason:'source-unavailable'},{id:null,reason:'no-session'},{id:null,reason:'no-session'},{id:null,reason:'no-session'},{id:'chrome.exe',reason:''}]);
 });
 test('MediaBridge includes current target on every status and action request',async()=>{
- const bridge=new MediaBridge('youtubemusic'),requests=[];bridge.start=()=>{};
- bridge.process={stdin:{write:line=>{const data=JSON.parse(line),pending=bridge.pending.get(data.id);requests.push(data);clearTimeout(pending.timer);bridge.pending.delete(data.id);pending.resolve({available:true});}}};
+ const transport=new MediaTransport(),bridge=new MediaBridge('youtubemusic',transport),requests=[];transport.start=()=>{};
+ transport.process={stdin:{write:line=>{const data=JSON.parse(line),pending=transport.pending.get(data.id);requests.push(data);clearTimeout(pending.timer);transport.pending.delete(data.id);pending.resolve({available:true});}}};
  await bridge.request('status');bridge.target='web';bridge.source='chrome.exe';await bridge.request('toggle');bridge.target='desktop';await bridge.request('next');
  assert.deepEqual(requests.map(({target,action})=>({target,action})),[{target:'auto',action:'status'},{target:'web',action:'toggle'},{target:'desktop',action:'next'}]);
  assert.equal(requests[1].source,'chrome.exe');assert.ok(requests.every(r=>r.provider==='youtubemusic'));

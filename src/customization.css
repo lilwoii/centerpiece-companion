@@ -93,3 +93,5 @@ label[for="widget-picker"]{color:#ffc66d;font-weight:700}
 .widget-drag-box:focus-within {outline:2px solid var(--attention);outline-offset:2px}
 
 .caps-target-controls{border:1px solid #ffb45b;border-radius:10px;padding:12px;margin:12px 0;background:#29231c}.caps-target-controls>label{display:block;color:#ffb45b;font-weight:700}.caps-target-controls select{display:block;width:100%;margin:8px 0 12px}.caps-target-controls .note{margin-bottom:0}.caps-target-controls button{color:#ffcf91;border-color:#ffb45b}
+
+.button.config-export{background:#39d979;border-color:#39d979;color:#102318;font-weight:700}.button.config-import{background:#ffad42;border-color:#ffad42;color:#291a08;font-weight:700}.button.config-export:hover:not(:disabled){background:#65e697;border-color:#65e697}.button.config-import:hover:not(:disabled){background:#ffc16d;border-color:#ffc16d}.button.config-export:focus-visible,.button.config-import:focus-visible{outline:3px solid #fff;outline-offset:3px}.button.config-export:disabled,.button.config-import:disabled{opacity:.5;cursor:wait}

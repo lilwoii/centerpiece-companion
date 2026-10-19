@@ -1,0 +1,9 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{EventEmitter}=require('node:events'),{PassThrough}=require('node:stream');
+const {MediaBridge,MediaTransport}=require('../src/media.cjs');
+test('all providers share one worker, route independently and release only after last user',async()=>{
+ let count=0,killed=0;const requests=[];const proc=new EventEmitter();proc.stdout=new PassThrough();proc.stderr=new PassThrough();proc.stdin=new EventEmitter();proc.stdin.write=line=>{const r=JSON.parse(line);requests.push(r);queueMicrotask(()=>proc.stdout.write(JSON.stringify({id:r.id,ok:true,result:{available:true,source:r.provider+'/'+r.target}})+'\n'));};proc.kill=()=>{killed++;};
+ const transport=new MediaTransport('spotify',()=>{count++;return proc;}),spotify=new MediaBridge('spotify',transport),web=new MediaBridge('youtubemusic',transport),desktop=new MediaBridge('youtubemusic',transport),youtube=new MediaBridge('youtube',transport);web.target='web';desktop.target='desktop';
+ const [a,b,c,d]=await Promise.all([spotify.request('status'),web.request('status'),desktop.request('status'),youtube.request('status')]);assert.equal(count,1);assert.equal(b.source,'youtubemusic/web');assert.equal(c.source,'youtubemusic/desktop');assert.equal(a.source,'spotify/auto');assert.equal(d.source,'youtube/auto');
+ spotify.close();web.close();assert.equal(killed,0);await desktop.request('next');assert.equal(requests.at(-1).action,'next');desktop.close();youtube.close();assert.equal(killed,1);
+});
+test('duplicate status reads coalesce without combining control commands',async()=>{let calls=0,resolve;const t={request:()=>{calls++;return new Promise(r=>resolve=r);},close(){}};const b=new MediaBridge('spotify',t);const a=b.request('status'),c=b.request('status');assert.equal(a,c);assert.equal(calls,1);resolve({});await a;b.close();});

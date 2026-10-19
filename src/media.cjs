@@ -16,11 +16,11 @@ async function sanitizeMedia(result){
 }
 
 
-class MediaBridge {
-  constructor(provider = 'spotify') { if(!['spotify','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.label=provider==='spotify'?'Spotify':provider==='youtube'?'YouTube':'YouTube Music';this.pending = new Map(); this.sequence = 0; this.process = null; }
+class MediaTransport {
+  constructor(provider = 'spotify', spawnWorker=spawn) { this.spawnWorker=spawnWorker; if(!['spotify','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.label=provider==='spotify'?'Spotify':provider==='youtube'?'YouTube':'YouTube Music';this.pending = new Map(); this.sequence = 0; this.process = null; }
   start() {
     if (this.process) return;
-    const proc = spawn('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'media.ps1')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    const proc = this.spawnWorker('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'media.ps1')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     this.process = proc;
     const lines = readline.createInterface({ input: proc.stdout });
     lines.on('line', line => {
@@ -36,6 +36,7 @@ class MediaBridge {
     const ended = () => {
       if (this.process !== proc) return;
       this.process = null;
+      proc.kill();
       this.failAll('The Windows media connection stopped. Try again.');
     };
     proc.on('exit', ended);
@@ -46,10 +47,10 @@ class MediaBridge {
     for (const item of this.pending.values()) { clearTimeout(item.timer); item.reject(new Error(message)); }
     this.pending.clear();
   }
-  request(action) {
+  request(action, route={provider:this.provider,source:this.source,target:this.target}) {
     if (!['status', 'toggle', 'play', 'pause', 'next', 'previous', 'rewind'].includes(action)) return Promise.reject(new Error('Unknown media action'));
-    if (!['auto','desktop','web'].includes(this.target)) return Promise.reject(new Error('Unknown YouTube Music player target'));
-    if (this.pending.size > 3) return Promise.reject(new Error(`${this.label} is busy. Please try again.`));
+    if (!['auto','desktop','web'].includes(route.target)) return Promise.reject(new Error('Unknown YouTube Music player target'));
+    if (this.pending.size >= 12) return Promise.reject(new Error(`${this.label} is busy. Please try again.`));
     this.start();
     return new Promise((resolve, reject) => {
       const id = ++this.sequence;
@@ -58,9 +59,15 @@ class MediaBridge {
         const proc = this.process; this.process = null; proc?.kill();
       }, 9000);
       this.pending.set(id, { resolve, reject, timer });
-      this.process.stdin.write(JSON.stringify({ id, action, provider:this.provider, source:this.source, target:this.target }) + '\n');
+      this.process.stdin.write(JSON.stringify({ id, action, ...route }) + '\n');
     });
   }
   close() { const proc = this.process; this.process = null; this.failAll('App closed'); proc?.kill(); }
 }
-module.exports = { MediaBridge };
+const sharedTransport=new MediaTransport();
+class MediaBridge {
+ constructor(provider='spotify',transport=sharedTransport){if(!['spotify','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.transport=transport;this.acquired=false;this.statusRequest=null;}
+ request(action){if(!['status','toggle','play','pause','next','previous','rewind'].includes(action))return Promise.reject(Error('Unknown media action'));if(!['auto','desktop','web'].includes(this.target))return Promise.reject(Error('Unknown YouTube Music player target'));if(!this.acquired){this.acquired=true;this.transport.users=(this.transport.users||0)+1;}if(action==='status'&&this.statusRequest)return this.statusRequest;const result=this.transport.request(action,{provider:this.provider,source:this.source,target:this.target});if(action==='status'){const pending=result.finally(()=>{if(this.statusRequest===pending)this.statusRequest=null;});this.statusRequest=pending;return pending;}return result;}
+ close(){if(!this.acquired)return;this.acquired=false;if(--this.transport.users===0)this.transport.close();}
+}
+module.exports = { MediaBridge, MediaTransport };

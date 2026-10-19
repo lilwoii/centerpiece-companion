@@ -25,5 +25,5 @@ test('dispatches a registered plugin action once and propagates errors', async (
 test('rejects unknown plugins and actions before accessing media', async () => {
   await assert.rejects(plugins.execute('missing', 'next', {}), /not installed/);
   await assert.rejects(plugins.execute('spotify', 'shell', {}), /Unknown/);
-  const media = new MediaBridge(); await assert.rejects(media.request('shell'), /Unknown/); assert.equal(media.process, null);
+  const media = new MediaBridge(); await assert.rejects(media.request('shell'), /Unknown/); assert.equal(media.transport.process, null); assert.equal(media.acquired,false);
 });

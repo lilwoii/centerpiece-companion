@@ -119,7 +119,7 @@ async function refreshYoutube(){
  catch(error){state.youtube=youtubeClock.update({available:false,message:error.message});}
  finally{youtubePolling=false;if(!quitting){send();if(previous!==trackKey(state.youtube))void refreshStrip(false);}}
 }
-async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}
+async function refreshStrip(reconcile=true){if(!state.strip||quitting||displayBusy||displayTasks.paused||strip.sleepPaused)return;displayBusy=true;try{await strip.refreshLive();if(reconcile&&!displayTasks.paused)await strip.reconcile();}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;appliedAppearance='';send();}finally{displayBusy=false;}}
 async function perform(plugin, action) {
   if (executing) return { ok: false, error: 'A control is already in progress.' };
   executing = true; state.error = ''; send();
@@ -159,8 +159,27 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       if(automatic&&!autoAllowed())return false;
       leaveMode();widgetCycle.close();desk.save(config);state.profileRevision=(state.profileRevision||0)+1;state.widgetRevision=(state.widgetRevision||0)+1;updateNavigation();send();appliedAppearance='';await syncAppearance();send();return true;
     },autoAllowed);
-    sleepService=new(require('./sleep-service.cjs').SleepService)({run:fn=>displayTasks.run(fn),onError:error=>{state.error='Display sleep: '+error.message;send();}});
+    sleepService=new(require('./sleep-service.cjs').SleepService)({setPaused:value=>strip.setSleepPaused(value),run:fn=>displayTasks.run(fn),onError:error=>{state.error='Display sleep: '+error.message;send();}});
     desk.system.on('activity',()=>sleepService.activity());
+    handle('config-backup',async action=>{
+      const backup=require('./config-backup.cjs'),validate=c=>desk.validate(c);
+      if(action==='export'){
+        if(desk.settingsError)throw Error(desk.settingsError);
+        const result=await dialog.showSaveDialog(win,{title:'Export Companion configuration',defaultPath:'Companion-configuration.json',filters:[{name:'Companion configuration',extensions:['json']}]});
+        if(result.canceled||!result.filePath)return{message:'Export canceled.'};
+        fs.writeFileSync(result.filePath,backup.encode(desk.config,validate,app.getVersion()),{encoding:'utf8'});return{message:'Configuration exported. Keep this file somewhere safe outside the app.'};
+      }
+      if(action!=='import')throw Error('Unknown backup action.');
+      const result=await dialog.showOpenDialog(win,{title:'Import Companion configuration',properties:['openFile'],filters:[{name:'Companion configuration',extensions:['json']}]});
+      if(result.canceled||!result.filePaths[0])return{message:'Import canceled.'};
+      const config=backup.read(result.filePaths[0],validate);
+      const confirmed=await dialog.showMessageBox(win,{type:'question',buttons:['Cancel','Restore configuration'],defaultId:0,cancelId:0,title:'Restore saved configuration?',message:'Replace your current Companion display settings?',detail:'Your current settings will be backed up first. Keyboard mappings, installed skins and account sign-ins will not be replaced.'});
+      if(confirmed.response!==1)return{message:'Import canceled. Current settings kept.'};
+      if(profiles?.data.enabled)throw Error('Turn off automatic profiles before importing a configuration.');
+      desk.save(config);leaveMode();updateNavigation();appliedAppearance='';youtubeMusic.target=config.youtubeMusicTarget;youtubeMusic.source=config.youtubeMusicSource;send();
+      try{if(config.sleepMinutes===null)await sleepService.close();else await sleepService.configure(config.sleepMinutes);await syncAppearance();}catch(error){return{message:'Configuration saved and previous settings backed up. Keyboard apply needs retry: '+error.message};}
+      return{message:'Configuration restored. Previous settings were backed up automatically. Use Keyboard editor to apply any changed shortcut bindings.'};
+    });
     handle('test-display-sleep',async()=>{await sleepService.test();return true;});
     handle('set-display-sleep',async minutes=>{if(desk.settingsError)throw Error(desk.settingsError);const previous=desk.config.sleepMinutes;try{await sleepService.configure(minutes);desk.save({...desk.config,sleepMinutes:minutes});}catch(error){try{if(previous===null)await sleepService.close();else await sleepService.configure(previous);}catch{}throw error;}send();return state;});
     desk.system.on('music-toggle',()=>{if(musicSlot())void musicNavigation('toggle');});
@@ -286,7 +305,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
-    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
+    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};state.setupReport.sleep=sleepService.status();if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
     handle('dismiss-update-notes',version=>{const next=updateNotes.dismiss(version);send();return next;});
     handle('set-plugin-shortcuts',async settings=>{
       leaveMode();

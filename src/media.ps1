@@ -11,7 +11,7 @@ function Await-WinRT($operation, $resultType) {
   return $task.Result
 }
 $manager = Await-WinRT ($managerType::RequestAsync()) $managerType
-$artCache=@{};$installedMusicIds=@();$installedMusicChecked=[datetime]::MinValue;$managerRefreshed=[datetime]::UtcNow
+$artCaches=@{};$installedMusicIds=@();$installedMusicChecked=[datetime]::MinValue;$managerRefreshed=[datetime]::UtcNow
 while ($null -ne ($line = [Console]::ReadLine())) {
   $request = $null
   try {
@@ -31,7 +31,7 @@ while ($null -ne ($line = [Console]::ReadLine())) {
     }
     $selection=Get-CompanionMediaSelection $sessions $request.provider $request.source $installedMusicIds $target
     $session=$selection.session
-    if(!$session -and ([datetime]::UtcNow-$managerRefreshed).TotalSeconds -ge 3){
+    if(!$session -and ([datetime]::UtcNow-$managerRefreshed).TotalSeconds -ge 60){
       # Reacquire after an app restart/resume instead of retaining a stale manager.
       # This is a read-only discovery retry; playback commands are sent only once.
       $managerRefreshed=[datetime]::UtcNow
@@ -51,7 +51,9 @@ while ($null -ne ($line = [Console]::ReadLine())) {
       $playback = $session.GetPlaybackInfo()
       $timeline = $session.GetTimelineProperties()
       $newKey=$session.SourceAppUserModelId+'|'+$props.Title+'|'+$props.Artist+'|'+$props.AlbumTitle
-      $art=Get-CompanionMediaArtwork $artCache $newKey $request.provider {
+      $cacheId=$request.provider+'|'+$target+'|'+$session.SourceAppUserModelId
+      if(!$artCaches.ContainsKey($cacheId)){if($artCaches.Count -ge 12){$artCaches.Clear()};$artCaches[$cacheId]=@{}}
+      $art=Get-CompanionMediaArtwork $artCaches[$cacheId] $newKey $request.provider {
         $stream=$null;$reader=$null
         try{if($props.Thumbnail){
           $streamType=[Windows.Storage.Streams.IRandomAccessStreamWithContentType,Windows.Storage.Streams,ContentType=WindowsRuntime]

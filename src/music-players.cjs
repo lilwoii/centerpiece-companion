@@ -4,8 +4,7 @@ const {PlaybackClock}=require('./playback-clock.cjs');
 const {MusicMemory}=require('./music-memory.cjs');
 const {playerTarget,validateSource}=require('./music-source.cjs');
 
-// The two players have independent clocks, workers and reconnection loops.
-// A slow/unavailable browser must not delay desktop controls or artwork.
+// Independent routing and clocks share one bounded Windows media worker.
 class MusicPlayers {
  constructor({directory,onChange=()=>{},canRefresh=()=>true,bridgeFactory=()=>new MediaBridge('youtubemusic'),memory, timers}={}){
   this.target='desktop';this.onChange=onChange;this.canRefresh=canRefresh;this.closed=false;this.sourceRevision=0;
@@ -13,7 +12,7 @@ class MusicPlayers {
   for(const target of ['desktop','web']){
    const bridge=this.bridges[target]=bridgeFactory(target);bridge.target=target;
    this.clocks[target]=new PlaybackClock();this.views[target]=this.memory.update({available:false,target},target);
-   this.polls[target]=new MediaPoll(()=>this.refresh(target),()=>this.views[target],timers,{active:250,inactive:500,immediate:true});
+   this.polls[target]=new MediaPoll(()=>this.refresh(target),()=>this.views[target],timers,{active:1000,inactive:8000,paused:5000,immediate:true});
   }
  }
  get source(){return this.bridges[playerTarget(this.target)].source||'';}

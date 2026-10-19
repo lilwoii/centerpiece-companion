@@ -1,5 +1,12 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.44": Object.freeze([
+    "Display sleep now uses a Companion inactivity timer alongside the firmware setting, pausing live overlay updates while asleep and waking on keyboard input.",
+    "Reduced background media usage with one shared Windows media helper, slower idle polling and bounded refreshes after music controls. Playback timers continue advancing locally.",
+    "Added Export configuration and Import configuration in Connections, with bright green and orange buttons. Save plugins, widgets, custom images, colors, indicators, language and sleep preferences outside the app.",
+    "Configuration imports are validated and current settings are backed up before replacement. Keyboard firmware mappings, installed skins, Studio projects, app profiles and sign-ins are not included.",
+    "Keyboard setup reports now include sleep timer, idle time and sleep state to help diagnose display-sleep problems."
+]),
   "0.3.0-preview.43": Object.freeze([
     "Move the Caps Lock indicator to any key, including Space, with adjustable size, position, color and transparency. Typing and Caps Lock behavior stay unchanged.",
     "Improved Spotify recovery: ignore closed or unreadable sessions and reconnect the Windows media service after errors.",

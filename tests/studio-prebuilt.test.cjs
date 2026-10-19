@@ -34,6 +34,15 @@ test('service resolves included builds without invoking the native toolchain',as
  assert.equal((await request('build-download',{id:found.id,sceneSha256:entry.sceneSha256})).length,entry.size);
  assert.equal(await request('build-latest',{sceneSha256:'f'.repeat(64)}),null);
 });
+
+test('corrected bundled packages supersede older local copies of the same scene',async()=>{
+ const library=new StudioPrebuilt(),entry=[...library.entries.values()][0];
+ let local={id:'local',state:'ready',createdAt:entry.createdAt-1};
+ const request=require('../src/studio-service.cjs').createStudioService('unused',{prebuilt:library,builder:{latest:()=>local}});
+ assert.equal((await request('build-latest',{sceneSha256:entry.sceneSha256})).id,entry.id);
+ local={...local,createdAt:entry.createdAt+1};assert.equal((await request('build-latest',{sceneSha256:entry.sceneSha256})).id,'local');
+ local={...local,state:'building',createdAt:0};assert.equal((await request('build-latest',{sceneSha256:entry.sceneSha256})).id,'local');
+});
 test('gallery retains the entire collection and newly-created basic presets contain native triggers',()=>{
  const presets=require('../studio/presets.js'),collection=require('../studio/collection-presets.js'),gallery=require('../src/studio-gallery-ui.js');
  assert.equal(gallery.collectionEntries(collection,presets).length,26);

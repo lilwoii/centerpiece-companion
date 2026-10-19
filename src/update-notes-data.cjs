@@ -1,5 +1,10 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.45": Object.freeze([
+    "Attach images and videos to feature requests by choosing files or dragging them into the form. Attachments are public and automatically expire after 10 days; authors and the owner can remove them sooner.",
+    "Removed an unwanted black circle from preset skins. Fixed koi steering that could tilt a fish edge-on or move it behind the pond; artwork, fish sizes and intended swimming reactions are preserved.",
+    "Corrected library skin packages now take priority over older cached builds of the same unchanged scene."
+]),
   "0.3.0-preview.44": Object.freeze([
     "Display sleep now uses a Companion inactivity timer alongside the firmware setting, pausing live overlay updates while asleep and waking on keyboard input.",
     "Reduced background media usage with one shared Windows media helper, slower idle polling and bounded refreshes after music controls. Playback timers continue advancing locally.",

@@ -283,6 +283,10 @@ def generate():
         require(controller,'The device input Blueprint did not compile. No usable package was produced.')
         unreal.EditorAssetLibrary.save_loaded_asset(controller)
     require(unreal.EditorLevelLibrary.new_level(MAP),'Could not create a new entry map.')
+    skin_game_mode=unreal.SkinStudioDeviceBuilder.create_skin_game_mode()
+    require(skin_game_mode,'Could not disable the visible default player pawn.')
+    unreal.EditorAssetLibrary.save_loaded_asset(skin_game_mode)
+    content_assets.append(skin_game_mode)
     if controller:
         generated_class=unreal.EditorAssetLibrary.load_blueprint_class(controller.get_path_name())
         require(generated_class,'The device input class could not be loaded.')

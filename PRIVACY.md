@@ -40,6 +40,8 @@ The skin gallery fetches the public registry and preview images from assets.free
 
 ## Optional automatic profiles
 
+Feature requests can include up to three image/video attachments. Chosen files stay local until you submit. Submitted files, names and request text are public; attachments are stored in Cloudflare R2 and expire after ten days. Authors and the owner can delete attachments sooner. Expiration does not remove the request text or copies already downloaded by others. Do not attach private information. Videos load only when opened or played.
+
 When enabled, automatic profiles read the executable name of the foreground Windows app locally. The companion does not collect window titles, browsing history or typed text, and does not send foreground app names to a server. Saved profiles and app links stay in `profiles.json` in your Windows user data folder. Profile snapshots exclude account connections, keyboard remaps and skins. App-launch slots can contain local app paths. Automatic switching is off until you enable it.
 
 ## Local photo animation (development build)

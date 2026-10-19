@@ -65,7 +65,15 @@ function createStudioService(directory,{builder,runExclusive,trustedBackups=[],e
    return device.request(action,input);
   }
   if(action==='build-start'){if(cook.active)throw Error('An edited Unreal project is already building. Wait for it to finish.');return nativeBuilder.start(input);}
-  if(action==='build-latest'){const local=nativeBuilder.latest(input?.sceneSha256);return local&&['ready','queued','building'].includes(local.state)?local:included.latest(input?.sceneSha256)||local;}
+  if(action==='build-latest'){
+   const local=nativeBuilder.latest(input?.sceneSha256);
+   if(local&&['queued','building'].includes(local.state))return local;
+   const bundled=included.latest(input?.sceneSha256);
+   // A corrected shipped package must supersede an older cached build of the
+   // identical scene. Preserve an explicitly rebuilt, newer local package.
+   if(bundled&&(!local||local.state!=='ready'||(bundled.createdAt||0)>(local.createdAt||0)))return bundled;
+   return local?.state==='ready'?local:bundled||local;
+  }
   if(action==='build-status')return builds.status(input?.id);
   if(action==='build-cancel')return nativeBuilder.cancel(input?.id);
   if(action==='build-download'){

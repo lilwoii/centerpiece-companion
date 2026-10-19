@@ -13,6 +13,8 @@
 #include "Engine/Font.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSettings.h"
+#include "GameFramework/GameModeBase.h"
 #include "Engine/Engine.h"
 #include "EngineUtils.h"
 #include "Editor.h"
@@ -37,6 +39,27 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Engine/Blueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
+
+UBlueprint* USkinStudioDeviceBuilder::CreateSkinGameMode()
+{
+    // A skin is a camera-driven scene. The engine's default player pawn has a
+    // visible sphere mesh, which otherwise appears over every unlit skin.
+    UWorld* World=GEditor?GEditor->GetEditorWorldContext().World():nullptr;
+    if(!World||World->GetOutermost()->GetName()!=TEXT("/Game/map/M_EntryPoint"))return nullptr;
+    UPackage* Package=CreatePackage(TEXT("/Game/Companion/BP_SkinGameMode"));
+    UBlueprint* Blueprint=FKismetEditorUtilities::CreateBlueprint(AGameModeBase::StaticClass(),Package,TEXT("BP_SkinGameMode"),BPTYPE_Normal,UBlueprint::StaticClass(),UBlueprintGeneratedClass::StaticClass());
+    if(!Blueprint)return nullptr;
+    FKismetEditorUtilities::CompileBlueprint(Blueprint);
+    auto* Defaults=Cast<AGameModeBase>(Blueprint->GeneratedClass->GetDefaultObject());
+    if(!Defaults)return nullptr;
+    Defaults->DefaultPawnClass=nullptr;
+    FBlueprintEditorUtils::MarkBlueprintAsModified(Blueprint);
+    FKismetEditorUtilities::CompileBlueprint(Blueprint);
+    if(Cast<AGameModeBase>(Blueprint->GeneratedClass->GetDefaultObject())->DefaultPawnClass)return nullptr;
+    World->GetWorldSettings()->DefaultGameMode=Blueprint->GeneratedClass;
+    Blueprint->MarkPackageDirty();
+    return Blueprint;
+}
 #include "UObject/UnrealType.h"
 #include "GameFramework/Actor.h"
 #include "EdGraphSchema_K2.h"
@@ -194,6 +217,29 @@ bool USkinStudioDeviceBuilder::ValidateDeviceMaterials(const TArray<UMaterialInt
     }
     return Good;
 }
+FString USkinStudioDeviceBuilder::RunSwimmerPlaneTest()
+{
+ UWorld* Source=GEditor?GEditor->GetEditorWorldContext().World():nullptr;
+ if(!GEngine||!Source||Source->GetOutermost()->GetName()!=TEXT("/Game/map/M_EntryPoint"))return TEXT("{\"error\":\"Load a generated skin.\"}");
+ UWorld* World=UWorld::CreateWorld(EWorldType::Game,false,FName(TEXT("StudioSchoolPlaneTest")));
+ if(!World)return TEXT("{\"error\":\"No test world.\"}");
+ GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+ FActorSpawnParameters Params;Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+ TArray<AActor*> Fish;TArray<float> Depths;
+ for(TActorIterator<AActor> It(Source);It;++It)if(It->ActorHasTag(TEXT("StudioSwimmer")))if(auto* Actor=World->SpawnActor<AActor>(It->GetClass(),It->GetActorLocation(),It->GetActorRotation(),Params)){Fish.Add(Actor);Depths.Add(Actor->GetActorLocation().Z);}
+ World->InitializeActorsForPlay(FURL());for(auto* Actor:Fish)Actor->DispatchBeginPlay();USkinCreatorLibrary::SetPreviewReceiverAvailableForTests(true);
+ double MaxDepth=0,MaxTilt=0,MaxScaleError=0;bool Finite=true;int32 Events=0;
+ for(int32 Frame=0;Frame<7200;Frame++){
+  if(Frame>5&&Frame%30==0&&Fish.Num())if(auto* Receiver=USkinCreatorLibrary::GetKeyEventReceiver()){
+   const FVector P=Fish[(Frame/30)%Fish.Num()]->GetActorLocation();USkinCreatorLibrary::SetPreviewPositionForTests(FVector2D(P.X+960,P.Y+275));Receiver->OnKeyEvent.Broadcast(17,true,100);Receiver->OnKeyEvent.Broadcast(17,false,0);++Events;
+  }
+  ++GFrameCounter;World->Tick(LEVELTICK_All,1.f/60);
+  for(int32 I=0;I<Fish.Num();I++){const FVector P=Fish[I]->GetActorLocation(),S=Fish[I]->GetActorScale3D();const FRotator R=Fish[I]->GetActorRotation();Finite&=!P.ContainsNaN()&&!R.ContainsNaN()&&!S.ContainsNaN();MaxDepth=FMath::Max(MaxDepth,double(FMath::Abs(P.Z-Depths[I])));MaxTilt=FMath::Max(MaxTilt,double(FMath::Max(FMath::Abs(R.Pitch),FMath::Abs(R.Roll))));MaxScaleError=FMath::Max(MaxScaleError,double(FMath::Max(FMath::Abs(S.X-1),FMath::Abs(S.Y-1))));}
+ }
+ TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();Report->SetNumberField(TEXT("fish"),Fish.Num());Report->SetNumberField(TEXT("simulatedSeconds"),120);Report->SetNumberField(TEXT("pressEvents"),Events);Report->SetNumberField(TEXT("maxDepthDrift"),MaxDepth);Report->SetNumberField(TEXT("maxTiltDegrees"),MaxTilt);Report->SetNumberField(TEXT("maxScaleError"),MaxScaleError);Report->SetBoolField(TEXT("finite"),Finite);Report->SetBoolField(TEXT("hardwareVerified"),false);
+ USkinCreatorLibrary::SetPreviewPositionForTests(FVector2D::ZeroVector);GEngine->DestroyWorldContext(World);World->DestroyWorld(false);
+ FString Text;auto Writer=TJsonWriterFactory<>::Create(&Text);FJsonSerializer::Serialize(Report,Writer);return Text;
+}
 bool USkinStudioDeviceBuilder::CaptureRuntimePreview(float Seconds,bool PressKey,float KeyX,float KeyY,int32 PressCount)
 {
     UWorld* Source=GEditor?GEditor->GetEditorWorldContext().World():nullptr;
@@ -321,3 +367,4 @@ bool USkinStudioDeviceBuilder::CaptureDevicePreview()
     if(auto* CDO=Cast<AActor>(Blueprint->GeneratedClass->GetDefaultObject())){CDO->PrimaryActorTick.bCanEverTick=true;CDO->PrimaryActorTick.bStartWithTickEnabled=true;}
     FAssetRegistryModule::AssetCreated(Blueprint);Package->MarkPackageDirty();return Blueprint;
 }
+

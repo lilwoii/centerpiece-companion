@@ -1,5 +1,6 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.47": Object.freeze(["Fixed various bugs and issues."]),
   "0.3.0-preview.46": Object.freeze([
     "Start with Windows now repairs missing or outdated startup registrations when the saved preference is enabled, while respecting entries disabled in Windows. Failed changes no longer overwrite the saved preference.",
     "Temporary shortcut-check read failures now retry before rebuilding an otherwise healthy keyboard connection, reducing unnecessary display reloads. Real disconnections and persistent failures still recover automatically.",

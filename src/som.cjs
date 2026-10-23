@@ -26,7 +26,7 @@ class Som {
         if (error) { done(error); return; }
         try { const result = match(command, payload); if (result !== undefined) done(null, result); } catch (e) { done(e); }
       };
-      const timer = setTimeout(() => done(new Error('Keyboard display response timed out.')), timeout);
+      const timer = setTimeout(() => done(Object.assign(new Error('Keyboard display response timed out.'),{code:'DISPLAY_REQUEST_TIMEOUT'})), timeout);
       this.listeners.add(listener); try { trigger(); } catch (error) { done(error); }
     });
   }

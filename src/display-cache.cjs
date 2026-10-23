@@ -8,7 +8,7 @@ function ownedPool(manifest){
  return [...pool];
 }
 class DisplayCache{
- constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;}
+ constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
  setSleepPaused(value){this.sleepPaused=!!value;if(value)this.clearLiveTimer();else this.displayReady();}
  get capacity(){return this.pool.length-1;}
  key(selected=this.desired,caps=this.caps,layer=this.layer){const key=selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);return this.config?.stripEnabled===false?'hidden:'+key:key;}
@@ -31,6 +31,23 @@ class DisplayCache{
  async write(slot,selected,caps,layer=false,verify=true,shift){
   if(!this.pool.includes(slot)||slot===this.lastSlot)throw Error('The display upload target is not a free inactive companion slot.');
   const key=this.key(selected,caps,layer,shift),content=this.contentKey(),svg=this.frame(selected,caps,layer,shift),png=await sharp(Buffer.from(svg)).png().toBuffer();
+  // The screen engine or XPANEL may have switched slots since our last write.
+  // Check after rasterization, immediately before sending upload metadata.
+  if(typeof this.som.currentSlot==='function'){
+   const active=await this.som.currentSlot();
+   if(!Number.isInteger(active)||active<0||active>10)throw Error('Invalid active overlay; upload canceled.');
+   this.lastObservedSlot=active;
+   if(active===slot){
+    this.lastSlot=active;this.selectionAt=Date.now();
+    const occupied=new Set(this.cache.values());
+    slot=this.pool.find(candidate=>candidate!==active&&!occupied.has(candidate))??this.cache.get(key)??this.pool.find(candidate=>candidate!==active);
+    if(slot===active||!this.pool.includes(slot))slot=this.pool.find(candidate=>candidate!==active);
+    if(slot===undefined)throw Error('No inactive overlay is safe to upload.');
+    // With only two allocated slots, replacing an inactive cached frame is
+    // safer than writing the externally selected visible slot.
+    for(const [oldKey,oldSlot]of this.cache)if(oldSlot===slot){this.cache.delete(oldKey);this.frames.delete(oldKey);this.frameContent.delete(oldKey);this.usage.delete(oldKey);}
+   }
+  }
   this.lastPngBytes=png.length;await this.som.uploadOverlay(slot,png,'Companion strip',verify);
   // The firmware activates a completed overlay upload. Record that transition
   // before dropping old cache entries, so the visible slot is never overwritten.
@@ -130,11 +147,12 @@ class DisplayCache{
   if(this.cache.has(key)&&interval&&this.liveUploadedAt&&remaining>0){this.deferLive(remaining);return;}
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.clearLiveTimer();this.livePending=false;this.updating=true;
-  try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();}
+  try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}
   catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
- async reconcile(){if(this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300)return;this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}finally{this.watching=false;this.displayReady();}}
- detach(){this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
+ async reconcile(){if(this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;if(++this.statusReadFailures<=2)return;}throw error;}finally{this.watching=false;this.displayReady();}}
+ detach(){this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
  async close(){this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;this.som=null;try{await som.activate(this.manifest.originalSlot||0);}finally{som.close();}}
 }
 module.exports={DisplayCache,ownedPool};
+

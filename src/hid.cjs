@@ -12,7 +12,7 @@ class VirtualHID extends EventEmitter{
  writeBatch(packets){
   if(this.closed)return Promise.reject(Error('USB connection closed. Restart the keyboard connection.'));
   if(!Array.isArray(packets)||!packets.length||packets.length>64||packets.some(p=>p.length!==1024))return Promise.reject(Error('Invalid USB batch.'));
-  return new Promise((resolve,reject)=>{const id=++sequence,timer=setTimeout(()=>{pending.delete(id);reject(Error('USB batch timed out.'));},10000);pending.set(id,{resolve,reject,timer});try{send({op:'write-batch',key:this.key,id,packets:packets.map(p=>Array.from(p))});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
+  return new Promise((resolve,reject)=>{const id=++sequence,deadline=Date.now()+10000,timer=setTimeout(()=>{pending.delete(id);reject(Error('USB batch timed out.'));},10000);pending.set(id,{resolve,reject,timer});try{send({op:'write-batch',key:this.key,id,deadline,packets:packets.map(p=>Array.from(p))});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
  }
  close(){if(this.closed)return;this.closed=true;handles.delete(this.key);if(child?.connected)child.send({op:'close',key:this.key},()=>{});}
 }

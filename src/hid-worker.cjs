@@ -12,7 +12,8 @@ process.on('message',message=>{const{id,op,key}=message;try{
  const entry=handles.get(key);if(!entry){if(id)send({id,error:'USB connection closed.'});return;}const handle=entry.handle;
  if(op==='write-batch'){
   if(!Array.isArray(message.packets)||!message.packets.length||message.packets.length>64||message.packets.some(p=>!Array.isArray(p)||p.length!==1024))throw Error('Invalid USB batch.');
-  for(const packet of message.packets)if(handle.write(packet)!==packet.length)throw Error('Incomplete USB packet write.');
+  if(!Number.isFinite(message.deadline))throw Error('Missing USB batch deadline.');
+  for(const packet of message.packets){if(Date.now()>=message.deadline)throw Error('USB batch expired before completion.');if(handle.write(packet)!==packet.length)throw Error('Incomplete USB packet write.');}
   send({id,result:true});return;
  }
  if(op==='write'){if(!Array.isArray(message.data)||![64,1024].includes(message.data.length))throw Error('Invalid USB packet.');handle.write(message.data);}

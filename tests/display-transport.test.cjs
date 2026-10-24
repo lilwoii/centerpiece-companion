@@ -38,10 +38,11 @@ test('the USB worker acknowledges completed batches and stops immediately on a s
  class Native extends EventEmitter{write(p){writes++;return short?100:p.length;}close(){}}
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/hid-worker.cjs'),'utf8'),{process:proc,require:()=>({HID:Native,devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'test'}]})});
  proc.emit('message',{op:'open',key:1,path:'test'});const packets=Array.from({length:64},()=>Array(1024).fill(0));
- proc.emit('message',{op:'write-batch',key:1,id:2,packets});assert.equal(writes,64);assert.equal(messages.at(-1).result,true);
- short=true;proc.emit('message',{op:'write-batch',key:1,id:3,packets});assert.equal(writes,65);assert.ok(messages.at(-1).error);
- proc.emit('message',{op:'write-batch',key:1,id:4,packets:[...packets,packets[0]]});assert.equal(writes,65);assert.ok(messages.at(-1).error);
- proc.emit('message',{op:'write-batch',key:99,id:5,packets});assert.ok(messages.at(-1).error);
+ const deadline=Date.now()+10000;
+ proc.emit('message',{op:'write-batch',key:1,id:2,deadline,packets});assert.equal(writes,64);assert.equal(messages.at(-1).result,true);
+ short=true;proc.emit('message',{op:'write-batch',key:1,id:3,deadline,packets});assert.equal(writes,65);assert.ok(messages.at(-1).error);
+ proc.emit('message',{op:'write-batch',key:1,id:4,deadline,packets:[...packets,packets[0]]});assert.equal(writes,65);assert.ok(messages.at(-1).error);
+ proc.emit('message',{op:'write-batch',key:99,id:5,deadline,packets});assert.ok(messages.at(-1).error);
 });
 test('exit restoration confirms delayed slot changes and never repeats a toggle command',async()=>{
  for(const target of [0,1]){
@@ -54,4 +55,13 @@ test('unconfirmed or malformed restoration does not report success',async()=>{
  const selections=[];
  await assert.rejects(Som.prototype.activate.call({currentSlot:async()=>6,selectSlot:slot=>selections.push(slot)},0),error=>error.code==='DISPLAY_RESTORE_FAILED');assert.deepEqual(selections,[6]);
  await assert.rejects(Som.prototype.activate.call({currentSlot:async()=>11,selectSlot:()=>assert.fail('must not toggle an unknown slot')},0),/Invalid active overlay/);
+});
+test('backlogged or stalled USB batches cannot continue writing beyond their deadline',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{EventEmitter}=require('node:events'),proc=new EventEmitter(),messages=[];let time=200,writes=0,stall=false;
+ Object.assign(proc,{argv:[],connected:true,send:m=>messages.push(m),exit(){}});
+ class Native extends EventEmitter{write(p){writes++;if(stall)time+=1000;return p.length;}close(){}}
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/hid-worker.cjs'),'utf8'),{Date:{now:()=>time},process:proc,require:()=>({HID:Native,devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'test'}]})});
+ proc.emit('message',{op:'open',key:1,path:'test'});const packets=Array.from({length:64},()=>Array(1024).fill(0));
+ proc.emit('message',{op:'write-batch',key:1,id:1,deadline:100,packets});assert.equal(writes,0);assert.ok(messages.at(-1).error);
+ stall=true;proc.emit('message',{op:'write-batch',key:1,id:2,deadline:500,packets});assert.equal(writes,1);assert.ok(messages.at(-1).error);
 });

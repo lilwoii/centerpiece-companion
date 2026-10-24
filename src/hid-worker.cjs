@@ -9,7 +9,12 @@ const send=value=>{if(process.connected)process.send(value);};
 process.on('message',message=>{const{id,op,key}=message;try{
  if(op==='devices'){send({id,result:inventory()});return;}
  if(op==='open'){const device=inventory().find(d=>d.path===message.path);if(!device)throw Error('Supported Centerpiece interface not found.');let entry=devices.get(device.path);if(!entry){entry={handle:new HID.HID(device.path),clients:new Set()};devices.set(device.path,entry);entry.handle.on('data',data=>{for(const client of entry.clients)send({event:'data',key:client,data});});entry.handle.on('error',()=>{for(const client of entry.clients)send({event:'error',key:client,message:'USB connection interrupted.'});});}entry.clients.add(key);handles.set(key,entry);return;}
- const entry=handles.get(key);if(!entry)return;const handle=entry.handle;
+ const entry=handles.get(key);if(!entry){if(id)send({id,error:'USB connection closed.'});return;}const handle=entry.handle;
+ if(op==='write-batch'){
+  if(!Array.isArray(message.packets)||!message.packets.length||message.packets.length>64||message.packets.some(p=>!Array.isArray(p)||p.length!==1024))throw Error('Invalid USB batch.');
+  for(const packet of message.packets)if(handle.write(packet)!==packet.length)throw Error('Incomplete USB packet write.');
+  send({id,result:true});return;
+ }
  if(op==='write'){if(!Array.isArray(message.data)||![64,1024].includes(message.data.length))throw Error('Invalid USB packet.');handle.write(message.data);}
  else if(op==='close'){handles.delete(key);entry.clients.delete(key);}
  }catch(error){if(id)send({id,error:'USB operation failed.'});else send({event:'error',key,message:error.message?.slice(0,160)||'USB operation failed.'});}});

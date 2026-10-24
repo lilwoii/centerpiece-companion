@@ -8,7 +8,7 @@ function ownedPool(manifest){
  return [...pool];
 }
 class DisplayCache{
- constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
+ constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.closing=false;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
  setSleepPaused(value){this.sleepPaused=!!value;if(value)this.clearLiveTimer();else this.displayReady();}
  get capacity(){return this.pool.length-1;}
  key(selected=this.desired,caps=this.caps,layer=this.layer){const key=selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);return this.config?.stripEnabled===false?'hidden:'+key:key;}
@@ -84,7 +84,7 @@ class DisplayCache{
   return states;
  }
  async apply(config,locks){
-  if(!this.som)throw Error('Keyboard strip is disconnected.');if(this.updating||this.watching)throw Error('Display is busy. Try again.');
+  if(this.closing)throw Error('Display restoration is pending. Retry Quit or reconnect the keyboard.');if(!this.som)throw Error('Keyboard strip is disconnected.');if(this.updating||this.watching)throw Error('Display is busy. Try again.');
   // A slot edit needs one new visible frame, not eight sequential firmware
   // uploads. Other states are rebuilt when requested; keeping their old frame
   // mappings would briefly show the previous action or a stale highlight.
@@ -115,12 +115,12 @@ class DisplayCache{
  connect(){
   const file=path.join(this.directory,'hardware.json');if(!fs.existsSync(file))return false;
   this.manifest=JSON.parse(fs.readFileSync(file,'utf8'));if(!this.manifest.verified||this.manifest.restored)return false;
-  this.pool=ownedPool(this.manifest);this.som=new Som();
+  this.pool=ownedPool(this.manifest);this.som=new Som();this.closing=false;
   if(this.som.serial!==this.manifest.serial){this.som.close();this.som=null;throw Error('This keyboard needs its own local setup.');}
   return true;
  }
  displayReady(){
-  if(!this.som||!this.config||this.updating||this.watching||(this.tasksPaused||this.sleepPaused))return;
+  if(this.error||this.closing||!this.som||!this.config||this.updating||this.watching||(this.tasksPaused||this.sleepPaused))return;
   const key=this.key(),slot=this.cache.get(key);
   // Do not briefly select an old song's cached navigation/Caps frame. A
   // completed transfer is followed by at most one pending, newest-state render.
@@ -134,7 +134,8 @@ class DisplayCache{
  setLayer(active){this.layer=!!active;this.displayReady();}
  setData(data){this.data=data;}
  async refreshLive(){
-  if(!this.som||!this.config||this.sleepPaused)return;
+  if(this.closing||!this.som||!this.config||this.sleepPaused)return;
+  if(this.error)throw Error(this.error);
   if(this.updating||this.watching){this.livePending=true;return;}
   const selected=this.desired,caps=this.caps,layer=selected==='idle'&&this.layer,key=this.key(selected,caps,layer),svg=this.frame(selected,caps,layer);
   if(this.cache.has(key)&&svg===this.frames.get(key)){this.frameContent.set(key,this.contentKey());this.livePending=false;this.clearLiveTimer();this.displayReady();return;}
@@ -150,9 +151,9 @@ class DisplayCache{
   try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}
   catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
- async reconcile(){if(this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;if(++this.statusReadFailures<=2)return;}throw error;}finally{this.watching=false;this.displayReady();}}
- detach(){this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
- async close(){this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;this.som=null;try{await som.activate(this.manifest.originalSlot||0);}finally{som.close();}}
+ async reconcile(){if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}}
+ detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
+ async close(){this.closing=true;this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;await som.activate(this.manifest.originalSlot||0);this.som=null;som.close();}
 }
 module.exports={DisplayCache,ownedPool};
 

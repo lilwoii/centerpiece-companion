@@ -9,6 +9,11 @@ function send(message){const p=start();p.send(message,error=>{if(error&&message.
 class VirtualHID extends EventEmitter{
  constructor(devicePath){super();this.key=++sequence;this.closed=false;handles.set(this.key,this);send({op:'open',key:this.key,path:devicePath});}
  write(data){if(this.closed)throw Error('USB connection closed. Restart the keyboard connection.');send({op:'write',key:this.key,data:Array.from(data)});return data.length;}
+ writeBatch(packets){
+  if(this.closed)return Promise.reject(Error('USB connection closed. Restart the keyboard connection.'));
+  if(!Array.isArray(packets)||!packets.length||packets.length>64||packets.some(p=>p.length!==1024))return Promise.reject(Error('Invalid USB batch.'));
+  return new Promise((resolve,reject)=>{const id=++sequence,timer=setTimeout(()=>{pending.delete(id);reject(Error('USB batch timed out.'));},10000);pending.set(id,{resolve,reject,timer});try{send({op:'write-batch',key:this.key,id,packets:packets.map(p=>Array.from(p))});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
+ }
  close(){if(this.closed)return;this.closed=true;handles.delete(this.key);if(child?.connected)child.send({op:'close',key:this.key},()=>{});}
 }
 function devices(){if(cached)return cached;cached=JSON.parse(execFileSync(process.execPath,[worker,'--list'],{env:environment(),windowsHide:true,timeout:8000,maxBuffer:200000,encoding:'utf8'}));return cached;}

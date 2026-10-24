@@ -113,10 +113,15 @@ class DisplayCache{
   }catch(e){this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
  connect(){
+  if(this.updating||this.watching)throw Error('Display is busy. Wait for its current operation before reconnecting.');
   const file=path.join(this.directory,'hardware.json');if(!fs.existsSync(file))return false;
-  this.manifest=JSON.parse(fs.readFileSync(file,'utf8'));if(!this.manifest.verified||this.manifest.restored)return false;
-  this.pool=ownedPool(this.manifest);this.som=new Som();this.closing=false;
-  if(this.som.serial!==this.manifest.serial){this.som.close();this.som=null;throw Error('This keyboard needs its own local setup.');}
+  const manifest=JSON.parse(fs.readFileSync(file,'utf8'));if(!manifest.verified||manifest.restored)return false;
+  const pool=ownedPool(manifest),som=new Som();
+  if(som.serial!==manifest.serial){som.close();throw Error('This keyboard needs its own local setup.');}
+  // Validate the replacement before releasing a usable session, then discard
+  // old frame mappings together with the old USB client.
+  try{this.detach();}catch(error){som.close();throw error;}
+  this.manifest=manifest;this.pool=pool;this.som=som;this.closing=false;
   return true;
  }
  displayReady(){

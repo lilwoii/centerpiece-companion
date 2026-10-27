@@ -132,3 +132,5 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 @media(forced-colors:active){.button.crash-report-button{background:ButtonFace;color:ButtonText;border-color:ButtonText}}
 
 #crash-report-status{min-height:2.6em;overflow-wrap:anywhere}
+
+[data-page="connections"] .page-heading{flex-wrap:wrap;gap:16px}

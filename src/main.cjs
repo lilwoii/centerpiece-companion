@@ -83,13 +83,13 @@ const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 
 function crashSnapshot(){return{appVersion:app.getVersion(),platform:process.platform,windowsRelease:require('node:os').release(),error:state.error,deviceError:state.deviceError,displayConnected:!!state.strip,monitorConnected:!!monitor.status().connected,displayError:strip.error||null,display:{updating:strip.updating,lastTransferMs:strip.lastTransferMs??null,backgroundRestMs:strip.backgroundRestMs||0,lastPngBytes:strip.lastPngBytes??null,liveUploads:strip.liveUploads,skippedIdenticalFrames:strip.skippedIdenticalFrames,liveBytes:strip.liveBytes,statusTimeouts:strip.statusTimeouts,expectedSlot:strip.lastSlot,observedSlot:strip.lastObservedSlot,cachedFrames:strip.cache.size},widgets:[desk?.config.widget,...(desk?.config.extraWidgets||[])].filter(Boolean).map(w=>({type:w.type,x:w.x,y:w.y,width:w.width,height:w.height,zoom:w.zoom})),widgetLayout:desk?.config.widgetLayout,recovery:connectionRecovery?.status()||null,sleep:sleepService?.status()||null};}
 function send() {
-  crashLog.observe(crashSnapshot());
+  crashLog.observe(crashSnapshot,[state.error,state.deviceError,!!state.strip,!!monitor.status().connected,connectionRecovery?.blocked]);
   const capture=!!musicSlot();if(desk&&(capture!==musicCapture||capture&&Date.now()-musicCaptureAt>1000)){musicCapture=capture;musicCaptureAt=Date.now();void desk.system.request('music-navigation',capture).catch(error=>{musicCapture=false;state.error=error.message;});}
   state.updateNotes=updateNotes.view();state.keyboardReady=!!(state.strip&&appliedAppearance);deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
   if(desk)strip.setData({timer:desk.countdown.view(),obs:desk.obsStatus,live:desk.live.state,media:state.media,youtubeMusic:state.youtubeMusic,youtubeMusicByTarget:state.youtubeMusicByTarget,youtube:state.youtube,chat:desk.chat.state,selected:navigation.action,baseLabels:desk.baseLabels,bindingLayers:desk.bindingLayers,language:desk.language});
   if(state.strip&&!quitting)try{strip.show(state.navigation);}catch(error){state.error=`Keyboard strip: ${error.message}`;state.strip=false;}
-  if (win && !win.isDestroyed()) win.webContents.send('state', state);
+  if (win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()) win.webContents.send('state', state);
 }
 function configPath() { return path.join(app.getPath('userData'), 'settings.json'); }
 function setShortcuts(enabled, persist = true) {
@@ -232,6 +232,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       }
     win.webContents.on('will-navigate', event => event.preventDefault());
     win.on('blur',()=>monitor.capture(false));
+    win.on('show',send);win.on('restore',send);
     handle('get-state', () => state);
     handle('set-startup',enabled=>{state.startup=startup.set(enabled);refreshTray();send();return state;});
     win.on('focus',()=>{if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))void updates.check({background:true});state.startup=startup.read();refreshTray();send();});

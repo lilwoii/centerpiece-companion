@@ -3,6 +3,11 @@ const path = require('node:path');
 const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
+const crashLog=new(require('./crash-log.cjs').CrashLog)(app.getPath('userData'));
+process.on('uncaughtExceptionMonitor',(error,origin)=>crashLog.record('main-process-fatal',{origin,message:error.message,stack:error.stack}));
+app.on('render-process-gone',(_event,_contents,details)=>crashLog.record('renderer-process-gone',details));
+app.on('child-process-gone',(_event,details)=>crashLog.record('child-process-gone',{type:details.type,reason:details.reason,exitCode:details.exitCode}));
+
 const { pathToFileURL } = require('node:url');
 const {PlaybackClock}=require('./playback-clock.cjs');const playbackClock=new PlaybackClock();
 const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll,youtubeMusicPoll,youtubePoll;const youtubeClock=new PlaybackClock();let youtubePolling=false;
@@ -76,7 +81,9 @@ function enterMode() {
 }
 const pageURL = pathToFileURL(path.join(__dirname, 'index.html')).href;
 
+function crashSnapshot(){return{appVersion:app.getVersion(),platform:process.platform,windowsRelease:require('node:os').release(),error:state.error,deviceError:state.deviceError,displayConnected:!!state.strip,monitorConnected:!!monitor.status().connected,displayError:strip.error||null,display:{updating:strip.updating,lastTransferMs:strip.lastTransferMs??null,backgroundRestMs:strip.backgroundRestMs||0,lastPngBytes:strip.lastPngBytes??null,liveUploads:strip.liveUploads,skippedIdenticalFrames:strip.skippedIdenticalFrames,liveBytes:strip.liveBytes,statusTimeouts:strip.statusTimeouts,expectedSlot:strip.lastSlot,observedSlot:strip.lastObservedSlot,cachedFrames:strip.cache.size},widgets:[desk?.config.widget,...(desk?.config.extraWidgets||[])].filter(Boolean).map(w=>({type:w.type,x:w.x,y:w.y,width:w.width,height:w.height,zoom:w.zoom})),widgetLayout:desk?.config.widgetLayout,recovery:connectionRecovery?.status()||null,sleep:sleepService?.status()||null};}
 function send() {
+  crashLog.observe(crashSnapshot());
   const capture=!!musicSlot();if(desk&&(capture!==musicCapture||capture&&Date.now()-musicCaptureAt>1000)){musicCapture=capture;musicCaptureAt=Date.now();void desk.system.request('music-navigation',capture).catch(error=>{musicCapture=false;state.error=error.message;});}
   state.updateNotes=updateNotes.view();state.keyboardReady=!!(state.strip&&appliedAppearance);deskState();
   if(twitch&&desk)desk.chat.state.auth=twitch.state;if(xpanelSkins)state.xpanelSkins=xpanelSkins.state;if(community)state.community=community.state;if(updates)state.updates=updates.state;
@@ -145,10 +152,28 @@ else if(process.argv.includes('--quit')) app.quit();
 else {
   function diagnostics(){
     const directory=app.getPath('userData');
-      const saved=require('./local-diagnostics.cjs').write(directory,{networkMonitor:{enabled:!!desk?.live.monitorNetwork,busy:!!desk?.live.resources.busy,closed:!!desk?.live.resources.closed,lastProbeAt:desk?.live.resources.last??null,samples:desk?.live.resources.samples.length??0,reading:desk?.live.state.network??null,collector:desk?.live.resources.state.network??null},strip:state.strip,navigation:state.navigation,error:state.error,deviceError:state.deviceError,expectedSlot:strip.lastSlot,layer:state.layer,monitor:monitor.status(),updating:strip.updating,displayTiming:{lastTransferMs:strip.lastTransferMs??null,lastPngBytes:strip.lastPngBytes??null,ownedSlots:strip.pool.length,cachedFrames:strip.cache.size},cacheKeys:[...strip.cache.keys()],observedSlot:strip.lastObservedSlot,desired:strip.desired,media:{available:state.media.available,status:state.media.status,position:state.media.position,duration:state.media.duration,receivedAt:state.media.receivedAt},youtubeMusic:{available:state.youtubeMusic.available,source:state.youtubeMusic.source,status:state.youtubeMusic.status,target:youtubeMusic.target,position:state.youtubeMusic.position,duration:state.youtubeMusic.duration,hasArtwork:!!state.youtubeMusic.art,receivedAt:state.youtubeMusic.receivedAt},widgetType:desk?.config.widget?.type,widgetSources:widgetSources?.view(),pluginBinding:desk?.editor.snapshot?.layers.find(l=>l.id===1)?.bindings[26]});if(!saved){state.error='Could not save local diagnostics.';send();}
+      const saved=require('./local-diagnostics.cjs').write(directory,{networkMonitor:{enabled:!!desk?.live.monitorNetwork,busy:!!desk?.live.resources.busy,closed:!!desk?.live.resources.closed,lastProbeAt:desk?.live.resources.last??null,samples:desk?.live.resources.samples.length??0,reading:desk?.live.state.network??null,collector:desk?.live.resources.state.network??null},strip:state.strip,navigation:state.navigation,error:state.error,deviceError:state.deviceError,expectedSlot:strip.lastSlot,layer:state.layer,monitor:monitor.status(),updating:strip.updating,displayTiming:{lastTransferMs:strip.lastTransferMs??null,backgroundRestMs:strip.backgroundRestMs||0,lastPngBytes:strip.lastPngBytes??null,ownedSlots:strip.pool.length,cachedFrames:strip.cache.size},cacheKeys:[...strip.cache.keys()],observedSlot:strip.lastObservedSlot,desired:strip.desired,media:{available:state.media.available,status:state.media.status,position:state.media.position,duration:state.media.duration,receivedAt:state.media.receivedAt},youtubeMusic:{available:state.youtubeMusic.available,source:state.youtubeMusic.source,status:state.youtubeMusic.status,target:youtubeMusic.target,position:state.youtubeMusic.position,duration:state.youtubeMusic.duration,hasArtwork:!!state.youtubeMusic.art,receivedAt:state.youtubeMusic.receivedAt},widgetType:desk?.config.widget?.type,widgetSources:widgetSources?.view(),pluginBinding:desk?.editor.snapshot?.layers.find(l=>l.id===1)?.bindings[26]});if(!saved){state.error='Could not save local diagnostics.';send();}
   }
   app.on('second-instance', (_event,args) => { if(args.includes('--diagnostics')){diagnostics();return;} if(args.includes('--quit')){app.quit();return;} if(args.includes('--background'))return;if (win) openCompanion(win); });
   app.whenReady().then(async () => {
+    try{require('electron').crashReporter.start({uploadToServer:false,compress:true});}catch(error){crashLog.record('native-crash-capture-unavailable',{message:error.message});}
+    app.on('will-quit',()=>crashLog.record('app-exit',{version:app.getVersion()}));
+    strip.onDiagnostic=(kind,details)=>crashLog.record(kind,details);
+    crashLog.record('app-start',{version:app.getVersion()});
+    let rendererErrors=[];
+    handle('renderer-error',details=>{const now=Date.now();rendererErrors=rendererErrors.filter(t=>t>now-60000);if(rendererErrors.length>=10)return;rendererErrors.push(now);crashLog.record('renderer-error',{kind:String(details?.kind||'').slice(0,40),message:String(details?.message||'').slice(0,2000),stack:String(details?.stack||'').slice(0,4000)});});
+    let reportSaving=false;
+    handle('save-crash-report',async()=>{
+      if(reportSaving)throw Error('A crash report is already being saved.');reportSaving=true;
+      try{
+        const result=await dialog.showSaveDialog(win,{title:'Save crash report',defaultPath:path.join(app.getPath('documents'),'Companion-crash-report-'+Date.now()+'.json'),filters:[{name:'Crash report',extensions:['json']}]});
+        if(result.canceled)return{message:'Save canceled. Automatic logging remains active.'};
+        crashLog.record('report-export');
+        const exported=await require('./crash-export.cjs').save(result.filePath,crashLog.report(crashSnapshot()),app.getPath('crashDumps'));
+        shell.showItemInFolder(result.filePath);
+        return{message:'Crash report saved. Attach the JSON file to your feature request.'+(exported.dumpCount?' Local app crash dumps were saved beside it; share those only privately.':'')};
+      }finally{reportSaving=false;}
+    });
     session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
     session.defaultSession.setPermissionCheckHandler(() => false);
     startup=new Startup(app,process.execPath,app.getPath('userData'));try{state.startup=startup.initialize();}catch(e){state.startup=startup.read();state.error=e.message;}xpanelSkins=new XpanelSkins(shell);community=new Community(app.getPath('userData'),shell,safeStorage);updates=new Updates(app);updates.start();updates.on('change',send);
@@ -184,12 +209,14 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('set-display-sleep',async minutes=>{if(desk.settingsError)throw Error(desk.settingsError);const previous=desk.config.sleepMinutes;try{await sleepService.configure(minutes);desk.save({...desk.config,sleepMinutes:minutes});}catch(error){try{if(previous===null)await sleepService.close();else await sleepService.configure(previous);}catch{}throw error;}send();return state;});
     desk.system.on('music-toggle',()=>{if(musicSlot())void musicNavigation('toggle');});
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
-    monitor.on('disconnected',()=>{shortcutHealth.record('monitor-disconnected',{monitorConnected:false,displayConnected:state.strip});state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';state.strip=false;recoveryVerified=false;appliedAppearance='';send();});
+    monitor.on('disconnected',()=>{crashLog.record('keyboard-monitor-disconnected',crashSnapshot());shortcutHealth.record('monitor-disconnected',{monitorConnected:false,displayConnected:state.strip});state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';state.strip=false;recoveryVerified=false;appliedAppearance='';send();});
     monitor.on('layer',handleLayerState);
     monitor.on('layer-press',handleLayerPress);
     monitor.on('selected',position=>{if(win?.isFocused())win.webContents.send(pluginKeyCapture?'plugin-selected-key':'selected-key',position);pluginKeyCapture=false;});
     win = new BrowserWindow({ icon:path.join(__dirname,'assets/community.png'), width: 1320, height: 920, minWidth: 560, minHeight: 600, show: !process.argv.includes('--background') && !process.argv.includes('--verify') && !process.argv.includes('--smoke'), backgroundColor: '#11151d', title: 'Centerpiece Companion', autoHideMenuBar: true,
       frame:false, skipTaskbar:process.argv.includes('--background'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+      win.webContents.on('unresponsive',()=>crashLog.record('window-unresponsive',crashSnapshot()));
+      win.webContents.on('preload-error',(_event,_file,error)=>crashLog.record('preload-error',{message:error.message}));
       win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
       if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke')){
         tray=new Tray(path.join(__dirname,'assets/community.ico'));
@@ -309,7 +336,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('connect-twitch',async channel=>{twitch.start(channel);send();return state;});
     handle('cancel-twitch',()=>{twitch.cancel();send();return state;});
     handle('disconnect-service',async name=>{if(name==='obs'){await desk.obs?.disconnect();desk.obs=null;desk.obsStatus={connected:false};}else if(name==='twitch')await twitch.disconnect();else throw Error('Unknown connection');send();return state;});
-    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};state.setupReport.sleep=sleepService.status();state.setupReport.startup=startup.diagnostics();state.setupReport.windowsRelease=require('node:os').release();state.setupReport.displayTiming={lastTransferMs:strip.lastTransferMs??null,lastPngBytes:strip.lastPngBytes??null,liveUploads:strip.liveUploads,liveBytes:strip.liveBytes,statusTimeouts:strip.statusTimeouts};state.setupReport.connectionRecovery=connectionRecovery?.status()||null;if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
+    handle('check-setup',async()=>{if(setupBusy||desk.editor.busy)throw Error('Wait for the current keyboard operation.');setupBusy=true;try{state.setupReport=await displayTasks.run(()=>require('./setup-report.cjs').collectSetupReport({version:app.getVersion(),directory:hardwareDirectory}));state.setupReport.shortcutListeners={plugin:globalShortcut.isRegistered('Control+Alt+P'),widget:globalShortcut.isRegistered('Control+Alt+F12')};state.setupReport.shortcutHistory=shortcutHealth.view();state.setupReport.runtime={monitorConnected:monitor.status().connected,displayConnected:!!state.strip,appearanceApplied:!!appliedAppearance,recoveryBlocked:!!connectionRecovery?.blocked};state.setupReport.sleep=sleepService.status();state.setupReport.startup=startup.diagnostics();state.setupReport.windowsRelease=require('node:os').release();state.setupReport.displayTiming={lastTransferMs:strip.lastTransferMs??null,backgroundRestMs:strip.backgroundRestMs||0,lastPngBytes:strip.lastPngBytes??null,liveUploads:strip.liveUploads,skippedIdenticalFrames:strip.skippedIdenticalFrames,liveBytes:strip.liveBytes,statusTimeouts:strip.statusTimeouts};state.setupReport.connectionRecovery=connectionRecovery?.status()||null;if(state.setupFailure)state.setupReport.lastSetupFailure=state.setupFailure;send();return state;}finally{setupBusy=false;}});
     handle('dismiss-update-notes',version=>{const next=updateNotes.dismiss(version);send();return next;});
     handle('set-plugin-shortcuts',async settings=>{
       leaveMode();
@@ -416,7 +443,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
             shortcutHealth.record('binding-check',{shortcuts:require('./shortcut-status.cjs').shortcutStatus(keys),monitorConnected:monitor.status().connected,displayConnected:state.strip});
             if(!require('./shortcut-status.cjs').shortcutsReady(keys,widgetShortcutReady)){state.strip=false;recoveryVerified=false;state.deviceError='Keyboard shortcuts changed. Checking L1, L1 + P and L1 + /…';}
           }
-          await connectionRecovery.run({eligible:!state.strip||!recoveryVerified||!!strip.error,recover:recoverKeyboardConnection});
+          await connectionRecovery.run({eligible:!state.strip||!recoveryVerified||!!strip.error,recover:async()=>{crashLog.record('recovery-start',crashSnapshot());try{await recoverKeyboardConnection();crashLog.record('recovery-complete',crashSnapshot());}catch(error){crashLog.record('recovery-failed',{...crashSnapshot(),message:error.message,code:error.code});throw error;}}});
         }catch(error){state.error=error.message;if(require('./connection-recovery.cjs').retryable(error)){state.strip=false;recoveryVerified=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';}send();}
         finally{checkingConnection=false;}
       }

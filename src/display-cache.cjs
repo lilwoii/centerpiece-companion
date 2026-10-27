@@ -2,13 +2,15 @@ const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');con
 const DEFAULT_POOL=[2,3,4,5,6,7,8,9,10];
 const NAVIGATION=['previous','toggle','next','fourth','fifth'];
 const CONTENT_INTERVAL=250;
+const {createHash}=require('node:crypto');
 function ownedPool(manifest){
  const pool=manifest?.ownedSlots===undefined?DEFAULT_POOL:manifest.ownedSlots;
  if(!Array.isArray(pool)||pool.length<2||pool.length>9||new Set(pool).size!==pool.length||pool.some(n=>!Number.isInteger(n)||n<2||n>10))throw Error('The saved display allocation is invalid. Run Check setup before applying the keyboard display.');
  return [...pool];
 }
 class DisplayCache{
- constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.closing=false;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
+ event(kind,details){try{this.onDiagnostic?.(kind,details);}catch{}}
+ constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.closing=false;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.frameHashes=new Map();this.skippedIdenticalFrames=0;this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
  setSleepPaused(value){this.sleepPaused=!!value;if(value)this.clearLiveTimer();else this.displayReady();}
  get capacity(){return this.pool.length-1;}
  key(selected=this.desired,caps=this.caps,layer=this.layer){const key=selected!=='idle'?'nav:'+selected:layer?'layer:'+(caps?1:0):'idle:'+(caps?1:0);return this.config?.stripEnabled===false?'hidden:'+key:key;}
@@ -23,20 +25,26 @@ class DisplayCache{
    const candidates=dynamic.length?dynamic:choices;
    candidates.sort((a,b)=>(this.usage.get(a[0])||0)-(this.usage.get(b[0])||0));
    const key=candidates[0]?.[0];if(key===undefined)throw Error('The display cache has no safe frame to replace.');
-   this.cache.delete(key);this.frames.delete(key);this.frameContent.delete(key);this.usage.delete(key);
+   this.cache.delete(key);this.frames.delete(key);this.frameContent.delete(key);this.frameHashes.delete(key);this.usage.delete(key);
   }
  }
  evictionCandidates(choices){return this.capacity>=7?choices.filter(([key])=>key.startsWith('layer:')):[];}
  spare(){const used=new Set(this.cache.values());return this.pool.find(slot=>slot!==this.lastSlot&&!used.has(slot));}
  async write(slot,selected,caps,layer=false,verify=true,shift){
   if(!this.pool.includes(slot)||slot===this.lastSlot)throw Error('The display upload target is not a free inactive companion slot.');
+  this.lastWriteUploaded=false;
   const key=this.key(selected,caps,layer,shift),content=this.contentKey(),svg=this.frame(selected,caps,layer,shift),png=await sharp(Buffer.from(svg)).png().toBuffer();
+  const digest=createHash('sha256').update(png).digest('hex');
+  // Custom placement can clip content or make subpixel updates invisible. Avoid
+  // decoding a new full-screen texture on the device when its pixels are identical.
+  if(!verify&&this.widgetCount()>=3&&this.cache.has(key)&&this.frameHashes.get(key)===digest){this.frames.set(key,svg);this.frameContent.set(key,content);this.skippedIdenticalFrames++;return svg;}
   // The screen engine or XPANEL may have switched slots since our last write.
   // Check after rasterization, immediately before sending upload metadata.
   if(typeof this.som.currentSlot==='function'){
    const active=await this.som.currentSlot();
    if(!Number.isInteger(active)||active<0||active>10)throw Error('Invalid active overlay; upload canceled.');
    this.lastObservedSlot=active;
+    if(this.lastSlot!==null&&active!==this.lastSlot)this.event('overlay-changed-before-upload',{expected:this.lastSlot,observed:active});
    if(active===slot){
     this.lastSlot=active;this.selectionAt=Date.now();
     const occupied=new Set(this.cache.values());
@@ -45,18 +53,19 @@ class DisplayCache{
     if(slot===undefined)throw Error('No inactive overlay is safe to upload.');
     // With only two allocated slots, replacing an inactive cached frame is
     // safer than writing the externally selected visible slot.
-    for(const [oldKey,oldSlot]of this.cache)if(oldSlot===slot){this.cache.delete(oldKey);this.frames.delete(oldKey);this.frameContent.delete(oldKey);this.usage.delete(oldKey);}
+    for(const [oldKey,oldSlot]of this.cache)if(oldSlot===slot){this.cache.delete(oldKey);this.frames.delete(oldKey);this.frameContent.delete(oldKey);this.frameHashes.delete(oldKey);this.usage.delete(oldKey);}
    }
   }
-  this.lastPngBytes=png.length;await this.som.uploadOverlay(slot,png,'Companion strip',verify);
+  this.lastPngBytes=png.length;await this.som.uploadOverlay(slot,png,'Companion strip',verify);this.lastWriteUploaded=true;
   // The firmware activates a completed overlay upload. Record that transition
   // before dropping old cache entries, so the visible slot is never overwritten.
   this.lastSlot=slot;this.selectionAt=Date.now();
-  this.cache.set(key,slot);this.frames.set(key,svg);this.frameContent.set(key,content);this.touch(key);this.trim();return svg;
+  this.cache.set(key,slot);this.frames.set(key,svg);this.frameContent.set(key,content);this.frameHashes.set(key,digest);this.touch(key);this.trim();return svg;
  }
  setWidget(widget,extraWidgets){if(!this.config)return;this.config={...this.config,widget:structuredClone(widget),...(extraWidgets?{extraWidgets:structuredClone(extraWidgets)}:{})};this.liveUploadedAt=0;}
  animatedLive(){const c=this.config||{},w=c.widget||{};return c.weatherMotion!==false&&((c.extraWidgets||[]).some(w=>w.type==='weather'||w.clockSeconds===true)||w.type==='weather'||w.clockSeconds===true||c.appearance?.motion&&c.appearance.motion!=='off'||c.slots?.some(slot=>slot?.plugin==='weather'));}
- liveInterval(){if(!this.animatedLive())return 0;const c=this.config||{},w=c.widget||{},type=w.type==='follow'?c.slots?.[this.data.selected||0]?.plugin:w.type;return ['spotify','youtubemusic','youtube'].includes(type)||(c.extraWidgets||[]).some(w=>['spotify','youtubemusic','youtube'].includes(w.type))?500:1500;}
+ widgetCount(){return [this.config?.widget,...(this.config?.extraWidgets||[])].filter(w=>w&&w.type!=='off').length;}
+ liveInterval(){if(!this.animatedLive())return this.widgetCount()>=3?500:0;const c=this.config||{},w=c.widget||{},type=w.type==='follow'?c.slots?.[this.data.selected||0]?.plugin:w.type;return ['spotify','youtubemusic','youtube'].includes(type)||(c.extraWidgets||[]).some(w=>['spotify','youtubemusic','youtube'].includes(w.type))?500:1500;}
  contentKey(){
   const c=this.config||{},w=c.widget||{},slot=c.slots?.[this.data.selected||0],type=w.type==='follow'?slot?.plugin:w.type;
   if(c.extraWidgets?.length){return JSON.stringify([c.widget,...c.extraWidgets].filter(w=>['spotify','youtubemusic','youtube'].includes(w.type)).map(w=>{const m=(w.type==='spotify'?this.data.media:w.type==='youtube'?this.data.youtube:this.data.youtubeMusic)||{};return[w.type,m.title,m.artist,m.art,!!m.available];}));}if(!['spotify','youtubemusic','youtube'].includes(type))return null;
@@ -103,7 +112,7 @@ class DisplayCache{
     const active=await this.som.currentSlot();if(!Number.isInteger(active)||active<0||active>10)throw Error('The display returned an invalid active slot.');
     this.lastSlot=active||null;
    }
-   this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();
+   this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();
    const states=(slotEdit||legendToggle)?[[this.desired,this.caps,this.desired==='idle'&&this.layer]]:this.initialStates();
    for(const [selected,caps,layer,shift]of states){
     const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
@@ -148,16 +157,22 @@ class DisplayCache{
   // New music content has a short independent bound; progress and weather keep
   // their normal limit. Wake at the deadline rather than losing the update
   // until another 500ms polling tick happens to arrive.
-  const contentChanged=(this.frameContent.get(key)??null)!==this.contentKey(),interval=contentChanged?CONTENT_INTERVAL:this.liveInterval();
+  const contentChanged=(this.frameContent.get(key)??null)!==this.contentKey();
+  // A large free-placement frame can take longer to transmit than the poll tick.
+  // Leave measured breathing room after slow transfers instead of saturating USB.
+  // Missing interaction frames and new tracks bypass this background-only guard.
+  const widgetCount=this.widgetCount();
+  this.backgroundRestMs=widgetCount>=3&&this.lastTransferMs>500?Math.min(1000,Math.ceil(this.lastTransferMs/2)):0;
+  const interval=contentChanged?CONTENT_INTERVAL:Math.max(this.liveInterval(),this.backgroundRestMs);
   const remaining=interval-(this.now()-this.liveUploadedAt);
   if(this.cache.has(key)&&interval&&this.liveUploadedAt&&remaining>0){this.deferLive(remaining);return;}
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.clearLiveTimer();this.livePending=false;this.updating=true;
-  try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}
-  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
+  try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);if(this.lastWriteUploaded){this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}}
+  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;this.event('display-upload-failed',{message:e.message,code:e.code,pngBytes:this.lastPngBytes});throw e;}finally{this.updating=false;this.displayReady();}
  }
- async reconcile(){if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}}
- detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
+ async reconcile(){if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.event('unexpected-overlay-selection',{expected,observed:current});this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;this.event('display-status-timeout',{consecutive:this.statusReadFailures+1});if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}}
+ detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
  async close(){this.closing=true;this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;await som.activate(this.manifest.originalSlot||0);this.som=null;som.close();}
 }
 module.exports={DisplayCache,ownedPool};

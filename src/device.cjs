@@ -38,7 +38,16 @@ function versionQuery(device, kind) {
 }
 
 async function inspectDevice(queryVersions = false) {
-  const devices = identify(await HID.devicesAsync());
+  let inventory;
+  try { inventory = await HID.devicesAsync(); }
+  catch (cause) {
+    // Enumeration cannot change keyboard settings. Preserve automatic backoff
+    // even when the USB helper returns an unclassified timeout/native error.
+    throw Object.assign(new Error(cause.message || 'USB discovery failed.', { cause }), {
+      code: 'STUDIO_DISCOVERY_FAILED', writesAttempted: false
+    });
+  }
+  const devices = identify(inventory);
   const result = { keyboard: !!devices.keyboard, display: !!devices.display, displayIntegration: false };
   if (queryVersions) {
     for (const kind of ['keyboard', 'display']) {

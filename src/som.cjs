@@ -86,7 +86,7 @@ class Som {
         if(beat>=1024*1024){batch.push(this.packet(17));beat=0;if(batch.length===64)await flush();}
       }
       await flush();if(stopped)return;ending=true;this.send(32);
-    }, 20000);}finally{stopped=true;}
+    }, 20000);}catch(error){error.displayPhase='transfer';error.transferType=type;throw error;}finally{stopped=true;}
   }
   async uploadOverlay(slot, bytes, name = 'Companion strip', verify = true) {
     if (!Number.isInteger(slot)||slot<1||slot>10 || bytes.length > 8*1024*1024 || bytes.subarray(0,8).toString('hex') !== '89504e470d0a1a0a') throw new Error('Invalid overlay PNG');

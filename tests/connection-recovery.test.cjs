@@ -23,3 +23,13 @@ test('slow failed recovery retains its entire backoff after the operation ends',
  assert.equal(await c.run({eligible:true,recover:()=>assert.fail('must wait')}),false);
  time=56000;await assert.rejects(c.run({eligible:true,recover}));assert.equal(c.next,121000);assert.equal(c.status().nextRetrySeconds,20);
 });
+
+test('reported unclassified USB discovery timeout remains retryable and reconnects after backoff',async()=>{
+ const vm=require('node:vm'),fs=require('node:fs');let scans=0;
+ const box={module:{exports:{}},require:name=>{assert.equal(name,'./hid.cjs');return{devicesAsync:async()=>{if(++scans===1)throw Error('USB discovery timed out.');return [{vendorId:0x361d,usagePage:0xff00,usage:1,productId:0x200},{vendorId:0x361d,usagePage:0xff00,usage:1,productId:0x202}];}};}};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/device.cjs'),'utf8'),box);
+ const recovery=new ConnectionRecovery(),recover=()=>box.module.exports.inspectDevice(false);
+ await assert.rejects(recovery.run({eligible:true,recover,now:100}),e=>e.code==='STUDIO_DISCOVERY_FAILED'&&e.writesAttempted===false&&e.message==='USB discovery timed out.');
+ assert.equal(recovery.blocked,false);assert.equal(await recovery.run({eligible:true,recover,now:200}),false);
+ assert.equal(await recovery.run({eligible:true,recover,now:10100}),true);assert.equal(scans,2);
+});

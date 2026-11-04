@@ -61,3 +61,26 @@ test('new music identity bypasses slow multi-widget background pacing',async()=>
 
 test('fast CPU GPU Network layouts enforce a background limit independently of animation settings',async()=>{const f=fixture();f.cache.config.widget={type:'cpu'};f.cache.config.extraWidgets=[{type:'gpu'},{type:'network'}];await f.cache.refreshLive();f.advance(50);f.cache.data.revision++;await f.cache.refreshLive();assert.equal(f.uploads.length,1);assert.equal(f.timers.at(-1).delay,450);f.advance(450);await f.cache.refreshLive();assert.equal(f.uploads.length,2);f.cache.clearLiveTimer();});
 test('invisible multi-widget changes update cache metadata without another texture upload',async()=>{const f=fixture();f.cache.render=(_s,_c,_l,d)=>`<svg width="4" height="4"><title>${d.revision}</title><rect width="4" height="4" fill="red"/></svg>`;f.cache.config.extraWidgets=[{type:'ram'},{type:'network'}];await f.cache.refreshLive();f.cache.data.revision++;f.advance(500);await f.cache.refreshLive();assert.equal(f.uploads.length,1);assert.equal(f.cache.liveUploads,1);assert.equal(f.cache.skippedIdenticalFrames,1);assert.match(f.cache.frames.get('idle:0'),/<title>1/);f.cache.clearLiveTimer();});
+
+test('one lost pre-upload status reply retries without disconnecting or rebuilding overlays',async()=>{
+ const f=fixture(),events=[];f.cache.onDiagnostic=(kind,details)=>events.push({kind,details});
+ await f.cache.refreshLive();const read=f.cache.som.currentSlot;let reads=0;
+ f.cache.som.currentSlot=async()=>{if(++reads===1)throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return read();};
+ f.cache.data.revision++;await f.cache.refreshLive();
+ assert.equal(reads,2);assert.equal(f.uploads.length,2);assert.equal(f.cache.error,'');assert.equal(f.cache.statusTimeouts,1);
+ assert.ok(events.some(e=>e.kind==='display-status-timeout'&&e.details.phase==='before-upload'&&e.details.retrying));
+ f.cache.clearLiveTimer();
+});
+test('pre-upload timeout retries are bounded and do not transmit image data without readback',async()=>{
+ const f=fixture();await f.cache.refreshLive();let reads=0;
+ f.cache.som.currentSlot=async()=>{reads++;throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});};
+ f.cache.data.revision++;await assert.rejects(f.cache.refreshLive(),/timeout/);
+ assert.equal(reads,2);assert.equal(f.uploads.length,1);assert.equal(f.cache.statusTimeouts,2);assert.ok(f.cache.error);
+ f.cache.clearLiveTimer();
+});
+test('an ambiguous upload timeout is never retried as a status read',async()=>{
+ const f=fixture();await f.cache.refreshLive();let uploads=0;
+ f.cache.som.uploadOverlay=async()=>{uploads++;throw Object.assign(Error('upload timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});};
+ f.cache.data.revision++;await assert.rejects(f.cache.refreshLive(),/upload timeout/);
+ assert.equal(uploads,1);assert.equal(f.cache.statusTimeouts,0);f.cache.clearLiveTimer();
+});

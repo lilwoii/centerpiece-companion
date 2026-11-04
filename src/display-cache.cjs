@@ -30,6 +30,21 @@ class DisplayCache{
  }
  evictionCandidates(choices){return this.capacity>=7?choices.filter(([key])=>key.startsWith('layer:')):[];}
  spare(){const used=new Set(this.cache.values());return this.pool.find(slot=>slot!==this.lastSlot&&!used.has(slot));}
+ async readUploadSlot(){
+  // A lost read-only reply must not immediately rebuild every cached overlay.
+  // Retry only before any upload begins; never retry an ambiguous transfer.
+  for(let attempt=0;attempt<2;attempt++){
+   try{const active=await this.som.currentSlot();
+    if(!Number.isInteger(active)||active<0||active>10)throw Error('Invalid active overlay; upload canceled.');
+    this.statusReadFailures=0;return active;
+   }catch(error){
+    error.displayPhase='before-upload';
+    if(error.code!=='DISPLAY_REQUEST_TIMEOUT')throw error;
+    this.statusTimeouts++;this.event('display-status-timeout',{phase:'before-upload',attempt:attempt+1,retrying:attempt===0});
+    if(attempt===1)throw error;
+   }
+  }
+ }
  async write(slot,selected,caps,layer=false,verify=true,shift){
   if(!this.pool.includes(slot)||slot===this.lastSlot)throw Error('The display upload target is not a free inactive companion slot.');
   this.lastWriteUploaded=false;
@@ -41,8 +56,7 @@ class DisplayCache{
   // The screen engine or XPANEL may have switched slots since our last write.
   // Check after rasterization, immediately before sending upload metadata.
   if(typeof this.som.currentSlot==='function'){
-   const active=await this.som.currentSlot();
-   if(!Number.isInteger(active)||active<0||active>10)throw Error('Invalid active overlay; upload canceled.');
+   const active=await this.readUploadSlot();
    this.lastObservedSlot=active;
     if(this.lastSlot!==null&&active!==this.lastSlot)this.event('overlay-changed-before-upload',{expected:this.lastSlot,observed:active});
    if(active===slot){
@@ -56,7 +70,10 @@ class DisplayCache{
     for(const [oldKey,oldSlot]of this.cache)if(oldSlot===slot){this.cache.delete(oldKey);this.frames.delete(oldKey);this.frameContent.delete(oldKey);this.frameHashes.delete(oldKey);this.usage.delete(oldKey);}
    }
   }
-  this.lastPngBytes=png.length;await this.som.uploadOverlay(slot,png,'Companion strip',verify);this.lastWriteUploaded=true;
+  this.lastPngBytes=png.length;
+  try{await this.som.uploadOverlay(slot,png,'Companion strip',verify);}
+  catch(error){error.displayPhase=error.displayPhase||'overlay-upload';throw error;}
+  this.lastWriteUploaded=true;
   // The firmware activates a completed overlay upload. Record that transition
   // before dropping old cache entries, so the visible slot is never overwritten.
   this.lastSlot=slot;this.selectionAt=Date.now();
@@ -169,7 +186,7 @@ class DisplayCache{
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.clearLiveTimer();this.livePending=false;this.updating=true;
   try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);if(this.lastWriteUploaded){this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}}
-  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;this.event('display-upload-failed',{message:e.message,code:e.code,pngBytes:this.lastPngBytes});throw e;}finally{this.updating=false;this.displayReady();}
+  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;this.event('display-upload-failed',{message:e.message,code:e.code,phase:e.displayPhase||'render',transferType:e.transferType,pngBytes:this.lastPngBytes});throw e;}finally{this.updating=false;this.displayReady();}
  }
  async reconcile(){if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.event('unexpected-overlay-selection',{expected,observed:current});this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;this.event('display-status-timeout',{consecutive:this.statusReadFailures+1});if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}}
  detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}

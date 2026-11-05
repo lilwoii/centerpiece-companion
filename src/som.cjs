@@ -69,24 +69,28 @@ class Som {
     }, () => this.send(9, Buffer.from([slot])), 20000);
   }
   async transfer(type, bytes) {
-    let ending=false,stopped=false;
+    let ending=false,stopped=false,stage='start',bytesWritten=0;
+    const writePackets=async packets=>{
+      if(this.handle.writeBatch)await this.handle.writeBatch(packets);
+      else{for(const packet of packets){if(stopped)return;if(this.handle.write([...packet])!==packet.length)throw Error('Incomplete USB packet write.');}await new Promise(resolve=>setImmediate(resolve));}
+    };
     try{return await this.wait((cmd, p) => {
       if (cmd !== 32 || p.length < 2 || p[1] !== type) return;
       if(!ending)throw new Error('Display upload acknowledgement arrived before the transfer ended.');
       if (p[0] !== 0) throw new Error(`Display rejected upload: ${p.subarray(5).toString('utf8')}`);
       return true;
     }, async () => {
-      this.send(type);
+      await writePackets([this.packet(type)]);if(stopped)return;stage='data';
       let batch=[],beat=0;
-      const flush=async()=>{if(!batch.length||stopped)return;const packets=batch;batch=[];if(this.handle.writeBatch)await this.handle.writeBatch(packets);else{for(const packet of packets)this.handle.write([...packet]);await new Promise(resolve=>setImmediate(resolve));}};
+      const flush=async()=>{if(!batch.length||stopped)return;const packets=batch;batch=[];await writePackets(packets);bytesWritten+=packets.reduce((total,p)=>total+(p[3]===16?p.readUInt16LE(1):0),0);};
       for (let offset = 0; offset < bytes.length&&!stopped; offset += 1020){
         const part=bytes.subarray(offset,offset+1020);batch.push(this.packet(16,part));beat+=part.length;
         if(batch.length===64)await flush();
         if(stopped)return;
         if(beat>=1024*1024){batch.push(this.packet(17));beat=0;if(batch.length===64)await flush();}
       }
-      await flush();if(stopped)return;ending=true;this.send(32);
-    }, 20000);}catch(error){error.displayPhase='transfer';error.transferType=type;throw error;}finally{stopped=true;}
+      await flush();if(stopped)return;ending=true;stage='end';await writePackets([this.packet(32)]);stage='acknowledgement';
+    }, 20000);}catch(error){error.displayPhase='transfer';error.transferType=type;error.transferStage=stage;error.bytesWritten=bytesWritten;error.transferBytes=bytes.length;throw error;}finally{stopped=true;}
   }
   async uploadOverlay(slot, bytes, name = 'Companion strip', verify = true) {
     if (!Number.isInteger(slot)||slot<1||slot>10 || bytes.length > 8*1024*1024 || bytes.subarray(0,8).toString('hex') !== '89504e470d0a1a0a') throw new Error('Invalid overlay PNG');

@@ -1,5 +1,6 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.53": Object.freeze(["Fixed bugs and improved reliability."]),
   "0.3.0-preview.52": Object.freeze(["Fixed bugs that could cause display interruptions and prevent reconnection."]),
   "0.3.0-preview.51": Object.freeze(["Fixed multiple bugs."]),
   "0.3.0-preview.50": Object.freeze(["Fixed multiple bugs."]),

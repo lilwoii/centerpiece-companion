@@ -1,5 +1,13 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const {DisplayCache}=require('../src/display-cache.cjs');
+const {DisplayCache:BaseDisplayCache}=require('../src/display-cache.cjs');
+// Synthetic state fixtures must change pixels, not only invisible SVG titles:
+// production now skips uploads whose rasterized images are identical.
+class DisplayCache extends BaseDisplayCache {
+ frame(...args){const svg=super.frame(...args);if(!svg.includes('width="2" height="2"><title>'))return svg;
+ const color=require('node:crypto').createHash('sha256').update(svg).digest('hex').slice(0,6);
+ return svg.replace('</svg>',`<rect width="2" height="2" fill="#${color}"/></svg>`);
+ }
+}
 test('widget switch uploads only the visible state, preserving navigation and lock caches',async()=>{
  const uploads=[];const cache=new DisplayCache('.',(selected,config,locks)=>`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${selected}/${config.widget.type}/${locks.caps}/${locks.layer}</title></svg>`);
  cache.som={uploadOverlay:async slot=>uploads.push(slot),selectSlot:()=>{}};

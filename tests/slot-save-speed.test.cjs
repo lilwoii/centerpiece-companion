@@ -4,7 +4,7 @@ const {DisplayTasks}=require('../src/display-tasks.cjs');
 
 function fixture(pool=[2,3,4,5,6,7,8,9,10]){
  const device={active:1,uploads:[],selections:[]};
- const cache=new DisplayCache('.',(selected,config,locks,data)=>`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${selected}/${config.slots[0].action}/${locks.caps}/${locks.layer}/${data.revision||0}</title></svg>`);
+ const cache=new DisplayCache('.',(selected,config,locks,data)=>`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><title>${selected}/${config.slots[0].action}/${locks.caps}/${locks.layer}/${data.revision||0}</title><rect width="2" height="2" fill="rgb(${data.revision||0},0,0)"/></svg>`);
  cache.pool=[...pool];
  cache.som={currentSlot:async()=>device.active,uploadOverlay:async(slot,png,name,verify)=>{
   assert.ok(pool.includes(slot),'upload stays in Companion-owned slots');

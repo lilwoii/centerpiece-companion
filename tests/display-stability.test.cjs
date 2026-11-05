@@ -84,3 +84,9 @@ test('an ambiguous upload timeout is never retried as a status read',async()=>{
  f.cache.data.revision++;await assert.rejects(f.cache.refreshLive(),/upload timeout/);
  assert.equal(uploads,1);assert.equal(f.cache.statusTimeouts,0);f.cache.clearLiveTimer();
 });
+
+test('identical pixels skip USB uploads with zero, one, or two visible widgets',async()=>{
+ for(const type of ['off','clock','spotify']){const f=fixture();f.cache.config.widget.type=type;if(type==='spotify')f.cache.config.extraWidgets=[{type:'clock'}];
+ f.cache.render=(_s,_c,_l,d)=>`<svg width="4" height="4"><title>${d.revision}</title><rect width="4" height="4" fill="red"/></svg>`;
+ await f.cache.refreshLive();f.cache.data.revision++;f.advance(1000);await f.cache.refreshLive();assert.equal(f.uploads.length,1);assert.equal(f.cache.skippedIdenticalFrames,1);f.cache.clearLiveTimer();}
+});

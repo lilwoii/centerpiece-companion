@@ -3,7 +3,7 @@ const {Som}=require('../src/som.cjs');
 function client({rejectBatch=false,earlyReply=false}={}){
  const packets=[],batches=[],s=Object.create(Som.prototype);s.listeners=new Set();
  const reply=()=>{for(const listener of [...s.listeners])listener(null,32,Buffer.from([0,4]));};
- s.handle={write(packet){packets.push(packet);if(packet[3]===32)queueMicrotask(reply);return packet.length;},async writeBatch(batch){batches.push(batch.length);if(rejectBatch)throw Error('USB batch failed');for(const packet of batch)packets.push(packet);if(earlyReply)reply();}};
+ s.handle={write(packet){packets.push(packet);if(packet[3]===32)queueMicrotask(reply);return packet.length;},async writeBatch(batch){batches.push(batch.length);if(rejectBatch)throw Error('USB batch failed');for(const packet of batch)packets.push(packet);if(earlyReply||batch.some(p=>p[3]===32))reply();}};
  return {s,packets,batches};
 }
 test('large overlay transfers drain bounded batches before ending and include file-status heartbeats',async()=>{
@@ -63,5 +63,46 @@ test('backlogged or stalled USB batches cannot continue writing beyond their dea
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/hid-worker.cjs'),'utf8'),{Date:{now:()=>time},process:proc,require:()=>({HID:Native,devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'test'}]})});
  proc.emit('message',{op:'open',key:1,path:'test'});const packets=Array.from({length:64},()=>Array(1024).fill(0));
  proc.emit('message',{op:'write-batch',key:1,id:1,deadline:100,packets});assert.equal(writes,0);assert.ok(messages.at(-1).error);
- stall=true;proc.emit('message',{op:'write-batch',key:1,id:2,deadline:500,packets});assert.equal(writes,1);assert.ok(messages.at(-1).error);
+ stall=true;proc.emit('message',{op:'write-batch',key:1,id:2,deadline:500,packets});assert.equal(writes,0,'failed sessions reject queued writes until reconnect');assert.ok(messages.at(-1).error);
+});
+
+test('transfer waits for confirmed start write before sending any image bytes',async()=>{
+ const f=client();let release;const original=f.s.handle.writeBatch;
+ f.s.handle.writeBatch=packets=>packets[0][3]===4?new Promise(resolve=>{release=()=>{f.packets.push(...packets);resolve();};}):original(packets);
+ const pending=f.s.transfer(4,Buffer.alloc(2050));await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.packets.length,0);release();await pending;
+ assert.deepEqual(f.packets.map(p=>p[3]),[4,16,16,16,32]);
+});
+test('failed start or end write identifies the failing stage and cannot be mistaken for a missing firmware reply',async()=>{
+ for(const command of [4,32]){const f=client(),original=f.s.handle.writeBatch;
+ f.s.handle.writeBatch=packets=>{if(packets[0][3]===command)return Promise.reject(Error('Incomplete USB packet write.'));return original(packets);};
+ await assert.rejects(f.s.transfer(4,Buffer.alloc(2040)),e=>e.transferStage===(command===4?'start':'end')&&e.bytesWritten===(command===4?0:2040)&&e.transferBytes===2040);
+ assert.equal(f.packets.some(p=>p[3]===32),false);if(command===4)assert.equal(f.packets.length,0);
+ }
+});
+test('missing firmware acknowledgement reports successfully written byte count',async()=>{
+ const f=client();f.s.wait=function(match,trigger){return Som.prototype.wait.call(this,match,trigger,20);};
+ f.s.handle.writeBatch=async packets=>{f.packets.push(...packets);};
+ await assert.rejects(f.s.transfer(4,Buffer.alloc(2040)),e=>e.code==='DISPLAY_REQUEST_TIMEOUT'&&e.transferStage==='acknowledgement'&&e.bytesWritten===2040);
+});
+test('single native USB writes report short control packets instead of silently succeeding',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{EventEmitter}=require('node:events'),proc=new EventEmitter(),messages=[];
+ Object.assign(proc,{argv:[],connected:true,send:m=>messages.push(m),exit(){}});
+ class Native extends EventEmitter{write(){return 10;}close(){}}
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/hid-worker.cjs'),'utf8'),{process:proc,require:()=>({HID:Native,devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'test'}]})});
+ proc.emit('message',{op:'open',key:1,path:'test'});proc.emit('message',{op:'write',key:1,data:Array(1024).fill(0)});
+ assert.equal(messages.at(-1).event,'error');assert.match(messages.at(-1).message,/Incomplete USB packet/);
+});
+
+test('short native writes quarantine queued packets on the same interface but leave the keyboard interface usable',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),{EventEmitter}=require('node:events'),proc=new EventEmitter(),messages=[];let writes=0;
+ Object.assign(proc,{argv:[],connected:true,send:m=>messages.push(m),exit(){}});
+ class Native extends EventEmitter{constructor(path){super();this.path=path;}write(p){writes++;return this.path==='screen'?1:p.length;}close(){}}
+ const devices=[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'screen'},{vendorId:0x361d,productId:0x200,usagePage:0xff00,usage:1,path:'keys'}];
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/hid-worker.cjs'),'utf8'),{process:proc,require:()=>({HID:Native,devices:()=>devices})});
+ proc.emit('message',{op:'open',key:1,path:'screen'});proc.emit('message',{op:'open',key:2,path:'keys'});
+ proc.emit('message',{op:'write',key:1,data:Array(1024).fill(0)});
+ proc.emit('message',{op:'write-batch',key:1,id:1,deadline:Date.now()+10000,packets:[Array(1024).fill(0)]});
+ proc.emit('message',{op:'write',key:1,data:Array(1024).fill(0)});assert.equal(writes,1);
+ proc.emit('message',{op:'write',key:2,data:Array(64).fill(0)});assert.equal(writes,2);
 });

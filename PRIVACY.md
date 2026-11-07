@@ -8,7 +8,7 @@ YouTube Music normally uses Windows media controls. Its last song, artwork and p
 
 YouTube Music playback uses the selected Windows media session. Companion does not require a YouTube Music Desktop pairing token or a browser extension.
 
-Weather sends the chosen coordinates to api.open-meteo.com and city searches to geocoding-api.open-meteo.com. Twitch chat connects to Twitch over TLS. OBS and optional temperature sensors use loopback. Opening an assigned website or app invokes that destination and its privacy policy.
+Weather sends the chosen coordinates to api.open-meteo.com and city searches to geocoding-api.open-meteo.com. Twitch chat connects to Twitch over TLS. OBS and optional temperature sensors use loopback. Opening an assigned website or app invokes that destination and its privacy policy. Strava, when connected, reads your own activities from www.strava.com with read-only activity permission. Your Strava API app credentials and sign-in tokens are encrypted in strava-app.bin and strava-session.bin (saved through Electron safeStorage.encryptString) on the user's PC, and are sent only to Strava.
 
 The keyboard monitor observes the state needed for Companion navigation, key selection, and reactive features. Modifier and lock state also select the appropriate physical language legends. It stores no typing history. Microphone mute control does not record audio. Keyboard layout mappings and the original legend-visibility recovery record stay on the PC.
 

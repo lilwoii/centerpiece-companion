@@ -41,6 +41,7 @@ const entries=[
  ['github','GitHub','Community','github','https://github.com/']
 ];
 entries.push(['calendar','Calendar','Live widgets','clock',null]);
+entries.push(['strava','Strava','Widgets','strava','https://www.strava.com/dashboard']);
 const action=(id,label)=>({id,label});
 const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon:icon||id,url,actions:[
  ...(['weather','clock','cpu','gpu','calendar','decoration','performance','ram','vram','network'].includes(id)?[action('display',id==='decoration'?'Display only · no action':'Show live reading')]:[]),
@@ -49,6 +50,7 @@ const catalog=entries.map(([id,name,category,icon,url])=>({id,name,category,icon
  ...(['spotify','youtubemusic','youtube'].includes(id)?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track'),action('rewind','Rewind 10 seconds')]:[]),
  ...(id==='obs'?[action('record','Start / stop recording'),action('replay','Save replay buffer'),action('scene','Switch scene'),action('mute','Mute / unmute input')]:[]),
  ...(id==='media'?[action('toggle','Play / pause'),action('previous','Previous track'),action('next','Next track'),action('volumeup','Volume up'),action('volumedown','Volume down'),action('volumemute','Mute speakers')]:[]),
+ ...(id==='strava'?require('./strava-tiles.cjs').ACTIONS.map(([a,l])=>action(a,l)):[]),
  ...(url?[action('open',id==='steam'?'Open Steam':`Open ${name}`)]:[]),
  ...(id==='browser'?[action('url','Open website')]:[]),
  ...(id==='app'?[action('app','Open chosen app')]:[]),

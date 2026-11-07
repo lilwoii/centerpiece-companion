@@ -13,7 +13,7 @@ const {PlaybackClock}=require('./playback-clock.cjs');const playbackClock=new Pl
 const {MediaPoll,trackKey}=require('./media-poll.cjs');let mediaPoll,youtubeMusicPoll,youtubePoll;const youtubeClock=new PlaybackClock();let youtubePolling=false;
 const {Startup,openCompanion,hideCompanion}=require('./startup.cjs');let startup,refreshTray=()=>{};
 const {XpanelSkins}=require('./xpanel-skins.cjs');let xpanelSkins;
-const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,widgetCycle,widgetShortcutReady=false;
+const {Community}=require('./community.cjs');const {Updates}=require('./updates.cjs');let community,updates,twitch,strava,widgetCycle,widgetShortcutReady=false;
 const { MediaBridge } = require('./media.cjs');
 const { inspectDevice } = require('./device.cjs');
 const plugins = require('./plugins/index.cjs');
@@ -300,6 +300,13 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     handle('read-keymap',async()=>{const keys=await desk.editor.read();desk.baseLabels=keys.layers.find(l=>l.id===0).keys.map(k=>k.label);desk.bindingLayers=Object.fromEntries(keys.layers.map(l=>[l.id,l.keys.map(k=>k.binding)]));send();appliedAppearance='';await syncAppearance();return keys;});
     handle('list-languages',()=>require('./languages.cjs').list());
     widgetSources=new(require('./widget-sources.cjs').WidgetSources)(app.getPath('userData'));
+    strava=new(require('./strava.cjs').StravaConnection)(app.getPath('userData'),shell,safeStorage);desk.strava=strava;desk.live.state.strava=strava.data;strava.on('change',()=>{desk.live.state.strava=strava.data;send();});
+    handle('save-strava-app',input=>strava.saveApp(input));
+    handle('connect-strava',()=>{strava.start();return strava.view();});
+    handle('cancel-strava',()=>{strava.cancel();return strava.view();});
+    handle('disconnect-strava',async()=>{await strava.disconnect();return strava.view();});
+    handle('save-strava',input=>strava.save(input));
+    handle('refresh-strava',async()=>{await strava.refresh(true);return strava.view();});
     handle('widget-sources',()=>widgetSources.view());
     handle('enable-game-monitoring',async()=>{
       const script=path.join(__dirname,'enable-game-monitoring.ps1');
@@ -429,7 +436,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     mediaPoll=new MediaPoll(refresh,()=>state.media);mediaPoll.start();youtubeMusicPoll=youtubeMusic;youtubeMusicPoll.start();youtubePoll=new MediaPoll(refreshYoutube,()=>state.youtube);youtubePoll.start();
     if(desk.config.sleepMinutes!==null&&!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))setTimeout(()=>sleepService.configure(desk.config.sleepMinutes).catch(error=>{state.error='Display sleep: '+error.message;send();}),20000).unref();
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))stripTimer=setInterval(()=>{if(desk.countdown.view().running)send();if(strip.data)strip.data.timer=desk.countdown.view();refreshStrip();},500);
-    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();const visibleWidgets=[desk.config.widget,...(desk.config.extraWidgets||[])];const needPerformance=visibleWidgets.some(w=>w.type==='performance')||desk.config.slots.some(s=>s?.plugin==='performance');const foreground=needPerformance?await desk.system.request('foreground-app').catch(()=>''):'';if(needPerformance)widgetSources?.sample('performance',foreground);for(const w of visibleWidgets)if(w.type!=='performance')widgetSources?.sample(w.type,foreground,needPerformance);Object.assign(desk.live.state,widgetSources?.state||{});await desk.sampleObs();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
+    if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke'))liveTimer=setInterval(async()=>{if(liveBusy||quitting)return;liveBusy=true;try{await desk.live.sample();const visibleWidgets=[desk.config.widget,...(desk.config.extraWidgets||[])];const needPerformance=visibleWidgets.some(w=>w.type==='performance')||desk.config.slots.some(s=>s?.plugin==='performance');const foreground=needPerformance?await desk.system.request('foreground-app').catch(()=>''):'';if(needPerformance)widgetSources?.sample('performance',foreground);for(const w of visibleWidgets)if(w.type!=='performance')widgetSources?.sample(w.type,foreground,needPerformance);Object.assign(desk.live.state,widgetSources?.state||{});if(desk.config.slots.some(s=>s?.plugin==='strava'))desk.strava?.sample();await desk.sampleObs();send();}catch(e){state.error=e.message;send();}finally{liveBusy=false;}},1500);
     if(!process.argv.includes('--verify'))lockTimer=setInterval(async()=>{if(lockBusy||quitting)return;lockBusy=true;try{desk.locks=await desk.system.request('locks');if(state.strip)strip.setLocks(desk.locks);if(strip.error)state.error=`Keyboard selection: ${strip.error}. Apply your slots again to retry.`;send();}catch(e){state.error=e.message;send();}finally{lockBusy=false;}},2000);
     if(!process.argv.includes('--verify')&&!process.argv.includes('--smoke')){
       connectionRecovery=new(require('./connection-recovery.cjs').ConnectionRecovery)();const bindingHealth=new(require('./connection-recovery.cjs').BindingCheckHealth)();let lastBindingCheck=0,checkingConnection=false;

@@ -115,6 +115,15 @@ Open the **Spotify desktop app** and start a track. The companion reads its Wind
 
 Community users do not need to register a Twitch application or paste an access token. Access is read-only; the companion does not send chat messages. The connection is encrypted and saved locally. The small screen displays limited text, not a full desktop chat window.
 
+### Strava running week
+
+1. Create your own API application at [strava.com/settings/api](https://www.strava.com/settings/api). Set **Authorization Callback Domain** to `localhost`.
+2. Open **Connections → Strava**, paste its **Client ID** and **Client Secret**, and click **Save Strava app**.
+3. Click **Connect Strava**, approve access in your browser, then set your weekly goal and units.
+4. In **Plugin library**, search for Strava and assign it to positions 1–4. Choose **Weekly goal ring**, **Mon–Tue runs**, **Wed–Thu runs** and **Fri–Sun runs** to stack the whole week. Position five (left of ←) accepts any of them. Strava tiles are transparent until you pick a background color for that position in Plugin appearance.
+
+Runs, trail runs and virtual runs count toward the Monday–Sunday week. Days you ran show a green dot with that day's distance and moving time. Runs refresh every 10 minutes while a Strava position is assigned. Each user registers their own Strava app because Strava requires a client secret, which a public download cannot contain.
+
 ### OBS Studio
 
 In OBS, open **Tools → WebSocket Server Settings**, enable the server, and use its port and password in the companion's **Connections** page. The companion connects to OBS on the same PC. Assign actions such as recording toggle, replay-buffer save, scene switching or input mute in Plugin library. Enter exact scene/input names where requested. OBS must be running and its relevant feature configured. Its password is kept in memory for that session.

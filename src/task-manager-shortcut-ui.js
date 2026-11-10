@@ -1,0 +1,11 @@
+(()=>{
+'use strict';
+const notice=document.createElement('section');notice.className='escape-shortcut-fix';notice.hidden=true;
+notice.innerHTML='<strong>Ctrl + Shift + Esc · Task Manager</strong><p class="note">Your Esc key also acts as backtick when Shift is held. Use standard Esc so Windows can receive Ctrl + Shift + Esc. Shift + Esc will then remain Escape; backtick can be assigned to another key or layer.</p><div class="form-actions"><button class="button" id="standard-escape" type="button">Use standard Esc</button><button class="button" id="undo-standard-escape" type="button" disabled>↶ Undo Esc change</button></div><p id="standard-escape-status" class="note" role="status"></p>';
+(document.querySelector('.key-group-editor')||el('keyboard-map')).after(notice);let savedMap=null;
+function render(){const binding=keymap?.layers.find(l=>l.id===0)?.keys[0]?.binding;const stock=binding?.behaviorId===29795;const canUndo=!!savedMap&&JSON.stringify(keymap)===savedMap;notice.hidden=!stock&&!canUndo;el('standard-escape').disabled=!stock||deskBusy;el('undo-standard-escape').disabled=!canUndo||deskBusy;}
+const draw=drawKeyboard;drawKeyboard=function(){draw();render();};
+bind('standard-escape',async()=>{const binding=keymap?.layers.find(l=>l.id===0)?.keys[0]?.binding;if(binding?.behaviorId!==29795)throw Error('Read the keyboard again. Esc is no longer using the combined binding.');keymap=await window.companion.changeKey({layer:0,position:0,value:0x70029,mods:0,swap:null});savedMap=JSON.stringify(keymap);document.dispatchEvent(new Event('companion-external-binding-change'));drawKeyboard();el('standard-escape-status').textContent=keymap.sample?'Standard Esc applied in this preview only. Physical keys are unchanged. Undo restores the sample binding.':'Standard Esc saved and verified. Try Ctrl + Shift + Esc. Undo restores the original combined binding.';});
+bind('undo-standard-escape',async()=>{if(!savedMap||JSON.stringify(keymap)!==savedMap)throw Error('Another binding changed. Use the keyboard editor to choose Esc explicitly.');keymap=await window.companion.undoKey();savedMap=null;document.dispatchEvent(new Event('companion-external-binding-change'));drawKeyboard();announce('Original Esc / backtick binding restored.');});
+document.addEventListener('companion-task-finished',render);window.companion.subscribe(render);render();
+})();

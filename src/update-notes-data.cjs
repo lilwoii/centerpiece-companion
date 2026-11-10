@@ -1,5 +1,15 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.54": Object.freeze([
+    "A cleaner Keyboard editor puts your editable keyboard at the top, with group selection, clearer actuation and rapid-trigger controls, presets and exact depth settings.",
+    "Added a live green key-travel meter with measured depth and rapid-trigger thresholds. Show or hide saved actuation values above the keyboard. Live travel uses the keyboard's available sensor feed.",
+    "Faster key selection and lighter app updates reduce editor lag. The keyboard preview now shows your actual plugins, widgets and live Caps Lock/L1 highlights, with sharper built-in plugin logos.",
+    "Added an optional, reversible standard-Esc fix for Ctrl + Shift + Esc when the keyboard's combined Esc/backtick binding prevents Task Manager from opening.",
+    "Feature requests now has a compact message composer that stays accessible while you browse, clearer colored actions, and Profile controls expanded by default with an option to collapse.",
+    "Window controls and the draggable header stay accessible while scrolling. Existing community sign-ins, messages and saved settings are preserved.",
+    "Improved display-sleep activity detection for fullscreen games, using keyboard activity and a Windows idle check before sleeping.",
+    "Fixed USB connection cleanup, interrupted-request handling and settings rollback safeguards to improve recovery and prevent the editor remaining stuck busy."
+  ]),
   "0.3.0-preview.53": Object.freeze(["Fixed bugs and improved reliability."]),
   "0.3.0-preview.52": Object.freeze(["Fixed bugs that could cause display interruptions and prevent reconnection."]),
   "0.3.0-preview.51": Object.freeze(["Fixed multiple bugs."]),

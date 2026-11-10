@@ -134,3 +134,38 @@ dialog{background:var(--surface);color:var(--ink);border:1px solid var(--border)
 #crash-report-status{min-height:2.6em;overflow-wrap:anywhere}
 
 [data-page="connections"] .page-heading{flex-wrap:wrap;gap:16px}
+
+/* Window chrome remains reachable while every page scrolls naturally. */
+:root{--app-header-height:96px}
+.app-header{position:sticky;top:0;z-index:100;background:var(--background)}
+.app-header a,.app-header button{ -webkit-app-region:no-drag }
+.sidebar{top:var(--app-header-height);height:calc(100dvh - var(--app-header-height))}
+html{scroll-padding-top:calc(var(--app-header-height) + 16px)}
+
+@media(max-width:740px){.sidebar{height:auto;position:static}}
+
+/* Community owns its conversation scroll; the message composer stays in view. */
+.community-page{display:flex;flex-direction:column;height:var(--community-height,calc(100dvh - var(--app-header-height) - 40px));min-height:320px;gap:12px}
+.community-heading{flex:none;margin:0;gap:12px}.community-heading>div{margin-right:auto}.community-heading h1{font-size:28px}.community-heading .subtitle{margin-top:4px;font-size:13px}.community-heading .button{min-height:38px;padding:8px 12px}.community-heading .mention-notifications{margin-left:0}
+.community-page .community-account{position:relative;flex:none;gap:10px;padding:0 0 10px}.community-page .community-account>p{flex:1;flex-basis:auto;font-size:12px}.community-page .community-account>.button{min-height:36px;padding:7px 12px}
+.community-profile{font-size:12px}.community-profile summary{margin:0;cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:7px;color:var(--muted)}.community-profile summary:hover{color:var(--ink);background:var(--tint)}.community-profile>div{position:static;margin-top:6px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 3px 12px #0002;display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%}.community-profile label{display:flex;gap:8px;align-items:center}.community-profile input{width:40px}.community-profile #save-name-color{color:var(--success);border-color:var(--success)}
+.community-conversation{flex:1;min-height:40px;overflow:auto;scrollbar-gutter:stable;overscroll-behavior:contain;padding-right:6px}.community-conversation .community-feed{margin:0}.community-message:first-child{padding-top:10px}.community-page .community-message{padding-block:14px;gap:12px}.community-page .community-message p{font-size:14px;line-height:1.5}.community-page .community-message h3{margin:5px 0}.community-page .message-meta{gap:8px}.community-page .status-label{border:1px solid var(--border);padding:0 6px;border-radius:4px;color:var(--success)}
+.community-page .request-composer{flex:none;margin:0;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);max-height:48dvh;overflow:auto;min-width:0;box-shadow:0 3px 12px #0002}.community-page .request-composer:focus-within{border-color:var(--success)}.community-page .request-composer.drag-over{border-color:var(--success);outline:2px solid var(--success);outline-offset:2px}
+.community-page .request-composer>label{display:block;margin:0}.community-page .request-subject input{width:100%;border:0;border-bottom:1px solid var(--border);background:transparent;border-radius:0;padding:4px 0 8px;min-height:30px;font-size:12px}.community-page .request-message textarea{width:100%;padding:9px 0 5px;min-height:60px;max-height:140px;border:0;background:transparent;resize:none;font-size:14px;line-height:1.5}.community-page .request-composer textarea:focus{outline:none}.community-page .request-media-drop{padding:0;margin:6px 0 0;border:0;background:transparent}.request-compose-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.request-compose-actions>.button,.request-compose-actions select{min-height:36px;padding:7px 10px;font-size:12px}.request-compose-actions select{border-color:var(--border);color:var(--ink);background:var(--background)}.request-compose-actions #request-submit{margin-left:auto;background:var(--success);border-color:var(--success);color:var(--background);font-weight:700;min-width:125px}.request-compose-actions #request-submit:hover:not(:disabled){filter:brightness(1.1)}.community-page .request-compose-actions .request-attach{background:var(--attention);border-color:var(--attention);color:var(--background);font-weight:700}.request-compose-actions .request-info{color:var(--muted);background:transparent;border-color:var(--border)}.request-compose-actions .request-info:hover{color:var(--ink);background:var(--tint)}
+.request-compose-footer{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px;margin-top:8px}.request-compose-footer #request-character-count{white-space:nowrap}.community-page #request-validation:empty,.community-page #request-media-list:empty,.community-page #request-media-status:empty{display:none}.community-page #request-validation{margin-top:8px;font-size:12px}.community-page #request-media-status{margin-top:6px;color:var(--attention);font-size:12px}.community-page #request-media-list{margin:8px 0 0}.community-page #request-media-list li{font-size:12px;margin-top:4px}.community-page #request-media-list .button{min-height:28px;padding:3px 8px}.community-page #skin-submission-fields label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}.community-page #skin-submission-fields input[type=url]{flex:1;min-width:100px}.request-info-dialog{max-width:520px}.request-info-dialog p{margin:16px 0;color:var(--muted);font-size:14px}.request-info-dialog .button{color:var(--success);border-color:var(--success)}
+@media(max-width:740px){.community-page{height:var(--community-height,calc(100dvh - var(--app-header-height) - 40px));min-height:320px}.community-heading{flex-wrap:wrap}.community-heading>div{flex:1 1 190px;min-width:0}.community-heading .subtitle{display:none}.community-heading h1{font-size:25px}.community-heading .mention-notifications{margin-left:auto}.request-compose-footer{font-size:10px}.request-compose-footer #request-compose-help{max-width:75%}.request-compose-actions{gap:6px}.community-page .community-message{grid-template-columns:28px minmax(0,1fr);gap:8px}.community-page .community-avatar{width:28px;height:28px}.community-page .community-account>p{flex:1 1 170px}}
+
+.community-page .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.community-page .community-message h3,.community-page .message-meta strong,.community-page #community-status{min-width:0;overflow-wrap:anywhere}
+@media(max-width:740px){.community-page .request-composer{position:sticky;bottom:12px;z-index:4}.community-page .community-heading .button{white-space:normal}}
+
+.shell main:has(>.community-page:not([hidden])){margin-block:0}
+/* Exact device content is composited over the existing editable keys. */
+.physical-board .editor-live-content,.physical-board .editor-live-indicators,.physical-board .editor-widget-hotspots{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;border:0;padding:0;margin:0;max-width:none}
+.physical-board .editor-live-content{object-fit:fill;z-index:2}
+.physical-board .editor-live-indicators{z-index:3;overflow:visible}
+.physical-board .editor-widget-hotspots{z-index:4}
+.physical-board .editor-widget-hotspot{position:absolute;pointer-events:auto;border:0;background:transparent;border-radius:5px;padding:0;min-height:0;cursor:pointer}
+.physical-board .editor-widget-hotspot:hover{outline:1px solid var(--attention)}
+.physical-board .editor-widget-hotspot:focus-visible{outline:3px solid var(--attention);outline-offset:2px}

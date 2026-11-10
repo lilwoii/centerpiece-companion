@@ -4,6 +4,7 @@ const fs = require('node:fs');
 app.setPath('userData',path.join(app.getPath('appData'),'centerpiece-companion'));
 
 const crashLog=new(require('./crash-log.cjs').CrashLog)(app.getPath('userData'));
+require('./hid.cjs').setDiagnosticHandler((kind,details)=>crashLog.record(kind,details));
 process.on('uncaughtExceptionMonitor',(error,origin)=>crashLog.record('main-process-fatal',{origin,message:error.message,stack:error.stack}));
 app.on('render-process-gone',(_event,_contents,details)=>crashLog.record('renderer-process-gone',details));
 app.on('child-process-gone',(_event,details)=>crashLog.record('child-process-gone',{type:details.type,reason:details.reason,exitCode:details.exitCode}));
@@ -184,7 +185,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       if(automatic&&!autoAllowed())return false;
       leaveMode();widgetCycle.close();desk.save(config);state.profileRevision=(state.profileRevision||0)+1;state.widgetRevision=(state.widgetRevision||0)+1;updateNavigation();send();appliedAppearance='';await syncAppearance();send();return true;
     },autoAllowed);
-    sleepService=new(require('./sleep-service.cjs').SleepService)({setPaused:value=>strip.setSleepPaused(value),run:fn=>displayTasks.run(fn),onError:error=>{state.error='Display sleep: '+error.message;send();}});
+    sleepService=new(require('./sleep-service.cjs').SleepService)({getIdleSeconds:()=>desk.system.request('input-idle'),setPaused:value=>strip.setSleepPaused(value),run:fn=>displayTasks.run(fn),onError:error=>{state.error='Display sleep: '+error.message;send();}});
     desk.system.on('activity',()=>sleepService.activity());
     handle('config-backup',async action=>{
       const backup=require('./config-backup.cjs'),validate=c=>desk.validate(c);
@@ -210,6 +211,7 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
     desk.system.on('music-toggle',()=>{if(musicSlot())void musicNavigation('toggle');});
     desk.system.on('locks',locks=>{if(navigation.active&&desk.locks.caps!==locks.caps)leaveMode();desk.locks=locks;if(state.strip)strip.setLocks(locks);send();});
     monitor.on('disconnected',()=>{crashLog.record('keyboard-monitor-disconnected',crashSnapshot());shortcutHealth.record('monitor-disconnected',{monitorConnected:false,displayConnected:state.strip});state.device.keyboard=false;state.deviceError='Keyboard connection interrupted. Reconnecting automatically…';state.strip=false;recoveryVerified=false;appliedAppearance='';send();});
+    monitor.on('activity',()=>sleepService.activity());
     monitor.on('layer',handleLayerState);
     monitor.on('layer-press',handleLayerPress);
     monitor.on('selected',position=>{if(win?.isFocused())win.webContents.send(pluginKeyCapture?'plugin-selected-key':'selected-key',position);pluginKeyCapture=false;});
@@ -232,6 +234,8 @@ if(desk.settingsError)suspendAutomaticSetup();deskState();updateNavigation();
       }
     win.webContents.on('will-navigate', event => event.preventDefault());
     win.on('blur',()=>monitor.capture(false));
+    const keyTravel=require('./key-travel-bridge.cjs').attachKeyTravel(monitor,win);
+    handle('set-key-travel-watching',enabled=>keyTravel.set(enabled));
     win.on('show',send);win.on('restore',send);
     handle('get-state', () => state);
     handle('set-startup',enabled=>{state.startup=startup.set(enabled);refreshTray();send();return state;});

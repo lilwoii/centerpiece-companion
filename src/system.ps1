@@ -7,6 +7,9 @@ public class CompanionInput {
  public static string ScreenshotFolder(string destination){var id=new Guid("B7BEDE81-DF94-4682-A7D8-57A52620B86F");if(!String.IsNullOrEmpty(destination)){if(!System.IO.Directory.Exists(destination))throw new Exception("Choose an existing folder.");Marshal.ThrowExceptionForHR(SHSetKnownFolderPath(ref id,0,IntPtr.Zero,destination));}IntPtr result;Marshal.ThrowExceptionForHR(SHGetKnownFolderPath(ref id,0x4000,IntPtr.Zero,out result));try{return Marshal.PtrToStringUni(result);}finally{Marshal.FreeCoTaskMem(result);}}
  [DllImport("user32.dll")] public static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
  [DllImport("user32.dll")] public static extern short GetKeyState(int key);
+ [StructLayout(LayoutKind.Sequential)] struct LastInput {public uint size;public uint time;}
+ [DllImport("user32.dll")] static extern bool GetLastInputInfo(ref LastInput input);
+ public static double IdleSeconds(){var input=new LastInput();input.size=(uint)Marshal.SizeOf(typeof(LastInput));if(!GetLastInputInfo(ref input))throw new Exception("Windows idle state was unavailable.");uint elapsed=unchecked((uint)Environment.TickCount-input.time);return elapsed>Int32.MaxValue?0:elapsed/1000.0;}
  [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
  public static string ForegroundApp(){uint id;GetWindowThreadProcessId(GetForegroundWindow(),out id);if(id==0)return "";try{using(var p=System.Diagnostics.Process.GetProcessById((int)id)){return p.ProcessName+".exe";}}catch{return "";}}
@@ -51,6 +54,7 @@ while($null -ne ($line=[Console]::ReadLine())){
   if($r.action -eq 'locks'){ $result=@{caps=[CompanionInput]::Caps;shift=[CompanionInput]::Shift} }
   elseif($r.action -eq 'music-navigation'){ [CompanionInput]::ConfigureMusic([bool]$r.codes); $result=$true }
   elseif($r.action -eq 'foreground-app'){ $result=[CompanionInput]::ForegroundApp() }
+  elseif($r.action -eq 'input-idle'){ $result=[CompanionInput]::IdleSeconds() }
   elseif($r.action -eq 'screenshot-folder'){ $result=[CompanionInput]::ScreenshotFolder($null) }
   elseif($r.action -eq 'set-screenshot-folder'){ $result=[CompanionInput]::ScreenshotFolder([string]$r.codes) }
   elseif($r.action -eq 'mic-status' -or $r.action -eq 'mic-toggle'){ $result=@{muted=[CompanionAudio]::Mute($r.action -eq 'mic-toggle')} }

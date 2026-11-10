@@ -1,13 +1,16 @@
 const{fork,execFileSync}=require('node:child_process'),{EventEmitter}=require('node:events'),path=require('node:path');
-const worker=path.join(__dirname,'hid-worker.cjs');let child,sequence=0,cached;const handles=new Map(),pending=new Map();
+const worker=path.join(__dirname,'hid-worker.cjs');let child,childEnd,sequence=0,cached;const handles=new Map(),pending=new Map();
+let diagnosticHandler=null;
+function setDiagnosticHandler(handler){diagnosticHandler=typeof handler==='function'?handler:null;}
+function diagnostic(kind,details){try{diagnosticHandler?.(kind,details);}catch{}}
 function environment(){return{...process.env,ELECTRON_RUN_AS_NODE:'1'};}
-function start(){if(child?.connected)return child;const proc=fork(worker,[],{execPath:process.execPath,env:environment(),windowsHide:true,stdio:['ignore','ignore','ignore','ipc'],serialization:'advanced'});child=proc;
- proc.on('message',m=>{if(m.id){const item=pending.get(m.id);if(item){clearTimeout(item.timer);pending.delete(m.id);m.error?item.reject(Error(m.error)):item.resolve(m.result);}}else{const h=handles.get(m.key);if(h&&!h.closed){if(m.event==='data')h.emit('data',Buffer.from(m.data));else if(m.event==='error')h.emit('error',Error(m.message));}}});
- const end=()=>{if(child!==proc)return;child=null;cached=null;for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('USB helper stopped. Reconnect the keyboard in the app.'));}pending.clear();const open=[...handles.values()];handles.clear();for(const h of open){h.closed=true;h.emit('error',Error('USB helper stopped. Restart the keyboard connection in the app.'));}};proc.on('error',end);proc.on('exit',end);return proc;
+function start(){if(child?.connected)return child;if(child)childEnd?.('disconnect',{});const proc=fork(worker,[],{execPath:process.execPath,env:environment(),windowsHide:true,stdio:['ignore','ignore','ignore','ipc'],serialization:'advanced'});child=proc;
+ proc.on('message',m=>{if(child!==proc)return;if(m.event==='diagnostic'){diagnostic(m.kind,m.details);return;}if(m.id){const item=pending.get(m.id);if(item){clearTimeout(item.timer);pending.delete(m.id);m.error?item.reject(Error(m.error)):item.resolve(m.result);}}else{const h=handles.get(m.key);if(h&&!h.closed){if(m.event==='data')h.emit('data',Buffer.from(m.data));else if(m.event==='error')h.emit('error',Error(m.message));}}});
+ const end=(reason,details)=>{if(child!==proc)return;child=null;childEnd=null;cached=null;diagnostic('usb-helper-failed',{reason,...details,clients:handles.size,pendingRequests:pending.size});for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('USB helper stopped. Reconnect the keyboard in the app.'));}pending.clear();const open=[...handles.values()];handles.clear();for(const h of open){h.closed=true;h.emit('error',Error('USB helper stopped. Restart the keyboard connection in the app.'));}};childEnd=end;proc.on('disconnect',()=>end('disconnect',{}));proc.on('error',error=>end('error',{message:String(error?.message||'USB helper error').slice(0,160)}));proc.on('exit',(exitCode,signal)=>end('exit',{exitCode:Number.isInteger(exitCode)?exitCode:null,signal:typeof signal==='string'?signal.slice(0,32):null}));return proc;
 }
 function send(message){const p=start();p.send(message,error=>{if(error&&message.key){const h=handles.get(message.key);if(h&&!h.closed)h.emit('error',Error('USB helper is unavailable.'));}});}
 class VirtualHID extends EventEmitter{
- constructor(devicePath){super();this.key=++sequence;this.closed=false;handles.set(this.key,this);send({op:'open',key:this.key,path:devicePath});}
+ constructor(devicePath){super();start();this.key=++sequence;this.closed=false;handles.set(this.key,this);send({op:'open',key:this.key,path:devicePath});}
  write(data){if(this.closed)throw Error('USB connection closed. Restart the keyboard connection.');send({op:'write',key:this.key,data:Array.from(data)});return data.length;}
  writeBatch(packets){
   if(this.closed)return Promise.reject(Error('USB connection closed. Restart the keyboard connection.'));
@@ -15,8 +18,9 @@ class VirtualHID extends EventEmitter{
   return new Promise((resolve,reject)=>{const id=++sequence,deadline=Date.now()+10000,timer=setTimeout(()=>{pending.delete(id);reject(Error('USB batch timed out.'));},10000);pending.set(id,{resolve,reject,timer});try{send({op:'write-batch',key:this.key,id,deadline,packets:packets.map(p=>Array.from(p))});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
  }
  close(){if(this.closed)return;this.closed=true;handles.delete(this.key);if(child?.connected)child.send({op:'close',key:this.key},()=>{});}
+ invalidate(){if(!this.closed&&child?.connected)child.send({op:'invalidate',key:this.key},()=>{});}
 }
 function devices(){if(cached)return cached;cached=JSON.parse(execFileSync(process.execPath,[worker,'--list'],{env:environment(),windowsHide:true,timeout:8000,maxBuffer:200000,encoding:'utf8'}));return cached;}
-function devicesAsync(){return new Promise((resolve,reject)=>{const id=++sequence;const timer=setTimeout(()=>{pending.delete(id);reject(Error('USB discovery timed out.'));},8000);pending.set(id,{resolve:value=>{cached=value;resolve(value);},reject,timer});send({op:'devices',id});});}
-function shutdown(){const p=child;child=null;cached=null;for(const h of handles.values())h.closed=true;handles.clear();for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('App closed.'));}pending.clear();if(!p||p.exitCode!=null)return Promise.resolve();return new Promise(resolve=>{const timer=setTimeout(()=>{try{p.kill();}catch{}resolve();},3000);timer.unref();p.once('exit',()=>{clearTimeout(timer);resolve();});if(p.connected)p.disconnect();});}
-module.exports={HID:VirtualHID,devices,devicesAsync,shutdown};
+function devicesAsync(){return new Promise((resolve,reject)=>{start();const id=++sequence;const timer=setTimeout(()=>{pending.delete(id);reject(Error('USB discovery timed out.'));},8000);pending.set(id,{resolve:value=>{cached=value;resolve(value);},reject,timer});send({op:'devices',id});});}
+function shutdown(){const p=child;child=null;childEnd=null;cached=null;for(const h of handles.values())h.closed=true;handles.clear();for(const item of pending.values()){clearTimeout(item.timer);item.reject(Error('App closed.'));}pending.clear();if(!p||p.exitCode!=null)return Promise.resolve();return new Promise(resolve=>{const timer=setTimeout(()=>{try{p.kill();}catch{}resolve();},3000);timer.unref();p.once('exit',()=>{clearTimeout(timer);resolve();});if(p.connected)p.disconnect();});}
+module.exports={HID:VirtualHID,devices,devicesAsync,shutdown,setDiagnosticHandler};

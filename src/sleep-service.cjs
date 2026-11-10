@@ -1,20 +1,31 @@
 const {DisplaySleep,minutes}=require('./display-sleep.cjs');
 const {Som}=require('./som.cjs');
 class SleepService {
- constructor({run,onError,createSom=()=>new Som(),setEnabled=value=>require('./display-power.cjs').enabled(value),setPaused=()=>{},now=Date.now,every=setInterval,cancel=clearInterval}){this.setEnabled=setEnabled;this.keepAwakeBusy=false;this.testing=false;this.run=run;this.onError=onError;this.createSom=createSom;this.original=null;this.identity=null;this.timer=null;this.every=every;this.cancel=cancel;this.controller=new DisplaySleep({now,onError,setEnabled:async value=>{if(!value)setPaused(true);try{await this.run(()=>setEnabled(value));}catch(error){if(!value)setPaused(false);throw error;}if(value)setPaused(false);}});}
+ constructor({run,onError,createSom=()=>new Som(),setEnabled=value=>require('./display-power.cjs').enabled(value),setPaused=()=>{},getIdleSeconds,now=Date.now,every=setInterval,cancel=clearInterval}){this.setEnabled=setEnabled;this.keepAwakeBusy=false;this.testing=false;this.run=run;this.onError=onError;this.createSom=createSom;this.original=null;this.identity=null;this.timer=null;this.every=every;this.cancel=cancel;this.getIdleSeconds=getIdleSeconds;this.activityCheck=null;this.activityEpoch=0;this.inputFallbackError=null;this.controller=new DisplaySleep({now,onError,setEnabled:async value=>{if(!value)setPaused(true);try{await this.run(()=>setEnabled(value));}catch(error){if(!value)setPaused(false);throw error;}if(value)setPaused(false);}});}
  async configure(value){
   minutes(value);
   // This firmware clamps the one-byte timeout to 1..99 minutes. Zero is NOT Never.
   if(value>99)throw Error('This keyboard firmware supports sleep timers up to 99 minutes for native idle sleep. Choose 10, 15, 30, 45 minutes or 1 hour. Your previous timer is unchanged.');
-  this.cancel(this.timer);this.timer=null;const nativeValue=value===0?99:value;
+  this.activityEpoch++;this.cancel(this.timer);this.timer=null;const nativeValue=value===0?99:value;
   await this.run(async()=>{const s=this.createSom();try{const current=await s.screenTimeout();if(this.original===null){this.original=current;this.identity=s.identity;}if(this.identity!==s.identity)throw Error('Reconnect the original keyboard before changing its sleep timer.');await s.screenTimeout(nativeValue);const confirmed=await s.screenTimeout();if(confirmed!==nativeValue)throw Error(`The keyboard confirmed ${confirmed} minutes instead of ${value}. Your previous timer will be restored.`);}finally{s.close();}});
   // Overlay traffic can keep the native idle timer alive. Enforce keyboard
   // inactivity independently and pause overlay writes before powering down.
-  this.testing=false;await this.controller.configure(value);if(value===0){await this.run(()=>this.setEnabled(true));this.timer=this.every(()=>{if(this.testing||this.keepAwakeBusy)return;this.keepAwakeBusy=true;this.run(()=>this.setEnabled(true)).catch(this.onError).finally(()=>{this.keepAwakeBusy=false;});},30000);}else{this.timer=this.every(()=>{void this.controller.reconcile().catch(this.onError);},1000);}this.timer.unref?.();
+  this.testing=false;await this.controller.configure(value);if(value===0){await this.run(()=>this.setEnabled(true));this.timer=this.every(()=>{if(this.testing||this.keepAwakeBusy)return;this.keepAwakeBusy=true;this.run(()=>this.setEnabled(true)).catch(this.onError).finally(()=>{this.keepAwakeBusy=false;});},30000);}else{this.timer=this.every(()=>{void this.reconcile().catch(this.onError);},1000);}this.timer.unref?.();
  }
- async test(){this.testing=true;this.testMinutes=this.controller.minutes;this.controller.minutes=10;this.controller.lastInput=this.controller.now()-600000;try{await this.controller.reconcile();}catch(e){this.testing=false;this.controller.minutes=this.testMinutes;throw e;}}
+ reconcile(){
+  const c=this.controller,now=c.now();
+  // A game's input path can bypass the Windows key hook. Ask Windows for its
+  // session idle time only before sleeping, or while waiting to wake; ordinary
+  // activity needs no additional process requests or USB polling.
+  if(!this.getIdleSeconds||this.testing||c.closed||!(c.minutes>0)||(!c.asleep&&now-c.lastInput<c.minutes*60000))return c.reconcile();
+  if(this.activityCheck)return this.activityCheck;
+  const epoch=this.activityEpoch;
+  this.activityCheck=(async()=>{try{const idle=await this.getIdleSeconds();if(epoch!==this.activityEpoch||this.testing||c.closed)return;if(typeof idle==='number'&&Number.isFinite(idle)&&idle>=0){c.lastInput=Math.max(c.lastInput,now-idle*1000);this.inputFallbackError=null;}else this.inputFallbackError='Windows idle state was unavailable.';}catch(error){this.inputFallbackError=String(error?.message||'Windows idle state was unavailable.').slice(0,160);}if(epoch===this.activityEpoch&&!this.testing&&!c.closed)await c.reconcile();})().finally(()=>{this.activityCheck=null;});
+  return this.activityCheck;
+ }
+ async test(){this.activityEpoch++;this.testing=true;this.testMinutes=this.controller.minutes;this.controller.minutes=10;this.controller.lastInput=this.controller.now()-600000;try{await this.controller.reconcile();}catch(e){this.testing=false;this.controller.minutes=this.testMinutes;throw e;}}
  activity(){this.controller.activity();if(this.testing){this.testing=false;this.controller.minutes=this.testMinutes;}}
- status(){return{minutes:this.controller.minutes,asleep:this.controller.asleep,idleSeconds:Math.max(0,Math.floor((this.controller.now()-this.controller.lastInput)/1000)),timerActive:this.timer!==null,testing:this.testing};}
- async close(){this.cancel(this.timer);this.timer=null;await this.controller.close();if(this.original===null)return;await this.run(async()=>{const s=this.createSom();try{if(s.identity===this.identity)await s.screenTimeout(this.original);}finally{s.close();}});this.original=null;}
+ status(){return{minutes:this.controller.minutes,asleep:this.controller.asleep,idleSeconds:Math.max(0,Math.floor((this.controller.now()-this.controller.lastInput)/1000)),timerActive:this.timer!==null,testing:this.testing,inputFallbackError:this.inputFallbackError};}
+ async close(){this.activityEpoch++;this.cancel(this.timer);this.timer=null;await this.controller.close();if(this.original===null)return;await this.run(async()=>{const s=this.createSom();try{if(s.identity===this.identity)await s.screenTimeout(this.original);}finally{s.close();}});this.original=null;}
 }
 module.exports={SleepService};

@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-contextBridge.exposeInMainWorld('companion', {
+contextBridge.exposeInMainWorld('companionNative', {
   reportRendererError:details=>ipcRenderer.invoke('renderer-error',details),
   saveCrashReport:()=>ipcRenderer.invoke('save-crash-report'),
   configBackup:action=>ipcRenderer.invoke('config-backup',action),
@@ -74,6 +74,8 @@ contextBridge.exposeInMainWorld('companion', {
   saveKeyAppearance:input=>ipcRenderer.invoke('save-key-appearance',input),
   readKeymap: () => ipcRenderer.invoke('read-keymap'),
   captureKey: enabled => ipcRenderer.invoke('capture-key',enabled),
+  setKeyTravelWatching:enabled=>ipcRenderer.invoke('set-key-travel-watching',enabled),
+  onKeyTravel:callback=>{const listener=(_event,sample)=>callback(sample);ipcRenderer.on('key-travel',listener);return()=>ipcRenderer.removeListener('key-travel',listener);},
   capturePluginKey: enabled => ipcRenderer.invoke('capture-plugin-key',enabled),
   subscribePluginKey: callback => {const listener=(_e,p)=>callback(p);ipcRenderer.on('plugin-selected-key',listener);return()=>ipcRenderer.removeListener('plugin-selected-key',listener);},
   subscribeKey: callback => {const listener=(_e,p)=>callback(p);ipcRenderer.on('selected-key',listener);return()=>ipcRenderer.removeListener('selected-key',listener);},

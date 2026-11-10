@@ -3,7 +3,7 @@
 const {choices,physical,label}=require('../src/keymap.cjs');
 function create(){
  const aliases={Esc:'Esc','⌫':'Backspace',Cap:'Caps Lock',Caps:'Caps Lock',Ctrl:'Left Ctrl',Win:'Windows',Alt:'Left Alt',Shift:'Left Shift','↑':'Up','←':'Left','↓':'Down','→':'Right','⏮':'Previous track','⏭':'Next track','⏯':'Play / pause',Vol:'Volume up'};
- const keys=physical.map((name,position)=>{const option=choices.find(c=>c.label===(aliases[name]||name));const binding=position===63?{behaviorId:54567,param1:1}:{behaviorId:50397,param1:({14:0xc00b6,15:0xc00b5,30:0xc00cd,31:0xc00e9})[position]||option?.value||0x70004};return{position,name,binding,label:label(binding)};});
+ const keys=physical.map((name,position)=>{const option=choices.find(c=>c.label===(aliases[name]||name));const binding=position===0?{behaviorId:29795,param1:0}:position===63?{behaviorId:54567,param1:1}:{behaviorId:50397,param1:({14:0xc00b6,15:0xc00b5,30:0xc00cd,31:0xc00e9})[position]||option?.value||0x70004};return{position,name,binding,label:label(binding)};});
  return{sample:true,layout:require('../src/layout.json'),choices,layers:[{id:0,keys},{id:1,keys:keys.map(k=>({...k,binding:{...k.binding}}))}]};
 }
 function change(map,input){

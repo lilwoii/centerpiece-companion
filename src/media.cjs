@@ -22,8 +22,9 @@ class MediaTransport {
     if (this.process) return;
     const proc = this.spawnWorker('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'media.ps1')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     this.process = proc;
-    const lines = readline.createInterface({ input: proc.stdout });
+    const lines = readline.createInterface({ input: proc.stdout });this.lines=lines;
     lines.on('line', line => {
+      if(this.process!==proc)return;
       let data;
       try { data = JSON.parse(line); } catch { return; }
       const pending = this.pending.get(data.id);
@@ -35,9 +36,7 @@ class MediaTransport {
     proc.stderr.resume();
     const ended = () => {
       if (this.process !== proc) return;
-      this.process = null;
-      proc.kill();
-      this.failAll('The Windows media connection stopped. Try again.');
+      this.close('The Windows media connection stopped. Try again.');
     };
     proc.on('exit', ended);
     proc.on('error', ended);
@@ -51,18 +50,18 @@ class MediaTransport {
     if (!['status', 'toggle', 'play', 'pause', 'next', 'previous', 'rewind'].includes(action)) return Promise.reject(new Error('Unknown media action'));
     if (!['auto','desktop','web'].includes(route.target)) return Promise.reject(new Error('Unknown YouTube Music player target'));
     if (this.pending.size >= 12) return Promise.reject(new Error(`${this.label} is busy. Please try again.`));
-    this.start();
+    try{this.start();}catch(error){return Promise.reject(error);}
+    const proc=this.process;
     return new Promise((resolve, reject) => {
       const id = ++this.sequence;
       const timer = setTimeout(() => {
-        this.failAll(`${this.label} took too long to respond. Check the music app and retry; the action was not retried.`);
-        const proc = this.process; this.process = null; proc?.kill();
+        if(this.process===proc&&this.pending.has(id))this.close(`${this.label} took too long to respond. Check the music app and retry; the action was not retried.`);
       }, 9000);
       this.pending.set(id, { resolve, reject, timer });
-      this.process.stdin.write(JSON.stringify({ id, action, ...route }) + '\n');
+      try{proc.stdin.write(JSON.stringify({ id, action, ...route }) + '\n');}catch(error){if(this.process===proc)this.close(error.message||'The Windows media connection stopped.');}
     });
   }
-  close() { const proc = this.process; this.process = null; this.failAll('App closed'); proc?.kill(); }
+  close(message='App closed') { const proc = this.process; this.process = null; this.lines?.close();this.lines=null;this.failAll(message); proc?.kill(); }
 }
 const sharedTransport=new MediaTransport();
 class MediaBridge {

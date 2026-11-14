@@ -236,3 +236,6 @@ The shared window header stays sticky above document scrolling, with measured he
 Keyboard editor uses its editable key map first; the decorative plugin preview remains on Plugin library and Screen widgets. Compact layer/group tools precede the map. The left response meter shows measured selected-sensor travel from the existing keyboard stream, with a saved actuation threshold and reset-distance readout. Live data is enabled only for the visible, focused response editor; missing or stale telemetry is labelled rather than simulated.
 
 Keyboard editor reuses the exact device plugin/widget renderer over the existing editable key map. Live Caps/L1/music highlights are a separate lightweight SVG layer using saved positions, colors and transparency; they do not redraw bindings or replace selection styles. Generic plugin placeholders are removed.
+
+Extra plugin placement uses an always-visible compact row above the position tiles. The green heading identifies the optional fifth position beside Left Arrow. Its native switch reuses Plugin strip's green On / red Off states and fixed-width label; no cycling controls or separate Save action are shown.
+Strip colors & bottom hint uses an amber outlined disclosure header; the expanded Bottom hint heading and mode selector use the shared green success color with visible keyboard focus.

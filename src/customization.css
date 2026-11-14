@@ -120,3 +120,19 @@ label[for="widget-picker"]{color:#ffc66d;font-weight:700}
 .keyboard-map .key-depth{position:absolute;left:1px;right:1px;bottom:2px;margin:0;text-align:center;white-space:nowrap;font-size:9px;pointer-events:none}
 
 @media(min-width:1100px){.response-controls{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px}.rapid-controls{margin-top:0;padding-top:0;padding-left:24px;border-top:0;border-left:1px solid var(--border)}}
+/* Extra position uses the same saved-state switch as Plugin strip. */
+.extra-plugin-controls{border-color:var(--success)}
+.extra-plugin-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.extra-plugin-heading strong{color:var(--success);font-size:1rem}
+.extra-plugin-heading .note{margin:4px 0 0}
+.extra-plugin-heading .strip-visibility{min-width:88px;flex-shrink:0}
+.extra-plugin-controls>#extra-plugin-note{margin:10px 0 0}
+.strip-appearance>summary{color:var(--attention);font-weight:700;border:1px solid var(--attention);border-radius:8px;padding:12px 14px;cursor:pointer;background:var(--surface)}
+.strip-appearance>summary small{color:var(--ink);font-weight:400;margin-left:8px}
+.strip-appearance>summary:hover{background:var(--tint)}
+.strip-appearance>summary:focus-visible{outline:2px solid var(--attention);outline-offset:3px}
+.strip-appearance[open]>summary{margin-bottom:16px}
+.strip-appearance>h3{color:var(--success)}
+.strip-appearance label:has(#hint-mode){color:var(--success);font-weight:700}
+#hint-mode{border-color:var(--success)}
+#hint-mode:focus-visible{outline:2px solid var(--success);outline-offset:3px}

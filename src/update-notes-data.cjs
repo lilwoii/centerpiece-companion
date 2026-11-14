@@ -1,5 +1,6 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.55": Object.freeze(["Fixed bugs and improved reliability."]),
   "0.3.0-preview.54": Object.freeze([
     "A cleaner Keyboard editor puts your editable keyboard at the top, with group selection, clearer actuation and rapid-trigger controls, presets and exact depth settings.",
     "Added a live green key-travel meter with measured depth and rapid-trigger thresholds. Show or hide saved actuation values above the keyboard. Live travel uses the keyboard's available sensor feed.",

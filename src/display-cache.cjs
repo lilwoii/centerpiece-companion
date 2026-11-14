@@ -156,7 +156,7 @@ class DisplayCache{
   // Do not briefly select an old song's cached navigation/Caps frame. A
   // completed transfer is followed by at most one pending, newest-state render.
   if(slot&&!this.error&&(this.frameContent.get(key)??null)!==this.contentKey()){void this.refreshLive().catch(error=>{this.error=error.message;});return;}
-  if(slot){this.touch(key);if(slot!==this.lastSlot){this.som.selectSlot(slot);this.lastSlot=slot;this.selectionAt=Date.now();}}
+  if(slot){this.touch(key);if(slot!==this.lastSlot){try{this.som.selectSlot(slot);this.lastSlot=slot;this.selectionAt=Date.now();}catch(error){this.error=error.message;this.livePending=false;this.clearLiveTimer();this.event('display-selection-failed',{message:error.message,code:error.code,expected:slot,previous:this.lastSlot});return;}}}
   else if(!this.error&&!(this.tasksPaused||this.sleepPaused))void this.refreshLive().catch(error=>{this.error=error.message;});
   if(slot&&this.livePending&&!this.error)void this.refreshLive().catch(error=>{this.error=error.message;});
  }
@@ -186,9 +186,30 @@ class DisplayCache{
   const target=this.spare();if(target===undefined)throw Error('No inactive companion display slot is available.');
   this.clearLiveTimer();this.livePending=false;this.updating=true;
   try{const started=this.now();this.lastFrame=await this.write(target,selected,caps,layer,false);if(this.lastWriteUploaded){this.lastTransferMs=this.now()-started;this.liveUploadedAt=this.now();this.liveUploads++;this.liveBytes+=this.lastPngBytes||0;}}
-  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;this.event('display-upload-failed',{message:e.message,code:e.code,phase:e.displayPhase||'render',transferType:e.transferType,transferStage:e.transferStage,bytesWritten:e.bytesWritten,transferBytes:e.transferBytes,pngBytes:this.lastPngBytes});throw e;}finally{this.updating=false;this.displayReady();}
+  catch(e){this.livePending=false;this.clearLiveTimer();this.error=e.message;this.event('display-upload-failed',{message:e.message,code:e.code,phase:e.displayPhase||'render',transferType:e.transferType,transferStage:e.transferStage,bytesWritten:e.bytesWritten,transferBytes:e.transferBytes,pngBytes:this.lastPngBytes,transferDiagnostics:e.transferDiagnostics});throw e;}finally{this.updating=false;this.displayReady();}
  }
- async reconcile(){if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot;try{const current=await this.som.currentSlot();this.statusReadFailures=0;if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');this.lastObservedSlot=current;if(!this.som||this.cache.get(this.key())!==expected)return;if(current!==expected){this.event('unexpected-overlay-selection',{expected,observed:current});this.som.selectSlot(expected);this.selectionAt=Date.now();}}catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;this.event('display-status-timeout',{consecutive:this.statusReadFailures+1});if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}}
+ async reconcile(){
+  if(this.error||this.closing||this.sleepPaused||!this.som||this.watching||this.updating||!this.lastSlot||Date.now()-this.selectionAt<300||this.lastReconcileAt!==null&&this.now()-this.lastReconcileAt<2500)return;
+  this.lastReconcileAt=this.now();this.watching=true;const expected=this.lastSlot,som=this.som;
+  try{
+   const current=await som.currentSlot();
+   if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');
+   this.lastObservedSlot=current;
+   if(this.som!==som||this.cache.get(this.key())!==expected)return;
+   if(current!==expected){
+    // Slot replies have no request ID, and selecting the already-active slot
+    // toggles it off. Confirm an anomalous reply before issuing that command.
+    // Healthy status reads and normal widget refresh rates remain unchanged.
+    const confirmed=await som.currentSlot();
+    if(!Number.isInteger(confirmed)||confirmed<0||confirmed>10)throw Error('Invalid display status.');
+    this.lastObservedSlot=confirmed;
+    if(this.som!==som||this.cache.get(this.key())!==expected)return;
+    if(confirmed!==current){this.event('display-status-unstable',{expected,observed:current,confirmed});this.statusReadFailures=0;return;}
+    this.event('unexpected-overlay-selection',{expected,observed:confirmed});som.selectSlot(expected);this.selectionAt=Date.now();
+   }
+   this.statusReadFailures=0;
+  }catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;this.event('display-status-timeout',{consecutive:this.statusReadFailures+1});if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}
+ }
  detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
  async close(){this.closing=true;this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;await som.activate(this.manifest.originalSlot||0);this.som=null;som.close();}
 }

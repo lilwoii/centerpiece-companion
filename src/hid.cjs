@@ -8,9 +8,12 @@ function start(){if(child?.connected)return child;if(child)childEnd?.('disconnec
  proc.on('message',m=>{if(child!==proc)return;if(m.event==='diagnostic'){diagnostic(m.kind,m.details);return;}if(m.id){const item=pending.get(m.id);if(item){clearTimeout(item.timer);pending.delete(m.id);m.error?item.reject(Error(m.error)):item.resolve(m.result);}}else{const h=handles.get(m.key);if(h&&!h.closed){if(m.event==='data')h.emit('data',Buffer.from(m.data));else if(m.event==='error')h.emit('error',Error(m.message));}}});
  const end=(reason,details)=>{if(child!==proc)return;child=null;childEnd=null;cached=null;diagnostic('usb-helper-failed',{reason,...details,clients:handles.size,pendingRequests:pending.size});for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('USB helper stopped. Reconnect the keyboard in the app.'));}pending.clear();const open=[...handles.values()];handles.clear();for(const h of open){h.closed=true;h.emit('error',Error('USB helper stopped. Restart the keyboard connection in the app.'));}};childEnd=end;proc.on('disconnect',()=>end('disconnect',{}));proc.on('error',error=>end('error',{message:String(error?.message||'USB helper error').slice(0,160)}));proc.on('exit',(exitCode,signal)=>end('exit',{exitCode:Number.isInteger(exitCode)?exitCode:null,signal:typeof signal==='string'?signal.slice(0,32):null}));return proc;
 }
-function send(message){const p=start();p.send(message,error=>{if(error&&message.key){const h=handles.get(message.key);if(h&&!h.closed)h.emit('error',Error('USB helper is unavailable.'));}});}
+function send(message){const p=start();
+ const rejectRequest=error=>{const item=pending.get(message.id);if(item){clearTimeout(item.timer);pending.delete(message.id);item.reject(error);}};
+ try{p.send(message,error=>{if(!error||child!==p)return;const failure=Error('USB helper is unavailable.');rejectRequest(failure);if(message.key){const h=handles.get(message.key);if(h&&!h.closed)h.emit('error',failure);}});}catch(error){rejectRequest(error);throw error;}
+}
 class VirtualHID extends EventEmitter{
- constructor(devicePath){super();start();this.key=++sequence;this.closed=false;handles.set(this.key,this);send({op:'open',key:this.key,path:devicePath});}
+ constructor(devicePath){super();start();this.key=++sequence;this.closed=false;handles.set(this.key,this);try{send({op:'open',key:this.key,path:devicePath});}catch(error){this.closed=true;handles.delete(this.key);throw error;}}
  write(data){if(this.closed)throw Error('USB connection closed. Restart the keyboard connection.');send({op:'write',key:this.key,data:Array.from(data)});return data.length;}
  writeBatch(packets){
   if(this.closed)return Promise.reject(Error('USB connection closed. Restart the keyboard connection.'));

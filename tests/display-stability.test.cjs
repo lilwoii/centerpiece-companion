@@ -90,3 +90,68 @@ test('identical pixels skip USB uploads with zero, one, or two visible widgets',
  f.cache.render=(_s,_c,_l,d)=>`<svg width="4" height="4"><title>${d.revision}</title><rect width="4" height="4" fill="red"/></svg>`;
  await f.cache.refreshLive();f.cache.data.revision++;f.advance(1000);await f.cache.refreshLive();assert.equal(f.uploads.length,1);assert.equal(f.cache.skippedIdenticalFrames,1);f.cache.clearLiveTimer();}
 });
+
+test('a delayed slot reply cannot toggle off the overlay that is already active',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;
+ const expected=f.cache.lastSlot,replies=[0,expected],selections=[];
+ f.cache.som.currentSlot=async()=>replies.shift();
+ f.cache.som.selectSlot=slot=>selections.push(slot);
+ await f.cache.reconcile();
+ assert.deepEqual(selections,[],'a second read must confirm the mismatch before a toggle-capable selection command');
+ assert.equal(replies.length,0);assert.equal(f.cache.lastObservedSlot,expected);
+ f.cache.clearLiveTimer();
+});
+
+test('changing slot replies defer correction instead of selecting against an uncertain screen state',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;
+ const replies=[0,1],selections=[],events=[];
+ f.cache.onDiagnostic=(kind,details)=>events.push({kind,details});
+ f.cache.som.currentSlot=async()=>replies.shift();f.cache.som.selectSlot=slot=>selections.push(slot);
+ await f.cache.reconcile();assert.deepEqual(selections,[]);assert.equal(f.cache.error,'');
+ assert.ok(events.some(e=>e.kind==='display-status-unstable'));
+ f.cache.clearLiveTimer();
+});
+
+test('confirmed wrong overlay is corrected once; healthy reads do not gain another query',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;
+ let reads=0;const selections=[];f.cache.som.currentSlot=async()=>{reads++;return f.cache.lastSlot;};
+ f.cache.som.selectSlot=slot=>selections.push(slot);
+ await f.cache.reconcile();assert.equal(reads,1);assert.deepEqual(selections,[]);
+ f.advance(2500);f.cache.som.currentSlot=async()=>{reads++;return 0;};
+ await f.cache.reconcile();assert.equal(reads,3);assert.deepEqual(selections,[f.cache.lastSlot]);
+ f.cache.clearLiveTimer();
+});
+
+test('lost confirmation replies never issue selection and still reach the existing bounded recovery threshold',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;
+ let reads=0;const selections=[];
+ f.cache.som.currentSlot=async()=>{if(++reads%2===0)throw Object.assign(Error('confirmation timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return 0;};
+ f.cache.som.selectSlot=slot=>selections.push(slot);
+ await f.cache.reconcile();f.advance(2500);await f.cache.reconcile();f.advance(2500);
+ await assert.rejects(f.cache.reconcile(),/confirmation timeout/);
+ assert.equal(f.cache.statusReadFailures,3);assert.equal(reads,6);assert.deepEqual(selections,[]);f.cache.clearLiveTimer();
+});
+
+test('upload failure events retain numeric transfer diagnostics for exported reports',async()=>{
+ const f=fixture(),events=[];await f.cache.refreshLive();f.cache.data.revision++;
+ const diagnostics={elapsedMs:20000,writesCompletedMs:100,ackWaitMs:19900,replyCount:0,ackReplies:0,otherAckReplies:0,lastReplyCommand:null};
+ f.cache.onDiagnostic=(kind,details)=>events.push({kind,details});
+ f.cache.som.uploadOverlay=async()=>{throw Object.assign(Error('missing acknowledgement'),{transferDiagnostics:diagnostics});};
+ await assert.rejects(f.cache.refreshLive(),/missing acknowledgement/);
+ assert.deepEqual(events.find(e=>e.kind==='display-upload-failed').details.transferDiagnostics,diagnostics);f.cache.clearLiveTimer();
+});
+
+test('cached lock or layer selection failure stays in recovery state instead of escaping input callbacks',async()=>{
+ for(const action of ['caps','layer','navigation']){
+  const f=fixture();await f.cache.refreshLive();const original=f.cache.lastSlot,events=[];
+  f.cache.onDiagnostic=(kind,details)=>events.push({kind,details});
+  const key=action==='caps'?'idle:1':action==='layer'?'layer:0':'nav:next';
+  f.cache.cache.set(key,4);f.cache.frameContent.set(key,f.cache.contentKey());
+  let selections=0;f.cache.som.selectSlot=()=>{selections++;throw Error('Native reader stopped');};
+  f.cache.livePending=true;
+  assert.doesNotThrow(()=>action==='caps'?f.cache.setLocks({caps:true}):action==='layer'?f.cache.setLayer(true):f.cache.show({active:true,id:'next'}));
+  assert.equal(f.cache.error,'Native reader stopped');assert.equal(f.cache.lastSlot,original);assert.equal(f.cache.livePending,false);
+  f.cache.displayReady();assert.equal(selections,1);await assert.rejects(f.cache.refreshLive(),/Native reader stopped/);
+  assert.equal(events.at(-1).kind,'display-selection-failed');
+ }
+});

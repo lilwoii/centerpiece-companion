@@ -106,3 +106,65 @@ test('short native writes quarantine queued packets on the same interface but le
  proc.emit('message',{op:'write',key:1,data:Array(1024).fill(0)});assert.equal(writes,1);
  proc.emit('message',{op:'write',key:2,data:Array(64).fill(0)});assert.equal(writes,2);
 });
+
+test('failed transfer distinguishes a silent reader from replies with the wrong acknowledgement type without retaining payloads',async()=>{
+ for(const replies of [false,true]){
+  const f=client();f.s.wait=function(match,trigger){return Som.prototype.wait.call(this,match,trigger,20);};
+  f.s.handle.writeBatch=async packets=>{if(replies&&packets.some(p=>p[3]===32))for(const listener of [...f.s.listeners]){listener(null,50,Buffer.from([7]));listener(null,32,Buffer.from([0,1,99,88]));}};
+  await assert.rejects(f.s.transfer(4,Buffer.alloc(2040)),error=>{
+   const d=error.transferDiagnostics;assert.ok(d.elapsedMs>=d.writesCompletedMs);assert.ok(d.ackWaitMs>=0);
+   assert.equal(d.replyCount,replies?2:0);assert.equal(d.ackReplies,replies?1:0);assert.equal(d.otherAckReplies,replies?1:0);assert.equal(d.lastReplyCommand,replies?32:null);
+   assert.deepEqual(Object.keys(d).sort(),['ackReplies','ackWaitMs','elapsedMs','lastReplyCommand','otherAckReplies','replyCount','writesCompletedMs']);
+   return error.code==='DISPLAY_REQUEST_TIMEOUT';
+  });assert.equal(f.s.listeners.size,0);
+ }
+});
+
+test('failed native write is not reported as a completed write waiting for firmware',async()=>{
+ const f=client({rejectBatch:true});await assert.rejects(f.s.transfer(4,Buffer.alloc(2040)),error=>{
+  assert.equal(error.transferDiagnostics.writesCompletedMs,null);assert.equal(error.transferDiagnostics.ackWaitMs,null);assert.equal(error.transferDiagnostics.replyCount,0);return /USB batch failed/.test(error.message);
+ });
+});
+
+test('a firmware reply cannot hide a later native end-packet failure',async()=>{
+ const f=client(),original=f.s.handle.writeBatch;let rejectEnd;
+ f.s.handle.writeBatch=packets=>{
+  if(packets[0][3]!==32)return original(packets);
+  for(const listener of [...f.s.listeners])listener(null,32,Buffer.from([0,4]));
+  return new Promise((_resolve,reject)=>{rejectEnd=reject;});
+ };
+ let completed=false;const transfer=f.s.transfer(4,Buffer.alloc(2040)).then(()=>{completed=true;});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(completed,false,'transfer must wait for the native write completion as well as the reply');
+ rejectEnd(Error('Native end-packet write failed'));
+ await assert.rejects(transfer,/Native end-packet write failed/);assert.equal(f.s.listeners.size,0);
+});
+
+test('a valid reply followed by successful delayed write completion resolves exactly once',async()=>{
+ const f=client(),original=f.s.handle.writeBatch;let releaseEnd;
+ f.s.handle.writeBatch=packets=>{
+  if(packets[0][3]!==32)return original(packets);
+  for(const listener of [...f.s.listeners])listener(null,32,Buffer.from([0,4]));
+  return new Promise(resolve=>{releaseEnd=resolve;});
+ };
+ let completed=0;const transfer=f.s.transfer(4,Buffer.alloc(2040)).then(()=>completed++);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(completed,0);releaseEnd();await transfer;
+ assert.equal(completed,1);assert.equal(f.s.listeners.size,0);
+});
+
+test('closing a display client immediately cancels a stalled transfer and prevents its continuation',async()=>{
+ const f=client();let release,closed=0;f.s.handle.close=()=>{closed++;};
+ f.s.handle.writeBatch=batch=>{f.batches.push(batch.length);return new Promise(resolve=>{release=resolve;});};
+ const transfer=f.s.transfer(4,Buffer.alloc(2040));const rejected=assert.rejects(transfer,error=>error.code==='DISPLAY_CONNECTION_CLOSED');
+ await new Promise(resolve=>setImmediate(resolve));f.s.close();f.s.close();
+ assert.equal(f.s.listeners.size,0,'close removes waiters synchronously');await rejected;release();
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(f.batches.length,1);assert.equal(closed,1);
+ await assert.rejects(f.s.currentSlot(),error=>error.code==='DISPLAY_CONNECTION_CLOSED');assert.equal(f.packets.length,0);
+});
+
+test('an idle native reader failure rejects later display operations without new writes',async()=>{
+ const {EventEmitter}=require('node:events'),vm=require('node:vm'),fs=require('node:fs');let handle,writes=0;
+ class FakeHID extends EventEmitter{constructor(){super();handle=this;}write(){writes++;}close(){}}
+ const box={module:{exports:{}},Buffer,setTimeout,clearTimeout,require:name=>name==='./hid.cjs'?{devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'fake'}],HID:FakeHID}:require(name)};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/som.cjs'),'utf8'),box);const s=new box.module.exports.Som(),error=Error('native reader failed while idle');handle.emit('error',error);
+ await assert.rejects(s.currentSlot(),e=>e===error);await assert.rejects(s.transfer(4,Buffer.alloc(20)),e=>e===error);assert.throws(()=>s.selectSlot(2),e=>e===error);assert.equal(writes,0);assert.equal(s.listeners.size,0);s.close();
+});

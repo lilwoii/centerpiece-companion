@@ -13,7 +13,12 @@ function label(b){if(b.behaviorId===54567)return 'Layer '+b.param1;if(b.behavior
 class KeymapEditor{
  constructor(directory){this.directory=directory;this.busy=false;this.snapshot=null;this.history=[];}
  async use(fn){if(this.busy)throw Error('Keyboard edit in progress.');this.busy=true;let s;try{s=new Studio();return await fn(s);}finally{s?.close();this.busy=false;}}
- async read(){return this.use(async s=>{const m=(await s.request({keymap:{getKeymap:true}})).keymap?.getKeymap;if(!m||m.layers.some(l=>l.bindings.length!==68))throw Error('This editor requires the 68-key Centerpiece layout.');this.snapshot=m;this.serial=s.serial;return this.view();});}
+ async read(){return this.use(async s=>{try{const m=(await s.request({keymap:{getKeymap:true}})).keymap?.getKeymap;if(!Array.isArray(m?.layers)||!m.layers.length||m.layers.some(l=>!Array.isArray(l?.bindings)||l.bindings.length!==68))throw Error('This editor requires the 68-key Centerpiece layout.');
+   // Routine health reads preserve Undo. A new keyboard or externally changed
+   // map establishes a different baseline and must never reuse old restorations.
+   if(s.serial!==this.serial||JSON.stringify(m)!==JSON.stringify(this.snapshot))this.history=[];
+   this.snapshot=m;this.serial=s.serial;return this.view();
+  }catch(error){this.snapshot=null;this.history=[];throw error;}});}
  view(){const m=this.snapshot;if(!m)throw Error("Read keyboard bindings first.");return {layout:require('./layout.json'),layers:m.layers.map(l=>({id:l.id||0,keys:l.bindings.map((b,i)=>({position:i,name:physical[i],binding:b,label:label(b)}))})),choices};}
  async undo(){
   const entry=this.history.at(-1);if(!entry)throw Error("No binding change to undo.");

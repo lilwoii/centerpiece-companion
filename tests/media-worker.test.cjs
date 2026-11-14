@@ -7,3 +7,5 @@ test('all providers share one worker, route independently and release only after
  spotify.close();web.close();assert.equal(killed,0);await desktop.request('next');assert.equal(requests.at(-1).action,'next');desktop.close();youtube.close();assert.equal(killed,1);
 });
 test('duplicate status reads coalesce without combining control commands',async()=>{let calls=0,resolve;const t={request:()=>{calls++;return new Promise(r=>resolve=r);},close(){}};const b=new MediaBridge('spotify',t);const a=b.request('status'),c=b.request('status');assert.equal(a,c);assert.equal(calls,1);resolve({});await a;b.close();});
+
+test('media pipe write failure retires helper and cancels its timeout immediately',async()=>{let killed=0;const proc=new EventEmitter();proc.stdout=new PassThrough();proc.stderr=new PassThrough();proc.stdin=new EventEmitter();proc.stdin.write=()=>{throw Error('broken pipe');};proc.kill=()=>killed++;const t=new MediaTransport('spotify',()=>proc);await assert.rejects(t.request('next'),/broken pipe/);assert.equal(t.pending.size,0);assert.equal(t.process,null);assert.equal(killed,1);});

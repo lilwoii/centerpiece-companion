@@ -1,5 +1,6 @@
 const HID = require('./hid.cjs');
 const { randomUUID } = require('node:crypto');
+const { performance } = require('node:perf_hooks');
 const sharp = require('sharp');
 class Som {
   constructor() {
@@ -13,9 +14,11 @@ class Som {
       if (length > raw.length - 4) return;
       for (const listener of this.listeners) listener(null, raw[3], raw.subarray(4, 4 + length));
     });
-    this.handle.on('error', error => { for (const listener of this.listeners) listener(error); });
+    this.handle.on('error', error => { this.failure=error;for (const listener of this.listeners) listener(error); });
   }
   send(command, payload = Buffer.alloc(0)) {
+    if(this.closed)throw Object.assign(Error('Keyboard display connection closed.'),{code:'DISPLAY_CONNECTION_CLOSED'});
+    if(this.failure)throw this.failure;
     this.handle.write([...this.packet(command,payload)]);
   }
   packet(command, payload = Buffer.alloc(0)) {
@@ -24,14 +27,19 @@ class Som {
   }
   wait(match, trigger, timeout = 10000) {
     return new Promise((resolve, reject) => {
-      let settled=false;
+      if(this.closed){reject(Object.assign(Error('Keyboard display connection closed.'),{code:'DISPLAY_CONNECTION_CLOSED'}));return;}
+      if(this.failure){reject(this.failure);return;}
+      let settled=false,triggerFinished=false,received=false,response;
       const done = (error, result) => { if(settled)return;settled=true;clearTimeout(timer); this.listeners.delete(listener); error ? reject(error) : resolve(result); };
       const listener = (error, command, payload) => {
         if (error) { done(error); return; }
-        try { const result = match(command, payload); if (result !== undefined) done(null, result); } catch (e) { done(e); }
+        if(received)return;
+        try { const result = match(command, payload); if (result !== undefined) {received=true;response=result;if(triggerFinished)done(null,response);} } catch (e) { done(e); }
       };
       const timer = setTimeout(() => done(Object.assign(new Error('Keyboard display response timed out.'),{code:'DISPLAY_REQUEST_TIMEOUT'})), timeout);
-      this.listeners.add(listener); try { Promise.resolve(trigger()).catch(done); } catch (error) { done(error); }
+      // A reply can arrive before the IPC confirmation of the native write.
+      // Both must succeed; an early reply must not swallow a late write error.
+      this.listeners.add(listener); try { Promise.resolve(trigger()).then(()=>{triggerFinished=true;if(received)done(null,response);},done); } catch (error) { done(error); }
     });
   }
   screenTimeout(value) { if(value!==undefined&&(!Number.isInteger(value)||value<0||value>255))throw Error('Invalid firmware timeout.');return this.wait((cmd,p)=>cmd===51&&p.length?p[0]:undefined,()=>this.send(51,value===undefined?Buffer.alloc(0):Buffer.from([value]))); }
@@ -70,11 +78,14 @@ class Som {
   }
   async transfer(type, bytes) {
     let ending=false,stopped=false,stage='start',bytesWritten=0;
+    const started=performance.now();let writesCompletedAt=null,replyCount=0,ackReplies=0,otherAckReplies=0,lastReplyCommand=null;
     const writePackets=async packets=>{
       if(this.handle.writeBatch)await this.handle.writeBatch(packets);
       else{for(const packet of packets){if(stopped)return;if(this.handle.write([...packet])!==packet.length)throw Error('Incomplete USB packet write.');}await new Promise(resolve=>setImmediate(resolve));}
     };
     try{return await this.wait((cmd, p) => {
+      replyCount=Math.min(65535,replyCount+1);lastReplyCommand=cmd;
+      if(cmd===32){ackReplies=Math.min(65535,ackReplies+1);if(p.length<2||p[1]!==type)otherAckReplies=Math.min(65535,otherAckReplies+1);}
       if (cmd !== 32 || p.length < 2 || p[1] !== type) return;
       if(!ending)throw new Error('Display upload acknowledgement arrived before the transfer ended.');
       if (p[0] !== 0) throw new Error(`Display rejected upload: ${p.subarray(5).toString('utf8')}`);
@@ -89,8 +100,10 @@ class Som {
         if(stopped)return;
         if(beat>=1024*1024){batch.push(this.packet(17));beat=0;if(batch.length===64)await flush();}
       }
-      await flush();if(stopped)return;ending=true;stage='end';await writePackets([this.packet(32)]);stage='acknowledgement';
-    }, 20000);}catch(error){stopped=true;try{this.handle.invalidate?.();}catch{}error.displayPhase='transfer';error.transferType=type;error.transferStage=stage;error.bytesWritten=bytesWritten;error.transferBytes=bytes.length;throw error;}finally{stopped=true;}
+      await flush();if(stopped)return;ending=true;stage='end';await writePackets([this.packet(32)]);writesCompletedAt=performance.now();stage='acknowledgement';
+    }, 20000);}catch(error){stopped=true;const ended=performance.now();try{this.handle.invalidate?.();}catch{}error.displayPhase='transfer';error.transferType=type;error.transferStage=stage;error.bytesWritten=bytesWritten;error.transferBytes=bytes.length;
+      // Failure-only numeric evidence: no packets, artwork, IDs or per-frame log.
+      error.transferDiagnostics={elapsedMs:Math.round(ended-started),writesCompletedMs:writesCompletedAt===null?null:Math.round(writesCompletedAt-started),ackWaitMs:writesCompletedAt===null?null:Math.round(ended-writesCompletedAt),replyCount,ackReplies,otherAckReplies,lastReplyCommand};throw error;}finally{stopped=true;}
   }
   async uploadOverlay(slot, bytes, name = 'Companion strip', verify = true) {
     if (!Number.isInteger(slot)||slot<1||slot>10 || bytes.length > 8*1024*1024 || bytes.subarray(0,8).toString('hex') !== '89504e470d0a1a0a') throw new Error('Invalid overlay PNG');
@@ -99,6 +112,6 @@ class Som {
     if(!verify)return; // Live frames retain both firmware acknowledgements; setup verifies full previews.
     await require('./overlay-preview.cjs').verifyOverlayPreview(bytes,()=>this.readOverlay(slot));
   }
-  close() { this.handle.close(); }
+  close() { if(this.closed)return;this.closed=true;const error=Object.assign(Error('Keyboard display connection closed.'),{code:'DISPLAY_CONNECTION_CLOSED'});for(const listener of [...this.listeners])listener(error);this.handle.close(); }
 }
 module.exports = { Som };

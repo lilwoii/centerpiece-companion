@@ -14,7 +14,7 @@ function section(from, to) {
 }
 function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 
-function fixture({ shortcuts = async () => ({position:26,engineRecovery:true}), sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), start } = {}) {
+function fixture({ shortcuts = async () => ({position:26,engineRecovery:true}), sample = async () => {}, appearance = async () => {}, inspect = async () => ({ keyboard: true, display: true }), connect = () => true, start } = {}) {
   const events = [], handlers = {}, state = { device: {}, strip: false }, context = {
     Promise, Error, state,widgetSources:{close(){events.push("widget-sources-close");}},sleepService:null,fs:{existsSync:()=>false},path:require("node:path"),leaveMode(){}, setupBusy: false, setupPlan: null, setupFinished: Promise.resolve(), setupReview: null,
     quitting: false, automaticSetupSuspended: false, automaticCheckBusy: false, automaticSetupTimer: 1,
@@ -22,7 +22,7 @@ function fixture({ shortcuts = async () => ({position:26,engineRecovery:true}), 
     hardwareDirectory: 'test-only', widgetShortcutReady: true, appliedAppearance: '',shortcutHealth:new(require('../src/shortcut-health.cjs').ShortcutHealth)(),
     clearInterval() { events.push('clear-timer'); }, clearTimeout() {},
     desk: {config:{},save(config){this.config=config;}, editor: { busy: false }, live: { sample }, close() { assert.equal(state.setupRunning, false); events.push('desk-close'); } },
-    strip: { detach(){events.push('detach');},connect() { events.push('connect'); return true; }, async close() { events.push('strip-close'); } },
+    strip: { detach(){events.push('detach');},connect() { events.push('connect'); return connect(); }, async close() { events.push('strip-close'); } },
     monitor: {status(){return{connected:events.lastIndexOf('monitor-start')>events.lastIndexOf('monitor-close')};}, start() { events.push('monitor-start'); }, close() { events.push('monitor-close'); } },
     media: { close() { events.push('media-close'); } }, mediaPoll: null, youtubeMusicPoll: null, youtubePoll:null,musicBeePoll:null,musicBee:{close(){}},youtube:{close(){events.push('youtube-close');}}, youtubeMusic: {close(){events.push('youtube-music-close');}}, community: null, twitch: null, widgetCycle: null,
     globalShortcut: { unregisterAll() { events.push('unregister'); } },
@@ -103,3 +103,12 @@ test('automatic reconnect does not run during an existing settings review', asyn
 test('automatic reconnect clears stale USB helper before discovery and preserves pending settings for review',async()=>{const f=fixture();await f.recoverKeyboardConnection();assert.ok(f.events.indexOf('detach')<f.events.indexOf('hid-close'));assert.equal(f.state.setupRecovery.token,'review');assert.equal(f.events.includes('connect'),false);assert.equal(f.events.includes('review-event'),true);assert.equal(f.state.connectionRecovering,false);});
 test('quit during reconnect discovery never starts setup writes',async()=>{const d=deferred(),f=fixture({inspect:()=>d.promise,start:async()=>assert.fail('No writes after quit')});const work=f.recoverKeyboardConnection();await new Promise(r=>setImmediate(r));const quit=f.cleanup();d.resolve({keyboard:true,display:true});await assert.rejects(work,/closing/);await quit;assert.equal(f.events.includes('connect'),false);});
 test('reconnect reloads display and monitor after verified setup',async()=>{const f=fixture({start:async()=>({backup:{verified:true}})});await f.recoverKeyboardConnection();assert.equal(f.state.strip,true);assert.equal(f.context.recoveryVerified,true);assert.ok(f.events.includes('appearance'));assert.ok(f.events.includes('monitor-start'));assert.deepEqual(f.context.shortcutHealth.view().map(e=>e.kind),['recovery-start','recovery-complete']);});
+
+for(const returnsFalse of [false,true])test('verified setup retries a display-open '+(returnsFalse?'refusal':'failure')+' without claiming readiness',async()=>{
+ const f=fixture({connect:()=>{if(returnsFalse)return false;throw Error('Display disappeared while opening');}});
+ await assert.rejects(f.setupOperation(async()=>({verified:true}),true),error=>{
+  assert.equal(error.code,'KEYBOARD_DISPLAY_INITIALIZATION_FAILED');assert.equal(error.configurationVerified,true);assert.equal(error.writesAttempted,true);
+  assert.equal(require('../src/connection-recovery.cjs').retryable(error),true);return true;
+ });
+ assert.equal(f.state.strip,false);assert.equal(f.context.appliedAppearance,'');assert.equal(f.events.includes('monitor-start'),false);assert.equal(f.context.recoveryVerified,false);
+});

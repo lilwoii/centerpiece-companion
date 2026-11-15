@@ -6,7 +6,7 @@ function fixture(){
  el('request-kind').value='feature';
  const context={URL,Date,JSON,console,document:{createElement:()=>element(),addEventListener(){},querySelector(){return null;}},el,bind:(id,fn)=>actions.set(id,fn),deskBusy:false,deskCurrent:{community:{user:{id:'member'}}},announce(){},setInterval(){},window:{companion:{subscribe(){},getState:async()=>({}),communitySubmit:data=>submit(data)}}};
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/community-ui.js'),'utf8'),context);
- return{el,actions,submissions,render:context.renderCommunity,setSubmit(fn){submit=fn;},async fire(id,type,event={}){for(const fn of el(id).events[type]||[])await fn(event);}};
+ return{el,actions,submissions,context,render:context.renderCommunity,setSubmit(fn){submit=fn;},async fire(id,type,event={}){for(const fn of el(id).events[type]||[])await fn(event);}};
 }
 test('chat-style request derives a bounded title and preserves full message',async()=>{const f=fixture();f.el('request-body').value='A\nmessage about improving the keyboard with a useful feature. '+ 'more '.repeat(30);const original=f.el('request-body').value;await f.actions.get('request-submit')();assert.equal(f.submissions.length,1);assert.equal(f.submissions[0].title,original.replace(/\s+/g,' ').slice(0,100));assert.equal(f.submissions[0].body,original.trim());assert.equal(f.el('request-body').value,'');assert.equal(f.el('request-character-count').textContent,'0 / 2,000');assert.equal(f.el('request-body').focused,true);});
 test('explicit titles remain supported and invalid short messages focus the composer',async()=>{const f=fixture();f.el('request-title').value='My title';f.el('request-body').value='short';await assert.rejects(f.actions.get('request-submit'),/10–2,000/);assert.equal(f.el('request-body').focused,true);assert.equal(f.submissions.length,0);f.el('request-body').value='A complete description.';await f.actions.get('request-submit')();assert.equal(f.submissions[0].title,'My title');});
@@ -50,3 +50,19 @@ test('narrow conversation entry reveals the composer once without scrolling on r
  frames.shift()();listeners.hashchange();frames.shift()();frames.shift()();assert.equal(scrolls,1);assert.equal(values.get('--community-height'),'408px');listeners.resize();frames.shift()();assert.equal(scrolls,1);page.hidden=true;listeners.hashchange();frames.shift()();assert.equal(scrolls,1,'other routes never scroll');
 });
 test('profile controls start expanded and retain native collapse plus existing account actions',()=>{const html=fs.readFileSync(require.resolve('../src/index.html'),'utf8'),profile=html.match(/<details class="community-profile" open>([\s\S]*?)<\/details>/)?.[1];assert.ok(profile,'profile is visible by default');assert.match(profile,/<summary>Profile<\/summary>/);for(const id of ['name-color','save-name-color','discord-signout'])assert.equal((profile.match(new RegExp('id="'+id+'"','g'))||[]).length,1);const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),body=css.match(/\.community-profile>div\{([^}]+)\}/)?.[1];assert.match(body,/position:static/);assert.ok(!body.includes('position:absolute'),'expanded controls cannot cover feed as a popup');});
+
+
+test('saving a name color preserves a newer unsaved color selected during the request',async()=>{
+ const f=fixture();f.render(communityState());let finish;f.context.window.companion.communityColor=()=>new Promise(resolve=>finish=resolve);
+ f.el('name-color').value='#ff8800';await f.fire('name-color','input');const pending=f.actions.get('save-name-color')();
+ f.el('name-color').value='#33dd77';await f.fire('name-color','input');finish(communityState([],{id:'member',name:'Member',color:'#ff8800'}));await pending;
+ assert.equal(f.el('name-color').value,'#33dd77');assert.equal(f.el('save-name-color').disabled,false);
+});
+
+test('attachment owner actions follow current authorization even when the feed is unchanged',()=>{
+ const f=fixture(),message={id:'media',username:'Member',title:'Example',body:'Attachment example',created:1794000000,status:'open',kind:'feature',media:[{id:'file',kind:'image',url:'https://example.com/image.png',name:'Image',expires:9999999999}]};
+ const labels=n=>[n.textContent,...n.children.flatMap(labels)];
+ f.render(communityState([message]));assert.ok(!labels(f.el('feature-feed')).includes('Delete attachment'));
+ const state=communityState([message],{id:'owner',name:'Owner',isAdmin:true});state.community.queue=[];f.render(state);assert.ok(labels(f.el('feature-feed')).includes('Delete attachment'));
+ f.render(communityState([message],null));assert.ok(!labels(f.el('feature-feed')).includes('Delete attachment'));
+});

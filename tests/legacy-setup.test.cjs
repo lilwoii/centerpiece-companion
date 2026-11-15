@@ -1,11 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const binding={behaviorId:50397,param1:0x05070013};
 test('legacy setup adds identity using read-only queries and verifies the existing plugin binding',async()=>{
- let saved,closed=0;const requests=[];
+ let saved,staged,closed=0;const requests=[];
  const manifest={verified:true,serial:'display',installedBinding:binding};
  const devices=[{productId:0x200,serialNumber:'keyboard'},{productId:0x202,serialNumber:'display'}].map(d=>({...d,vendorId:0x361d,usagePage:0xff00,usage:1}));
  class Studio{constructor(){this.serial='keyboard';}close(){closed++;}async request(r){requests.push(r);const keys=Array.from({length:68},()=>({behaviorId:0}));keys[26]=binding;return{keymap:{getKeymap:{layers:[{id:0,bindings:keys},{id:1,bindings:keys}]}}};}}
- const box={module:{exports:{}},require:n=>n==='node:fs'?{writeFileSync:(_p,s)=>saved=JSON.parse(s)}:n==='./hid.cjs'?{devices:()=>devices}:n==='./studio.cjs'?{Studio}:require(n)};
+ const box={module:{exports:{}},require:n=>n==='node:fs'?{writeFileSync:(_p,s)=>staged=JSON.parse(s),renameSync:()=>{saved=staged;},unlinkSync:()=>{}}:n==='./hid.cjs'?{devices:()=>devices}:n==='./studio.cjs'?{Studio}:require(n)};
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/legacy-setup.cjs'),'utf8'),box);
  await box.module.exports.migrateLegacySetup('test',manifest);
  assert.equal(saved.keyboardSerial,'keyboard');assert.equal(closed,1);
@@ -23,4 +23,17 @@ test('identity and unsaved-change failures never send discard or other keymap mu
   assert.equal(requests.some(r=>r.keymap.discardChanges||r.keymap.setLayerBinding||r.keymap.saveChanges),false);
   assert.equal(requests.length,scenario==='identity'?0:2);
  }
+});
+
+test('failed legacy identity migration preserves the sole setup record and cleans its temporary file',async t=>{
+ const path=require('node:path'),os=require('node:os'),directory=fs.mkdtempSync(path.join(os.tmpdir(),'companion-migrate-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+ const manifest={verified:true,serial:'display',installedBinding:binding,ownedSlots:[9,10]},file=path.join(directory,'hardware.json'),original=JSON.stringify(manifest);fs.writeFileSync(file,original);
+ const devices=[{productId:0x200,serialNumber:'keyboard'},{productId:0x202,serialNumber:'display'}].map(d=>({...d,vendorId:0x361d,usagePage:0xff00,usage:1}));
+ let closes=0;class Studio{constructor(){this.serial='keyboard';}close(){closes++;}async request(){const keys=Array.from({length:68},()=>({behaviorId:0}));keys[26]=binding;return{keymap:{getKeymap:{layers:[{id:0,bindings:keys},{id:1,bindings:keys}]}}};}}
+ for(const failure of ['write','rename']){
+  const mock={...fs,writeFileSync:(target,data,options)=>{if(failure==='write'){fs.writeFileSync(target,'partial',options);throw Object.assign(Error('disk full'),{code:'ENOSPC'});}fs.writeFileSync(target,data,options);},renameSync:()=>{throw Object.assign(Error('locked'),{code:'EACCES'});}};
+  const box={module:{exports:{}},require:n=>n==='node:fs'?mock:n==='./hid.cjs'?{devices:()=>devices}:n==='./studio.cjs'?{Studio}:require(n)};vm.runInNewContext(fs.readFileSync(require.resolve('../src/legacy-setup.cjs'),'utf8'),box);
+  await assert.rejects(box.module.exports.migrateLegacySetup(directory,manifest));assert.equal(fs.readFileSync(file,'utf8'),original);assert.deepEqual(fs.readdirSync(directory),['hardware.json']);
+ }
+ assert.equal(closes,2);
 });

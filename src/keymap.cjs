@@ -31,18 +31,22 @@ class KeymapEditor{
   if(!restore&&swapPosition===null&&(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>15))throw Error('Choose a supported key and modifiers.');
   return this.use(async s=>{
    if(s.serial!==this.serial)throw Error('A different keyboard is connected. Read its bindings first.');
-   if((await s.request({keymap:{checkUnsavedChanges:true}})).keymap.checkUnsavedChanges)throw Error('Save or discard XPANEL changes first.');
+   if(await require('./studio-response.cjs').pendingChanges(s))throw Error('Save or discard XPANEL changes first.');
    const map=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;
    if(JSON.stringify(map)!==JSON.stringify(this.snapshot))throw Error('Keyboard changed since it was loaded. Read it again before saving.');
    fs.mkdirSync(this.directory,{recursive:true});fs.writeFileSync(path.join(this.directory,`keymap-${Date.now()}.json`),JSON.stringify(map,null,2));
    const layer=map.layers.find(l=>(l.id||0)===layerId),before=structuredClone(layer.bindings),edits=restore?structuredClone(restore.edits):swapPosition===null?[[position,{behaviorId:50397,param1:(mods<<24)|value}]]:[[position,before[swapPosition]],[swapPosition,before[position]]];
-   let saveAttempted=false;
    try{for(const [keyPosition,binding]of edits){if((await s.request({keymap:{setLayerBinding:{layerId,keyPosition,binding}}})).keymap.setLayerBinding!==0)throw Error('Keyboard rejected the change');layer.bindings[keyPosition]=binding;}
-    saveAttempted=true;
-    const saved=(await s.request({keymap:{saveChanges:true}})).keymap.saveChanges;if(!saved||saved.err)throw Error('Save failed');
+    const beforeSave=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;
+    if(JSON.stringify(map)!==JSON.stringify(beforeSave))throw Error('Keyboard changed during the edit. Nothing was saved; review the current bindings before retrying.');
+    const saved=(await s.request({keymap:{saveChanges:true}})).keymap.saveChanges;require('./keyboard-errors.cjs').assertSaveResult(saved,'Key assignment');
     const after=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;if(JSON.stringify(map)!==JSON.stringify(after))throw Error('Readback differs. Read keyboard again to check its current state.');
     this.snapshot=after;if(restore)this.history.pop();else{this.history.push({layerId,position,edits:edits.map(([p])=>[p,structuredClone(before[p])])});if(this.history.length>30)this.history.shift();}return true;
-   }catch(e){if(!saveAttempted)await s.request({keymap:{discardChanges:true}}).catch(()=>{});this.snapshot=null;throw e;}
+   }catch(e){
+    // A timed-out edit may have reached the device. Discarding the entire
+    // pending keymap would also erase edits made concurrently in XPANEL.
+    // Require a fresh read/review instead of silently rolling everything back.
+    this.snapshot=null;this.history=[];throw e;}
   });
  }
 }

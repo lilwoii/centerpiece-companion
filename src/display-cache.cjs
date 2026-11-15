@@ -1,13 +1,8 @@
 const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');const{Som}=require('./som.cjs');
-const DEFAULT_POOL=[2,3,4,5,6,7,8,9,10];
+const {DEFAULT_POOL,ownedPool}=require('./overlay-allocation.cjs');
 const NAVIGATION=['previous','toggle','next','fourth','fifth'];
 const CONTENT_INTERVAL=250;
 const {createHash}=require('node:crypto');
-function ownedPool(manifest){
- const pool=manifest?.ownedSlots===undefined?DEFAULT_POOL:manifest.ownedSlots;
- if(!Array.isArray(pool)||pool.length<2||pool.length>9||new Set(pool).size!==pool.length||pool.some(n=>!Number.isInteger(n)||n<2||n>10))throw Error('The saved display allocation is invalid. Run Check setup before applying the keyboard display.');
- return [...pool];
-}
 class DisplayCache{
  event(kind,details){try{this.onDiagnostic?.(kind,details);}catch{}}
  constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.closing=false;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.frameHashes=new Map();this.skippedIdenticalFrames=0;this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}

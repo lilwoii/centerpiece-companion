@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 function fixture(){
  const clients=[],control={serial:'keyboard-a'},manifest={serial:'keyboard-a',verified:true,ownedSlots:[9,10],originalSlot:1};
  class Som{constructor(){this.serial=control.serial;this.closed=0;clients.push(this);}close(){this.closed++;}}
- const box={module:{exports:{}},setTimeout,clearTimeout,require:name=>name==='./som.cjs'?{Som}:name==='node:fs'?{existsSync:()=>true,readFileSync:()=>JSON.stringify(manifest)}:require(name)};
+ const box={module:{exports:{}},setTimeout,clearTimeout,require:name=>name==='./som.cjs'?{Som}:name==='node:fs'?{existsSync:()=>true,readFileSync:()=>JSON.stringify(manifest)}:name==='./overlay-allocation.cjs'?require('../src/overlay-allocation.cjs'):require(name)};
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/display-cache.cjs'),'utf8'),box);
  return{cache:new box.module.exports.DisplayCache('.',()=>''),clients,control,manifest};
 }

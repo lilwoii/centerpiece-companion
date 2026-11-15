@@ -18,3 +18,10 @@ test('track-change discovery bursts are bounded, coalesced and return to the nor
  const normal=callback();release();await normal;assert.equal(delay,250,'the burst ends without another track change');
  poll.close();poll.boost();assert.equal(callback,null,'closing cancels pending discovery');
 });
+
+test('restarting during an unfinished refresh does not create overlapping polling chains',async()=>{
+ const timers=new Map();let id=0,calls=0,release;const poll=new MediaPoll(()=>{calls++;return new Promise(resolve=>{release=resolve;});},()=>({available:true}),{setTimeout:(fn)=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id)});
+ const fire=()=>{const [id,fn]=timers.entries().next().value;timers.delete(id);return fn();};
+ poll.start();const first=fire();assert.equal(calls,1);poll.close();poll.start();poll.kick();assert.equal(timers.size,0,'restart waits for the existing read');
+ release();await first;assert.equal(timers.size,1);const second=fire();assert.equal(calls,2);release();await second;assert.equal(timers.size,1,'only one recurring chain survives');poll.close();assert.equal(timers.size,0);
+});

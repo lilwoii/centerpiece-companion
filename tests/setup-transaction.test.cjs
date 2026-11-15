@@ -140,3 +140,42 @@ test('only slash reverted after setup is repaired even when plugin shortcut is s
 test('a custom shortcut after verified setup remains untouched',async t=>{const {x,directory,deps}=fixture(t);await startSetup(directory,{includeWidget:true},deps);x.map.layers[1].bindings[55]={behaviorId:50397,param1:0x70004};x.edits=[];const saves=x.saves;await assert.rejects(startSetup(directory,{includeWidget:true},deps),{code:'KEYBOARD_WIDGET_KEY_CUSTOMIZED',writesAttempted:false});assert.equal(x.edits.length,0);assert.equal(x.saves,saves);});
 
 test('restored setup automatically reclaims saved shortcuts without changing other keys',async t=>{const {x,directory,deps}=fixture(t);const original=structuredClone(x.map);await startSetup(directory,{includeWidget:true},deps);const file=path.join(directory,'hardware.json');const saved=JSON.parse(fs.readFileSync(file));fs.writeFileSync(file,JSON.stringify({...saved,restored:true}));x.map=structuredClone(original);x.edits=[];const result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,false);assert.equal(result.backup.restored,false);assert.deepEqual(result.backup.originalBinding,saved.originalBinding);assert.deepEqual(x.edits.map(e=>e.keyPosition),[26,55]);original.layers[1].bindings[26]=pluginBinding;original.layers[1].bindings[55]=widgetBinding;assert.deepEqual(x.map,original);const saves=x.saves;await startSetup(directory,{includeWidget:true},deps);assert.equal(x.saves,saves);});
+
+test('verified legacy fixed-pool setup reclaims its occupied slots after shortcut reset',async t=>{
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);
+ const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;fs.writeFileSync(file,JSON.stringify(backup));
+ x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};x.edits=[];
+ const result=await startSetup(directory,{includeWidget:true},deps);
+ assert.deepEqual(result.backup.ownedSlots,[2,3,4,5,6,7,8,9,10]);assert.deepEqual(result.backup.originalBinding,backup.originalBinding);assert.deepEqual(x.edits.map(e=>e.keyPosition),[26]);
+});
+test('legacy slot recovery remains read-only while pending settings await approval',async t=>{
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;backup.restored=true;fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.pending=true;x.edits=[];const before=fs.readFileSync(file,'utf8');const result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,true);assert.equal(x.edits.length,0);assert.equal(fs.readFileSync(file,'utf8'),before);
+});
+test('incomplete legacy records and explicit foreign slots never acquire all occupied overlays',async t=>{
+ for(const modify of [b=>{delete b.ownedSlots;b.verified=false},b=>{delete b.ownedSlots;delete b.installedBinding},b=>{b.ownedSlots=null}]){
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));modify(backup);fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};x.edits=[];await assert.rejects(startSetup(directory,{includeWidget:true},deps));assert.equal(x.edits.length,0);
+ }
+});
+
+test('correct shortcuts alone cannot bypass missing legacy overlay ownership proof',async t=>{
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);
+ const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;delete backup.installedBinding;fs.writeFileSync(file,JSON.stringify(backup));
+ x.occupied=[2,3,4,5,6,7,8,9,10];x.edits=[];const saves=x.saves,before=fs.readFileSync(file,'utf8');
+ await assert.rejects(startSetup(directory,{includeWidget:true},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED',writesAttempted:false});
+ assert.equal(x.edits.length,0);assert.equal(x.saves,saves);assert.equal(fs.readFileSync(file,'utf8'),before);
+});
+test('known two-slot allocation survives full storage and a shortcut reset without claiming foreign slots',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8];await setup(directory,{includeWidget:true},deps);
+ x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};x.edits=[];
+ const result=await startSetup(directory,{includeWidget:true},deps);assert.deepEqual(result.backup.ownedSlots,[9,10]);assert.deepEqual(result.backup.preservedSlots,[2,3,4,5,6,7,8]);assert.deepEqual(x.edits.map(e=>e.keyPosition),[26]);
+});
+
+test('missing ownedSlots never reclaims overlays explicitly preserved in the same completed setup',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8];await setup(directory,{includeWidget:true},deps);
+ const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;fs.writeFileSync(file,JSON.stringify(backup));
+ x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};
+ const result=await startSetup(directory,{includeWidget:true},deps);assert.deepEqual(result.backup.ownedSlots,[9,10]);assert.deepEqual(result.backup.preservedSlots,[2,3,4,5,6,7,8]);
+});
+test('malformed preserved-slot metadata never authorizes a legacy full-pool fallback',async t=>{
+ for(const preservedSlots of ['bad',[2,2],[1],[11]]){const {x,directory,deps}=fixture(t);await setup(directory,{},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;backup.preservedSlots=preservedSlots;fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.edits=[];await assert.rejects(startSetup(directory,{},deps),{code:'SETUP_BACKUP_UNREADABLE',writesAttempted:false});assert.equal(x.edits.length,0);}
+});

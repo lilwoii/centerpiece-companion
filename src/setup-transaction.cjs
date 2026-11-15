@@ -39,19 +39,30 @@ function identity(s, som, prior, widgetPrior) {
   if (!s.serial || !som.serial) throw keyboardError('KEYBOARD_IDENTITY_UNAVAILABLE', 'The keyboard or display did not provide an identity. Reconnect the Centerpiece and run Check setup.');
   if (prior && (prior.serial !== som.serial || prior.keyboardSerial && prior.keyboardSerial !== s.serial) || widgetPrior && widgetPrior.serial !== s.serial) throw keyboardError('KEYBOARD_BACKUP_MISMATCH', 'The saved setup belongs to a different keyboard. No settings were changed.');
 }
+function priorOwnedSlots(prior) {
+  if (!prior) return [];
+  // Only a completed, identity-checked installation establishes the old fixed
+  // pool contract; any explicitly preserved foreign slots still stay excluded.
+  const legacy=prior.verified===true && !prior.setupInProgress && prior.serial &&
+    prior.layerId===1 && prior.keyPosition===26 && prior.originalBinding &&
+    sameBinding(prior.installedBinding,pluginBinding);
+  if(prior.ownedSlots===undefined&&!legacy)return [];
+  try{return require('./overlay-allocation.cjs').ownedPool(prior);}
+  catch{throw keyboardError('SETUP_BACKUP_UNREADABLE','The saved display allocation is invalid. Existing overlays were preserved. Use Check setup and share the report.');}
+}
 async function overlayCheck(som, prior) {
-  const ownedSlots = [], preservedSlots = [];
+  const ownedSlots = [], preservedSlots = [], priorSlots=priorOwnedSlots(prior);
   for (const slot of slots) {
     let bytes;
     try { bytes = await som.readOverlay(slot); } catch (e) { e.stage = `read_overlay_${slot}`; throw e; }
-    if (bytes && !prior?.ownedSlots?.includes(slot)) preservedSlots.push(slot);
+    if (bytes && !priorSlots.includes(slot)) preservedSlots.push(slot);
     else ownedSlots.push(slot);
   }
   if (ownedSlots.length < 2) {
     const instruction = ownedSlots.length === 0
       ? 'Display slots are full. Two empty overlay slots are needed.'
       : 'One more empty display slot is needed; one is already available.';
-    throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `${instruction} Companion needs two available slots among 2–10 so it can update the display without overwriting the active frame. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Use Check setup → Copy setup report for help making space safely.`, {stage:'check_display_slots'});
+    throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `${instruction} Companion needs two available slots among 2–10 so it can update the display without overwriting the active frame. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Do not delete skins or reset the keyboard. Companion could not verify ownership of enough occupied overlays. Use Check setup → Copy setup report for safe recovery.`, {stage:'check_display_slots'});
   }
   return {ownedSlots, preservedSlots};
 }
@@ -73,13 +84,14 @@ async function prepareSetup(directory, options = {}, deps = {}) {
   try {
     const prior = record(directory, 'hardware.json'), widgetPrior = record(directory, 'widget-shortcut.json');
     s = new Studio(); som = new Som(); identity(s, som, prior, widgetPrior);
+    const savedSlots=priorOwnedSlots(prior);
     stage = 'read_keymap'; const map = await keymap(s), layer = checkMap(map);
     // Companion owns L1 + P. Reclaim blank or externally remapped bindings as
     // well as stock Plugin Toggle, with the full pre-change map checkpointed.
     const includeWidget = options.includeWidget === true;
     if (includeWidget && widgetPrior && ![widgetPrior.original, widgetPrior.installed, widgetBinding, {behaviorId:50397,param1:0x05070073}].some(b => b && sameBinding(b, layer.bindings[55]))) throw keyboardError('KEYBOARD_WIDGET_KEY_CUSTOMIZED', 'L1 + / changed since its backup was made. Setup preserved the current mapping.');
     // A correct verified installation needs no save, regardless of a dirty flag.
-    if (prior?.verified && prior.keyboardSerial===s.serial && !prior.setupInProgress && !prior.restored && !pluginArrowChanges(map).length && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
+    if (savedSlots.length>=2 && prior?.verified && prior.keyboardSerial===s.serial && !prior.setupInProgress && !prior.restored && !pluginArrowChanges(map).length && sameBinding(layer.bindings[26], pluginBinding) && (!includeWidget || sameBinding(layer.bindings[55], widgetBinding))) return {alreadyInstalled: true, prior};
     stage = 'read_pending_status'; const pending = await pendingChanges(s);
     if (pending && !options.reviewPending) throw keyboardError('KEYBOARD_PENDING_CHANGES', 'The keyboard reports pending configuration changes. This does not prove XPANEL has unsaved edits. Choose Review current settings to back up and keep the current configuration, or use Check setup for details.');
     stage = 'read_layout'; const physicalLayouts = await layouts(s);

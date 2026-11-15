@@ -11,11 +11,18 @@ class SleepService {
   try{await pending;}catch(error){if(epoch===this.activityEpoch&&previous!==null){this.controller.minutes=previous.minutes;this.controller.lastInput=previous.lastInput;this.armTimer(previous.minutes);}throw error;}finally{this.configurations.delete(pending);}
  }
  async configureCurrent(value,epoch){
-  const nativeValue=value===0?99:value;
-  await this.run(async()=>{const s=this.createSom();try{const current=await s.screenTimeout();if(this.original===null){this.original=current;this.identity=s.identity;}if(this.identity!==s.identity)throw Error('Reconnect the original keyboard before changing its sleep timer.');await s.screenTimeout(nativeValue);const confirmed=await s.screenTimeout();if(confirmed!==nativeValue)throw Error(`The keyboard confirmed ${confirmed} minutes instead of ${value}. Your previous timer will be restored.`);}finally{s.close();}});
+  const nativeValue=value===0?99:value;let previousNative=null,nativeIdentity=null,writeAttempted=false;
+  try{await this.run(async()=>{const s=this.createSom();try{const current=await s.screenTimeout();if(this.original===null){this.original=current;this.identity=s.identity;}if(this.identity!==s.identity)throw Error('Reconnect the original keyboard before changing its sleep timer.');previousNative=current;nativeIdentity=s.identity;writeAttempted=true;await s.screenTimeout(nativeValue);const confirmed=await s.screenTimeout();if(confirmed!==nativeValue)throw Error(`The keyboard confirmed ${confirmed} minutes instead of ${value}. Your previous timer will be restored.`);}finally{s.close();}});
   // Overlay traffic can keep the native idle timer alive. Enforce keyboard
   // inactivity independently and pause overlay writes before powering down.
   this.assertConfigurationCurrent(epoch);this.testing=false;await this.controller.configure(value);this.assertConfigurationCurrent(epoch);if(value===0){await this.run(()=>this.setEnabled(true));this.assertConfigurationCurrent(epoch);}this.armTimer(value);
+  }catch(error){
+   // A failed readback or power-on must not leave the native timer at the
+   // attempted value while the app continues enforcing its previous setting.
+   // Superseded operations leave restoration to the newest change or close().
+   if(writeAttempted&&epoch===this.activityEpoch){try{await this.run(async()=>{if(epoch!==this.activityEpoch)return;const s=this.createSom();try{if(s.identity!==nativeIdentity)throw Error('The original keyboard disconnected before its sleep timer could be restored.');await s.screenTimeout(previousNative);if(await s.screenTimeout()!==previousNative)throw Error('The keyboard did not confirm the restored sleep timer.');}finally{s.close();}});}catch(restoreError){error.message+=' Previous native sleep timer could not be restored: '+restoreError.message;}}
+   throw error;
+  }
  }
  assertConfigurationCurrent(epoch){if(epoch!==this.activityEpoch){const error=Error('Display sleep change was superseded or cancelled.');error.code='SLEEP_CONFIGURATION_CANCELLED';throw error;}}
  armTimer(value){this.timer=value===0?this.every(()=>{if(this.testing||this.keepAwakeBusy)return;this.keepAwakeBusy=true;this.run(()=>this.setEnabled(true)).catch(this.onError).finally(()=>{this.keepAwakeBusy=false;});},30000):this.every(()=>{void this.reconcile().catch(this.onError);},1000);this.timer.unref?.();
@@ -31,7 +38,7 @@ class SleepService {
   this.activityCheck=(async()=>{try{const idle=await this.getIdleSeconds();if(epoch!==this.activityEpoch||this.testing||c.closed)return;if(typeof idle==='number'&&Number.isFinite(idle)&&idle>=0){c.lastInput=Math.max(c.lastInput,now-idle*1000);this.inputFallbackError=null;}else this.inputFallbackError='Windows idle state was unavailable.';}catch(error){this.inputFallbackError=String(error?.message||'Windows idle state was unavailable.').slice(0,160);}if(epoch===this.activityEpoch&&!this.testing&&!c.closed)await c.reconcile();})().finally(()=>{this.activityCheck=null;});
   return this.activityCheck;
  }
- async test(){this.activityEpoch++;this.testing=true;this.testMinutes=this.controller.minutes;this.controller.minutes=10;this.controller.lastInput=this.controller.now()-600000;try{await this.controller.reconcile();}catch(e){this.testing=false;this.controller.minutes=this.testMinutes;throw e;}}
+ async test(){if(this.testing)return this.controller.reconcile();this.activityEpoch++;this.testing=true;this.testMinutes=this.controller.minutes;this.controller.minutes=10;this.controller.lastInput=this.controller.now()-600000;try{await this.controller.reconcile();}catch(e){this.testing=false;this.controller.minutes=this.testMinutes;throw e;}}
  activity(){this.controller.activity();if(this.testing){this.testing=false;this.controller.minutes=this.testMinutes;}}
  status(){return{minutes:this.controller.minutes,asleep:this.controller.asleep,idleSeconds:Math.max(0,Math.floor((this.controller.now()-this.controller.lastInput)/1000)),timerActive:this.timer!==null,testing:this.testing,inputFallbackError:this.inputFallbackError};}
  async close(){this.activityEpoch++;this.cancel(this.timer);this.timer=null;await Promise.allSettled([...this.configurations]);await this.controller.close();if(this.original===null)return;await this.run(async()=>{const s=this.createSom();try{if(s.identity===this.identity)await s.screenTimeout(this.original);}finally{s.close();}});this.original=null;}

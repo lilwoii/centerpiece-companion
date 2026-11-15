@@ -155,3 +155,42 @@ test('cached lock or layer selection failure stays in recovery state instead of 
   assert.equal(events.at(-1).kind,'display-selection-failed');
  }
 });
+
+test('every supported overlay pool survives repeated Caps layer navigation and live updates without writing active or foreign slots',async()=>{
+ for(let count=2;count<=9;count++){
+  const f=fixture();f.cache.pool=Array.from({length:count},(_,i)=>11-count+i);f.cache.config.slots=Array.from({length:5},()=>({plugin:'network'}));
+  const upload=f.cache.som.uploadOverlay;f.cache.som.uploadOverlay=async slot=>{assert.ok(f.cache.pool.includes(slot),'never upload into another owner’s slot');await upload(slot);};
+  await f.cache.apply(f.cache.config,{caps:false});
+  for(let step=0;step<24;step++){f.cache.desired=['idle','previous','toggle','next','fourth','fifth'][step%6];f.cache.caps=!!(step%2);f.cache.layer=!!(step%3);f.cache.data.revision++;f.advance(2000);await f.cache.refreshLive();assert.equal(f.cache.error,'');assert.ok(f.cache.cache.size<=count-1);assert.equal(new Set(f.cache.cache.values()).size,f.cache.cache.size);assert.equal(f.cache.cache.get(f.cache.key()),f.cache.lastSlot);}
+  f.cache.clearLiveTimer();
+ }
+});
+
+
+test('fragmented owned allocations preserve every foreign slot across repeated rebuilds and state changes',async()=>{
+ for(const pool of [[2,10],[3,7,10],[2,5,6,9],[2,3,5,6,8,10]]){
+  const f=fixture();f.cache.pool=pool;f.cache.config.slots=Array.from({length:5},()=>({plugin:'network'}));
+  const upload=f.cache.som.uploadOverlay;f.cache.som.uploadOverlay=async slot=>{assert.ok(pool.includes(slot),'foreign allocation must remain untouched');return upload(slot);};
+  for(let rebuild=0;rebuild<3;rebuild++){
+   await f.cache.apply(f.cache.config,{caps:!!(rebuild%2)});
+   for(let step=0;step<12;step++){f.cache.desired=['idle','previous','toggle','next','fourth','fifth'][step%6];f.cache.caps=!!(step%2);f.cache.layer=!!(step%3);f.cache.data.revision++;f.advance(2000);await f.cache.refreshLive();assert.equal(f.cache.cache.get(f.cache.key()),f.cache.lastSlot);assert.equal(new Set(f.cache.cache.values()).size,f.cache.cache.size);}
+  }
+  assert.equal(f.cache.error,'');f.cache.clearLiveTimer();
+ }
+});
+
+test('an upload that activates before its acknowledgement fails is not overwritten during retry',async()=>{
+ for(const pool of [[2,10],[3,7,10]]){
+  const f=fixture();f.cache.pool=pool;await f.cache.refreshLive();const upload=f.cache.som.uploadOverlay;
+  let failedSlot;f.cache.som.uploadOverlay=async slot=>{await upload(slot);failedSlot=slot;throw Object.assign(Error('Lost final acknowledgement'),{code:'DISPLAY_REQUEST_TIMEOUT'});};
+  f.cache.data.revision++;await assert.rejects(f.cache.refreshLive(),/Lost final acknowledgement/);
+  const count=f.uploads.length;await assert.rejects(f.cache.refreshLive());assert.equal(f.uploads.length,count,'failure must not automatically repeat transfer');
+  f.cache.som.uploadOverlay=upload;await f.cache.apply(f.cache.config,{caps:false});
+  assert.notEqual(f.uploads[count],failedSlot,'rebuild must read the actually active slot before uploading');assert.equal(f.cache.error,'');f.cache.clearLiveTimer();
+ }
+});
+
+test('runtime legacy allocation excludes preserved foreign slots exactly like setup',()=>{
+ const {ownedPool}=require('../src/display-cache.cjs');assert.deepEqual(ownedPool({preservedSlots:[2,3,4,5,6,7,8]}),[9,10]);
+ for(const manifest of [{ownedSlots:[9,10],preservedSlots:[10]},{preservedSlots:null},{preservedSlots:[2,2]},{preservedSlots:[2,3,4,5,6,7,8,9]}])assert.throws(()=>ownedPool(manifest),/allocation is invalid/);
+});

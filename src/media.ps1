@@ -16,7 +16,7 @@ while ($null -ne ($line = [Console]::ReadLine())) {
   $request = $null
   try {
     $request = $line | ConvertFrom-Json
-    $sources=@(); $label=if($request.provider -eq 'youtube'){'YouTube'}else{'Spotify'}
+    $sources=@(); $label=if($request.provider -eq 'musicbee'){'MusicBee'}elseif($request.provider -eq 'youtube'){'YouTube'}else{'Spotify'}
     if(!$manager){$manager=Await-WinRT ($managerType::RequestAsync()) $managerType;$managerRefreshed=[datetime]::UtcNow}
     $sessions=@($manager.GetSessions())
     $target=if($request.target){[string]$request.target}else{'auto'}
@@ -42,7 +42,7 @@ while ($null -ne ($line = [Console]::ReadLine())) {
     }
     if($request.provider -eq 'youtubemusic'){$sources=@(Get-CompanionMediaSources $sessions $target $installedMusicIds)}
     if (!$session) {
-      $message=if($selection.reason -eq 'ambiguous'){'Several media sessions match this player. Pause or close the other media sessions, then retry. No playback command was sent.'}elseif($selection.reason -eq 'source-unavailable'){'The selected media source is not available for this player choice. Choose a matching source or Automatic source in Connections.'}elseif($request.provider -eq 'youtube'){'No browser playback session is available. Open YouTube in your browser; Companion reconnects when Windows reports its media.'}elseif($label -eq 'Spotify'){'Open Spotify and start a track to connect.'}elseif($target -eq 'desktop'){'No YouTube Music desktop playback session is available. Open the desktop player; Companion reconnects automatically when Windows reports its media.'}elseif($target -eq 'web'){'No YouTube Music web playback session is available. Open the installed web app or browser player. Windows may need playback to start once before it reports media.'}else{'No identified YouTube Music playback session is available. Open the desktop player or installed web app. For a browser tab, select Web as your player. Windows may need playback to start once before it reports media.'}
+      $message=if($selection.reason -eq 'ambiguous'){'Several media sessions match this player. Pause or close the other media sessions, then retry. No playback command was sent.'}elseif($selection.reason -eq 'source-unavailable'){'The selected media source is not available for this player choice. Choose a matching source or Automatic source in Connections.'}elseif($request.provider -eq 'youtube'){'No browser playback session is available. Open YouTube in your browser; Companion reconnects when Windows reports its media.'}elseif($request.provider -eq 'musicbee'){'Open MusicBee with its Media Control plugin enabled. See MusicBee setup in the Plugin library.'}elseif($label -eq 'Spotify'){'Open Spotify and start a track to connect.'}elseif($target -eq 'desktop'){'No YouTube Music desktop playback session is available. Open the desktop player; Companion reconnects automatically when Windows reports its media.'}elseif($target -eq 'web'){'No YouTube Music web playback session is available. Open the installed web app or browser player. Windows may need playback to start once before it reports media.'}else{'No identified YouTube Music playback session is available. Open the desktop player or installed web app. For a browser tab, select Web as your player. Windows may need playback to start once before it reports media.'}
       if ($request.action -ne 'status') { throw $message }
       $result = @{ available=$false; reason=$selection.reason; message=$message; sources=$sources; target=$target }
     } elseif ($request.action -eq 'status') {

@@ -136,3 +136,8 @@ label[for="widget-picker"]{color:#ffc66d;font-weight:700}
 .strip-appearance label:has(#hint-mode){color:var(--success);font-weight:700}
 #hint-mode{border-color:var(--success)}
 #hint-mode:focus-visible{outline:2px solid var(--success);outline-offset:3px}
+.musicbee-setup{border:1px solid var(--attention);border-radius:8px;padding:14px;margin:12px 0;color:var(--ink)}
+.musicbee-setup>strong,.musicbee-setup .musicbee-status{color:var(--attention)}
+.musicbee-setup[data-connected=true] .musicbee-status{color:var(--success)}
+.musicbee-setup p{font-size:13px;line-height:1.55;margin:8px 0}
+.musicbee-setup .button{background:var(--success);border-color:var(--success);color:var(--background);font-weight:700}

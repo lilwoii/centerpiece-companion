@@ -1,4 +1,4 @@
-const widgetNames={performance:'Game performance',downloads:'Download progress',market:'Market watchlist',network:'Network quality',ram:'RAM usage',vram:'VRAM usage',calendar:'Calendar',spotify:'Spotify',youtubemusic:'YouTube Music',youtube:'YouTube video',clock:'Local time',weather:'Weather',cpu:'CPU',gpu:'GPU',mic:'Microphone',twitch:'Twitch chat',text:'Custom text',timer:'Countdown timer',obs:'OBS status',off:'Off'};
+const widgetNames={performance:'Game performance',downloads:'Download progress',market:'Market watchlist',network:'Network quality',ram:'RAM usage',vram:'VRAM usage',calendar:'Calendar',spotify:'Spotify',musicbee:'MusicBee',youtubemusic:'YouTube Music',youtube:'YouTube video',clock:'Local time',weather:'Weather',cpu:'CPU',gpu:'GPU',mic:'Microphone',twitch:'Twitch chat',text:'Custom text',timer:'Countdown timer',obs:'OBS status',off:'Off'};
 let favoritesSaving=false;let favoritesLoaded=false,favoritesOrderKey='',featuresProfileRevision=0,profileListRevision=-1,confirmProfileId='';
 let widgetPicker;
 function drawFavorites(order){

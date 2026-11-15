@@ -17,7 +17,7 @@ async function sanitizeMedia(result){
 
 
 class MediaTransport {
-  constructor(provider = 'spotify', spawnWorker=spawn) { this.spawnWorker=spawnWorker; if(!['spotify','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.label=provider==='spotify'?'Spotify':provider==='youtube'?'YouTube':'YouTube Music';this.pending = new Map(); this.sequence = 0; this.process = null; }
+  constructor(provider = 'spotify', spawnWorker=spawn) { this.spawnWorker=spawnWorker; if(!['spotify','musicbee','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.label=provider==='musicbee'?'MusicBee':provider==='spotify'?'Spotify':provider==='youtube'?'YouTube':'YouTube Music';this.pending = new Map(); this.sequence = 0; this.process = null; }
   start() {
     if (this.process) return;
     const proc = this.spawnWorker('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'media.ps1')], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -65,7 +65,7 @@ class MediaTransport {
 }
 const sharedTransport=new MediaTransport();
 class MediaBridge {
- constructor(provider='spotify',transport=sharedTransport){if(!['spotify','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.transport=transport;this.acquired=false;this.statusRequest=null;}
+ constructor(provider='spotify',transport=sharedTransport){if(!['spotify','musicbee','youtubemusic','youtube'].includes(provider))throw Error('Unknown music provider');this.provider=provider;this.source='';this.target='auto';this.transport=transport;this.acquired=false;this.statusRequest=null;}
  request(action){if(!['status','toggle','play','pause','next','previous','rewind'].includes(action))return Promise.reject(Error('Unknown media action'));if(!['auto','desktop','web'].includes(this.target))return Promise.reject(Error('Unknown YouTube Music player target'));if(!this.acquired){this.acquired=true;this.transport.users=(this.transport.users||0)+1;}if(action==='status'&&this.statusRequest)return this.statusRequest;const result=this.transport.request(action,{provider:this.provider,source:this.source,target:this.target});if(action==='status'){const pending=result.finally(()=>{if(this.statusRequest===pending)this.statusRequest=null;});this.statusRequest=pending;return pending;}return result;}
  close(){if(!this.acquired)return;this.acquired=false;if(--this.transport.users===0)this.transport.close();}
 }

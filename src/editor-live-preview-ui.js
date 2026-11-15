@@ -8,8 +8,8 @@
   const media=m=>m?{available:m.available,remembered:m.remembered,title:m.title,artist:m.artist,art:m.art,status:m.status,duration:m.duration,position:Math.floor(m.position||0),target:m.target}:null;
   const live=state.desk.live||{},fresh=Object.fromEntries(['network','ram','vram','performance'].map(k=>[k,!!live[k]?.updatedAt&&now-live[k].updatedAt<(k==='performance'?4000:15000)]));
   fresh.weather=!!live.weather&&now-(live.weather.observedAt||live.weather.updatedAt||now)<1800000;
-  const ticking=widgets.some(w=>['clock','calendar','timer','spotify','youtubemusic','youtube','downloads','market','performance'].includes(w?.type))||c.slots.some(s=>['clock','calendar','timer'].includes(s?.plugin));
-  return{config:c,selected:state.navigation?.active?state.navigation.id:'idle',live,fresh,media:media(state.media),youtubeMusic:media(state.youtubeMusic),youtube:media(state.youtube),timer:state.desk.timer,chat:state.desk.chat,obs:state.desk.obsStatus,tick:ticking?Math.floor(now/1000):0};
+  const ticking=widgets.some(w=>['clock','calendar','timer','spotify','musicbee','youtubemusic','youtube','downloads','market','performance'].includes(w?.type))||c.slots.some(s=>['clock','calendar','timer'].includes(s?.plugin));
+  return{config:c,selected:state.navigation?.active?state.navigation.id:'idle',live,fresh,media:media(state.media),musicBee:media(state.musicBee),youtubeMusic:media(state.youtubeMusic),youtube:media(state.youtube),timer:state.desk.timer,chat:state.desk.chat,obs:state.desk.obsStatus,tick:ticking?Math.floor(now/1000):0};
  }
  function highlights(state,layout){
   const c=state.desk.config,i=c.indicator||{},caps=!!state.desk.locks?.caps,shapes=[];
@@ -22,7 +22,7 @@
   function keyRect(id,position,color,shortcut=false){const k=layout?.keys?.[position];if(!k)return;const x=(k.x||0)*1920/1800,y=(k.y||0)*550/500,w=k.width*1920/1800,h=k.height*550/500;if(shortcut)rect(id,x+w/2-44,y+h/2-40,88,80,color,.65,3);else rect(id,x+4,y+4,w-8,h-8,color);}
   if(state.layer){const p=c.pluginShortcuts?.custom?c.pluginShortcuts.position:26;if(c.stripEnabled!==false)keyRect('plugin-shortcut',p,c.layerColor||i.on,true);keyRect('widget-shortcut',55,c.layerColor||i.on,true);if(c.pluginShortcuts?.hideLegendsShortcut)keyRect('legend-shortcut',62,c.legendShortcutColor||'#ff4040');}
   const selection=state.navigation?.active?names.indexOf(state.navigation.id):-1;
-  if(selection>=0&&['spotify','youtubemusic'].includes(c.slots[selection]?.plugin))for(const p of [65,67,56])keyRect('music-'+p,p,c.musicNavigationColor||'#1db954');
+  if(selection>=0&&['spotify','musicbee','youtubemusic'].includes(c.slots[selection]?.plugin))for(const p of [65,67,56])keyRect('music-'+p,p,c.musicNavigationColor||'#1db954');
   if(selection>=0&&c.stripEnabled!==false){const x=selection===4?1490:1605,y=selection===4?451:15+selection*86;shapes.push({id:'selection',tag:'rect',x,y,width:80,height:78,rx:9,fill:'none',stroke:'#9bb9ff','stroke-width':3});}
   return shapes;
  }

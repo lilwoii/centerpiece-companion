@@ -3,7 +3,7 @@ const number=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
 const playbackRate=media=>Number.isFinite(media?.playbackRate)&&media.playbackRate>=0&&media.playbackRate<=16?media.playbackRate:1;
 function positionAt(media,time=now()){const duration=Math.max(0,number(media?.duration));return Math.min(duration,Math.max(0,number(media?.position)+(media?.status==='Playing'?Math.max(0,time-number(media.positionTimestamp,time))/1000*playbackRate(media):0)));}
 class PlaybackClock{
- constructor(){this.last=null;}
+ constructor({precise=false}={}){this.last=null;this.precise=precise;}
  update(media,time=now(),wall=Date.now()){
   if(!media?.available){this.last=null;return media;}
   const key=JSON.stringify([media.source,media.title,media.artist,media.album]),raw=Math.max(0,number(media.rawPosition,number(media.position))),source=number(media.timelineUpdatedAt,wall)>0?number(media.timelineUpdatedAt,wall):wall,duration=Math.max(0,number(media.duration));
@@ -12,7 +12,7 @@ class PlaybackClock{
   // duration instead so opening Companion midway through a song stays accurate.
   const age=Math.max(0,(wall-source)/1000);let measured=raw+(media.status==='Playing'?age*playbackRate(media):0),position=measured;
   const old=this.last;
-  if(old&&old.key===key){
+  if(old&&old.key===key&&!this.precise){
    const projected=positionAt(old.media,time),elapsed=Math.max(0,(time-old.time)/1000);
    if(media.status==='Playing'&&old.media.status==='Playing'){
     // Repeated/coarse reports do not restart the local clock. New samples can seek.

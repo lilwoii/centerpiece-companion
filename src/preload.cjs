@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('companionNative', {
   indicatorPositions:()=>ipcRenderer.invoke('indicator-positions'),
   keyboardSkins:(action,input)=>ipcRenderer.invoke('keyboard-skins',action,input),
   openUnrealSetup:()=>ipcRenderer.invoke('open-unreal-setup'),
+  openMusicBeeSetup:()=>ipcRenderer.invoke('open-musicbee-setup'),
+  setupMusicBee:()=>ipcRenderer.invoke('setup-musicbee'),
   openSupport:()=>ipcRenderer.invoke('open-support'),
   studioRequest:(action,input)=>ipcRenderer.invoke('studio-request',action,input),
   skinLibrary:()=>ipcRenderer.invoke('skin-library'),

@@ -14,7 +14,7 @@ function Get-CompanionMediaArtwork([hashtable]$cache, [string]$key, [string]$pro
   $retrySeconds=if($provider -eq 'youtubemusic'){0.5}else{2}
   # Windows may expose the next title before replacing the previous thumbnail.
   # Reconcile only a few transition samples, then leave successful covers cached.
-  $reconcile=$provider -eq 'youtubemusic' -and $checkpoint -gt $cache.checkpoint
+  $reconcile=$provider -in @('youtubemusic','musicbee') -and $checkpoint -gt $cache.checkpoint
   if($changed -or $reconcile -or (!$cache.art -and ($now-$cache.checked).TotalSeconds -ge $retrySeconds)){
     $cache.checked=$now;$cache.checkpoint=$checkpoint
     try{$candidate=& $readThumbnail;if($candidate -is [string] -and $candidate){$cache.art=$candidate}}catch{}
@@ -77,6 +77,9 @@ function Select-CompanionMediaCandidate($candidates) {
   return [pscustomobject]@{session=$null;reason=$reason}
 }
 function Get-CompanionMediaSelection($sessions, $provider, $source, $installedMusicIds=@(), $target='auto') {
+  if($provider -eq 'musicbee') {
+    return Select-CompanionMediaCandidate @($sessions | Where-Object { $_.SourceAppUserModelId -match '(?i)(?:^|[\\/!])MusicBee(?:\.exe)?$|^50072StevenMayall\.MusicBee_kcr266et74avj!MusicBeePackage$' -and !(Test-CompanionMediaClosed $_) })
+  }
   if($provider -eq 'spotify') {
     # A restarted Spotify can coexist with its stale/closed Windows session.
     # Prefer a uniquely playing session; never let the first closed entry win.

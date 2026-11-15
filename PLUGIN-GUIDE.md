@@ -13,3 +13,15 @@ src/system.ps1 observes only Caps Lock state and emits changes through a local p
 src/keymap.cjs reads the actual 68-key map, checks serial/snapshot/unsaved changes, backs up before writing and compares the whole readback. Multi-key pre-save failures discard staged changes. Uncertain saves invalidate the snapshot. Do not bypass these checks or expose arbitrary HID requests to the renderer.
 
 Run npm test, npm run check and electron . --verify. Physical hardware tests must report their real outcomes separately from software assertions. Keep hardware-backup, diagnostics and user settings out of shared source packages.
+
+## MusicBee
+
+MusicBee uses the shared Windows media helper and only polls when a MusicBee plugin or widget is configured. Standard/portable MusicBee executable identities and the Microsoft Store package identity are recognized; unrelated players are never used as a fallback. Multiple indistinguishable MusicBee sessions require the user to close the extra player.
+
+Install Media Control once from https://github.com/HenryPDT/mb_MediaControl/releases using MusicBee Preferences > Plugins > Add Plugin, then restart MusicBee. The upstream manual alternative is to copy mb_MediaControl.dll into the Plugins folder while MusicBee is closed. Store installations should use Add Plugin. The add-on runs inside MusicBee, not Companion; Companion does not silently install downloaded code.
+
+Highlight MusicBee to use Left/Right for previous/next track, Right Shift for play/pause and L1 to exit. Rewind 10 seconds is also an assignable action. Custom images keep these controls. The widget uses MusicBee's reported timeline with sample-age compensation, immediate seek corrections and pause/end clamping; physical timing still depends on the player's timeline reports.
+
+MusicBee automatic setup downloads the fixed upstream 1.0 DLL only when requested, checks SHA-256 before installation, and preserves existing files. The DLL is not bundled or redistributed. Store installs use their per-user LocalCache folder; portable installs with local MusicBee3Settings.ini use their own Plugins folder. Users restart MusicBee afterward. Multiple running installations are rejected rather than guessed.
+
+Adding a MusicBee plugin position or applying its widget now starts setup automatically when no working media session exists. Setup runs outside keyboard display writes, coalesces simultaneous requests, and reports install/restart/errors separately from the saved assignment. Working sessions do not trigger installation. Setup does not run periodically or at app launch. The explicit setup button has been removed.

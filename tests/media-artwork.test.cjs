@@ -31,3 +31,10 @@ test('Spotify and regular YouTube retain successful artwork and their two-second
   assert.deepEqual(result.reads,[0,2000]);assert.equal(result.rows[4].art,'cover');assert.equal(result.rows[5].art,'cover');
  }
 });
+
+
+test('MusicBee replaces transitional stale artwork, retries missing covers and caches success',{skip:process.platform!=='win32'},()=>{
+ const result=run(`$script:candidate='old-cover';$rows=@((Sample 0 'song-a' 'musicbee'));$script:candidate='new-cover';$rows+=(Sample 750 'song-a' 'musicbee');$rows+=(Sample 1500 'song-a' 'musicbee');$rows+=(Sample 60000 'song-a' 'musicbee');$script:candidate='';$rows+=(Sample 61000 'song-b' 'musicbee');$rows+=(Sample 62500 'song-b' 'musicbee');$script:candidate='late-cover';$rows+=(Sample 64500 'song-b' 'musicbee');$rows+=(Sample 90000 'song-b' 'musicbee');@{rows=$rows;reads=$script:reads}|ConvertTo-Json -Depth 4 -Compress`);
+ assert.deepEqual(result.rows.map(r=>r.art),['old-cover','new-cover','new-cover','new-cover','','','late-cover','late-cover']);
+ assert.deepEqual(result.reads,[0,750,1500,61000,62500,64500]);
+});

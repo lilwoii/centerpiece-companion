@@ -3,7 +3,7 @@ const{app,BrowserWindow}=require('electron'),assert=require('node:assert/strict'
 app.setPath('userData',path.join(app.getPath('temp'),'centerpiece-setup-feedback-verification'));
 app.whenReady().then(async()=>{try{
  const win=new BrowserWindow({show:false,width:1320,height:920,webPreferences:{offscreen:true,backgroundThrottling:false,contextIsolation:true,nodeIntegration:false,sandbox:false,preload:path.join(__dirname,'features-preload.cjs'),additionalArguments:['--setup-feedback-test']}}),errors=[];
- win.webContents.on('console-message',(_event,level,message)=>{if(level>=3&&!message.includes('Content-Security-Policy'))errors.push(message);});
+ win.webContents.on('console-message',(_event,level,message)=>{if(level>=3&&!/Content[- ]Security[- ]Policy/.test(message))errors.push(message);});
  const js=source=>win.webContents.executeJavaScript(source),wait=()=>new Promise(resolve=>setTimeout(resolve,120));
  const click=async id=>{await js(`document.getElementById(${JSON.stringify(id)}).click()`);await wait();};
  await win.loadFile(path.join(__dirname,'../src/index.html'));await wait();
@@ -22,5 +22,7 @@ app.whenReady().then(async()=>{try{
  const directory=path.join(__dirname,'../verification');fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,'setup-current-blocker.png'),(await win.webContents.capturePage()).toPNG());
  await js('window.setupFeedbackTest.clear()');await wait();
  assert.equal(await js('document.getElementById("setup-failure-detail").hidden'),true);assert.equal(await js('document.getElementById("setup-failure-detail").textContent'),'');assert.equal(await js('document.getElementById("review-setup").hidden'),true);assert.match(await js('document.getElementById("setup-report-summary").textContent'),/no pending changes/);assert.doesNotMatch(await js('document.getElementById("setup-report-summary").textContent'),/OVERLAY/);
+ await js("renderSetupHelp({strip:true,setupReport:{classification:'no_pending_reported',setup:{verified:true,restored:false,ownedSlots:[9,10]}}})");assert.match(await js('document.getElementById("setup-report-summary").textContent'),/Companion display slots: 9, 10/);
+ await js("renderSetupHelp({setupReport:{classification:'no_pending_reported',setup:{verified:true,restored:true,ownedSlots:[9,10]}}})");assert.doesNotMatch(await js('document.getElementById("setup-report-summary").textContent'),/Companion display slots/);
  assert.deepEqual(errors,[]);console.log('Setup feedback passed: failed IPC refresh, latest blocker, no stale pending banner, nonrecoverable review hidden, report diagnosis, unrelated feedback retained and cleared failure state.');win.destroy();app.exit(0);
  }catch(error){console.error(error);app.exit(1);}});

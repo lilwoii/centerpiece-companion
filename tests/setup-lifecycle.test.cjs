@@ -116,12 +116,12 @@ for(const returnsFalse of [false,true])test('verified setup retries a display-op
 });
 
 
-test('only explicit recovery prepares occupied slots and forwards specific replacement consent',async()=>{
+test('manual recovery uses automatic slot selection while retaining settings confirmation',async()=>{
  for(const approval of [false,true,'true']){
   let prepareOptions,commitOptions;const f=fixture({prepare:async(_dir,options)=>{prepareOptions=options;return{id:'slots',pending:true,map:{layers:[]},ownedSlots:[9,10],preservedSlots:[2,3,4,5,6,7,8],replacementSlots:[10,9]};},commit:async(_dir,_plan,options)=>{commitOptions=options;if(!options.acceptOverlayReplacement)throw Error('Overlay approval required');return{verified:true};}});
   const review=await f.handlers['prepare-setup-recovery']();assert.equal(prepareOptions.reviewOccupied,true);assert.deepEqual(Array.from(review.replacementSlots),[10,9]);assert.equal(f.events.includes('connect'),false);
-  const work=f.handlers['confirm-setup-recovery']('slots',approval);if(approval===true)await work;else await assert.rejects(work,/approval/);
-  assert.equal(commitOptions.acceptOverlayReplacement,approval===true);assert.equal(commitOptions.acceptPending,true);
+  await f.handlers['confirm-setup-recovery']('slots',approval);
+  assert.equal(commitOptions.acceptOverlayReplacement,true);assert.equal(commitOptions.acceptPending,true);
  }
 });
 
@@ -294,4 +294,9 @@ test('Quit waits for startup multi-interface inspection before releasing the USB
  const starting=vm.runInContext('(async()=>{'+source.slice(start,end)+'})()',f.context);await reached.promise;
  const quit=f.cleanup();await new Promise(setImmediate);const prematurelyClosed=f.events.includes('hid-close');release.resolve();await Promise.all([starting,quit]);
  assert.equal(prematurelyClosed,false);assert.ok(f.events.indexOf('inspect-second-interface')<f.events.indexOf('hid-close'));assert.equal(f.events.includes('refresh'),false);
+});
+
+test('automatic inactive-slot selection still waits for pending-settings confirmation',async()=>{
+ let commits=0;const f=fixture({start:async()=>({needsConfirmation:true,plan:{id:'auto-slots',pending:true,automaticReplacement:true,map:{layers:[]},ownedSlots:[9,10],preservedSlots:[2,3,4,5,6,7,8],replacementSlots:[10,9]}}),commit:async(_dir,plan,options)=>{commits++;assert.equal(plan.id,'auto-slots');assert.equal(options.acceptPending,true);assert.equal(options.acceptOverlayReplacement,true);return{verified:true};}});
+ f.state.deviceError='Old setup blocker';await f.recoverKeyboardConnection();assert.equal(commits,0);assert.equal(f.state.setupRecovery.automaticReplacement,true);assert.equal(f.state.deviceError,'');assert.match(f.state.feedback,/selected inactive display slots automatically/);await f.handlers['confirm-setup-recovery']('auto-slots',false);assert.equal(commits,1);assert.equal(f.state.strip,true);
 });

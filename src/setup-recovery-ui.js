@@ -1,6 +1,6 @@
 (() => {
   const review = document.createElement('button');
-  review.id='review-setup'; review.className='button'; review.textContent='Review current settings'; review.hidden=true;
+  review.id='review-setup'; review.className='button config-import'; review.textContent='Review current settings'; review.hidden=true;
   el('setup-banner').querySelector('.form-actions').append(review);
   const progress=document.createElement('p');progress.id='setup-progress';progress.className='note';progress.hidden=true;progress.setAttribute('role','status');el('setup-banner').firstElementChild.append(progress);
   const failure = document.createElement('p');
@@ -13,18 +13,21 @@
   modal.innerHTML='<h2 id="setup-recovery-title">Keep your current keyboard settings?</h2><p id="setup-recovery-description"></p><ul><li>A private backup of the current keymap and layout will be saved on this PC before changing any keys.</li><li id="setup-recovery-shortcuts"></li><li id="setup-recovery-overlay-detail">Your skin, other current key assignments and existing overlays stay stored. The companion overlay is active while the companion runs.</li><li>Close XPANEL and other keyboard editors while setup runs.</li></ul><label id="setup-overlay-consent-row" class="check-row" hidden><input id="setup-overlay-consent" type="checkbox"> I agree to replace the overlays in the listed slots.</label><p id="setup-recovery-error" class="error-text" role="status"></p><div class="form-actions"><button id="setup-recovery-cancel" class="button" autofocus>Cancel</button><button id="setup-recovery-confirm" class="button primary">Keep settings and set up</button></div>';
   document.body.append(modal);
   let token=null, confirming=false, origin=review, replacing=false;
-  let previousFailure=null;
+  let previousFailure=null,lastShownToken=null;
   function render(state){
     const f=state.setupFailure;
     review.hidden=!!state.strip||!(state.setupReviewAvailable||state.setupRecovery||(f?f.canRecover:state.setupReport?.lastSetupFailure?state.setupReport.lastSetupFailure.canRecover:state.setupReport?.classification==='pending_reported_consistently'));
     if(!review.hasAttribute('aria-busy'))review.disabled=!!state.setupRunning;
-    const space=(f||state.setupReport?.lastSetupFailure)?.code==='KEYBOARD_OVERLAY_SPACE_REQUIRED';review.textContent=space?'Review display slot recovery':'Review current settings';
+    const space=!!state.setupRecovery?.replacementSlots?.length||(f||state.setupReport?.lastSetupFailure)?.code==='KEYBOARD_OVERLAY_SPACE_REQUIRED';review.textContent=state.setupRecovery?.automaticReplacement?'Finish keyboard setup':space?'Review display slot recovery':'Review current settings';
     progress.hidden=!state.setupRunning;progress.textContent=state.setupRunning?'Setting up your keyboard…':'';
     const feedback=el('desk-feedback').textContent;
     if(previousFailure&&(feedback===previousFailure.message||feedback.includes(previousFailure.code)))announce('');
     previousFailure=f;
     failure.hidden=!f;
     failure.textContent=f?`${f.code} · ${setupPhase(f.stage)} — ${f.message}`:'';
+    // A review prepared while minimized can miss the one-shot IPC event.
+    // Recover it from state once; ordinary refreshes must not reopen a dismissal.
+    if(state.setupRecovery?.token&&state.setupRecovery.token!==lastShownToken)showReview(state.setupRecovery,review);
   }
   function restoreFocus(){const target=origin?.isConnected&&origin.getClientRects().length?origin:document.querySelector('main [data-page]:not([hidden]) h1');target?.focus();}
   async function cancel(){if(confirming)return;token=null;await window.companion.cancelSetupRecovery();modal.close();announce('Setup review closed. You can start setup again.');restoreFocus();}
@@ -32,9 +35,9 @@
   bind('setup-recovery-cancel',cancel);
   function showReview(result, source){
     if(modal.open||confirming||!result?.token)return;
-    origin=source;token=result.token;replacing=!!result.replacementSlots?.length;el('setup-overlay-consent-row').hidden=!replacing;el('setup-overlay-consent').checked=false;el('setup-recovery-confirm').disabled=replacing;el('setup-recovery-confirm').textContent=replacing?'Replace listed overlays and set up':'Keep settings and set up';el('setup-recovery-title').textContent=replacing?'Recover Companion display slots?':'Keep your current keyboard settings?';el('setup-recovery-overlay-detail').textContent=replacing?'Overlay slots '+result.replacementSlots.join(' and ')+' are inactive and have no direct key assignment. Their existing overlay images will be replaced when Companion starts. Original overlay images cannot be restored from this review. Your skin, other slots and other key assignments stay stored.':'Your skin, other current key assignments and existing overlays stay stored. The companion overlay is active while the companion runs.';el('setup-recovery-error').textContent='';
+    origin=source;token=result.token;lastShownToken=result.token;replacing=!!result.replacementSlots?.length&&!result.automaticReplacement;el('setup-overlay-consent-row').hidden=!replacing;el('setup-overlay-consent').checked=false;el('setup-recovery-confirm').disabled=replacing;el('setup-recovery-confirm').textContent=replacing?'Replace listed overlays and set up':'Keep settings and set up';el('setup-recovery-title').textContent=replacing?'Recover Companion display slots?':'Keep your current keyboard settings?';el('setup-recovery-overlay-detail').textContent=result.replacementSlots?.length?'Overlay slots '+result.replacementSlots.join(' and ')+' are inactive and have no direct key assignment. Their existing overlay images will be replaced when Companion starts. Original overlay images cannot be restored from this review. Your skin, other slots and other key assignments stay stored.':'Your skin, other current key assignments and existing overlays stay stored. The companion overlay is active while the companion runs.';el('setup-recovery-error').textContent='';
     el('setup-recovery-description').textContent=result.retryIncomplete?'An earlier setup did not finish. Continuing backs up and saves the current keyboard configuration again, even if the firmware reports no pending changes. Your original restoration information is kept.':result.pending?'The keyboard reports pending settings even if XPANEL shows none. Continuing saves the configuration currently on the keyboard, including any pending key or layout changes. Older saved settings will not be restored.':'The keyboard now reports no pending settings. Continuing backs up the current configuration and installs the companion shortcuts.';
-    el('setup-recovery-shortcuts').textContent='Only '+result.shortcuts.join(' and ')+' will be assigned to companion controls. '+(replacing?'Setup will reserve the listed overlay slots.':'Setup uses available display slots.');
+    el('setup-recovery-shortcuts').textContent='Only '+result.shortcuts.join(' and ')+' will be assigned to companion controls. '+(result.replacementSlots?.length?'Companion automatically selected the listed inactive slots.':'Setup uses available display slots.');
     modal.showModal();el('setup-recovery-cancel').focus();
   }
   window.addEventListener('setup-review-ready',event=>showReview(event.detail,el('setup-device')));

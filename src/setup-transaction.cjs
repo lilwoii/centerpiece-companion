@@ -65,11 +65,11 @@ function validateActiveSlot(slot) {
 }
 async function overlayCheck(som, prior, options={}) {
   const ownedSlots = [], preservedSlots = [], hashes={}, priorSlots=priorOwnedSlots(prior);
-  let replacementSlots=[];
+  let replacementSlots=[];const replacementPreviews={};
   for (const slot of slots) {
     let bytes;
     try { bytes = await som.readOverlay(slot); } catch (e) { e.stage = `read_overlay_${slot}`; throw e; }
-    if (bytes && !priorSlots.includes(slot)){preservedSlots.push(slot);hashes[slot]=createHash('sha256').update(bytes).digest('hex');}
+    if (bytes && !priorSlots.includes(slot)){preservedSlots.push(slot);hashes[slot]=createHash('sha256').update(bytes).digest('hex');if(options.replacementPlan?.replacementSlots?.includes(slot))replacementPreviews[slot]=bytes.toString('base64');}
     else ownedSlots.push(slot);
   }
   if(options.replacementPlan){
@@ -95,7 +95,7 @@ async function overlayCheck(som, prior, options={}) {
       : 'One more empty display slot is needed; one is already available.';
     throw keyboardError('KEYBOARD_OVERLAY_SPACE_REQUIRED', `${instruction} Companion needs two available slots among 2–10 so it can update the display without overwriting the active frame. Existing overlays in slots ${preservedSlots.join(', ')} were left untouched. Do not delete skins or reset the keyboard. Companion could not verify ownership of enough occupied overlays. Choose Review display slot recovery to review replacing inactive overlays. Nothing is replaced without your confirmation. Use Check setup → Copy setup report if recovery cannot proceed.`, {stage:'check_display_slots'});
   }
-  return {ownedSlots, preservedSlots,...(replacementSlots.length?{replacementSlots,replacementHashes:Object.fromEntries(replacementSlots.map(slot=>[slot,hashes[slot]]))}:{})};
+  return {ownedSlots, preservedSlots,...(options.replacementPlan?{replacementPreviews}:{}),...(replacementSlots.length?{replacementSlots,replacementHashes:Object.fromEntries(replacementSlots.map(slot=>[slot,hashes[slot]]))}:{})};
 }
 function changed() { return keyboardError('KEYBOARD_CONFIGURATION_CHANGED', 'The keyboard configuration changed while setup was being reviewed. Nothing was saved. Close other keyboard editors and prepare setup again.'); }
 function decorate(error, stage, writesAttempted) {
@@ -159,8 +159,9 @@ async function commitSetup(directory, plan, options = {}, deps = {}) {
     // Unique immutable checkpoint includes active state, never credentials. It
     // exists before the first device mutation, including on a failed retry.
     fs.writeFileSync(path.join(directory, `setup-checkpoint-${plan.id}.json`), JSON.stringify({format:1, createdAt:new Date().toISOString(), keyboardSerial:s.serial, serial:som.serial, pending:plan.pending, map:plan.map, physicalLayouts:plan.physicalLayouts, ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots,...(plan.replacementSlots?.length?{replacementSlots:plan.replacementSlots,replacementHashes:plan.replacementHashes}: {})},null,2), {flag:'wx'});
+    if(plan.replacementSlots?.length)writeRecord(path.join(directory,`overlay-recovery-${plan.id}.json`),{format:1,serial:som.serial,createdAt:new Date().toISOString(),thumbnailOnly:true,description:'Firmware returns reduced previews, not restorable original overlay files.',slots:plan.replacementSlots,hashes:plan.replacementHashes,previews:overlaySlots.replacementPreviews});
     const layer = checkMap(plan.map);
-    const backup = {serial:som.serial, keyboardSerial:s.serial, originalSlot:plan.originalSlot, originalBinding:layer.bindings[26], layerId:1, keyPosition:26, createdAt:new Date().toISOString(), ...(plan.prior||{}), ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots};
+    const backup = {serial:som.serial, keyboardSerial:s.serial, originalSlot:plan.originalSlot, originalBinding:layer.bindings[26], layerId:1, keyPosition:26, createdAt:new Date().toISOString(), ...(plan.prior||{}), ownedSlots:plan.ownedSlots, preservedSlots:plan.preservedSlots,...(plan.replacementSlots?.length?{reclaimedSlots:plan.replacementSlots,overlayRecoveryRecord:`overlay-recovery-${plan.id}.json`}:{})};
     const arrowChanges=pluginArrowChanges(plan.map);
     backup.pluginArrows=[...(backup.pluginArrows||[])];
     for(const change of arrowChanges)if(!backup.pluginArrows.some(item=>item.position===change.position))backup.pluginArrows.push(change);
@@ -197,8 +198,11 @@ async function setup(directory, options = {}, deps = {}) {
 async function startSetup(directory, options = {}, deps = {}) {
   // Detect pending status in the same read-only preflight. A status flag alone
   // never authorizes a global save, and no failed mutation is automatically retried.
-  const plan = await prepareSetup(directory, {...options,reviewPending:true}, deps);
-  if (plan.pending || plan.prior?.setupInProgress===true || plan.replacementSlots?.length) return {needsConfirmation:true,plan};
-  return {needsConfirmation:false,backup:await commitSetup(directory,plan,{},deps)};
+  // Reclaim only the minimum inactive, unassigned slots. Pending key settings
+  // still require review; the slot policy must not authorize unrelated saves.
+  const plan = await prepareSetup(directory, {...options,reviewPending:true,reviewOccupied:true}, deps);
+  if(plan.replacementSlots?.length)plan.automaticReplacement=true;
+  if (plan.pending || plan.prior?.setupInProgress===true) return {needsConfirmation:true,plan};
+  return {needsConfirmation:false,backup:await commitSetup(directory,plan,{acceptOverlayReplacement:plan.automaticReplacement===true},deps)};
 }
 module.exports = {prepareSetup, commitSetup, setup, startSetup, pluginBinding, widgetBinding, validateRestorationRecord};

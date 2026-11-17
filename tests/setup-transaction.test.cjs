@@ -92,8 +92,8 @@ test('clean and already installed setup finish without a recovery confirmation',
   const {x,directory,deps}=fixture(t);let result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,false);assert.equal(result.backup.verified,true);
   x.pending=true;result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,false);assert.equal(x.saves,1);
 });
-test('automatic detection never treats malformed status or full overlay storage as recoverable',async t=>{
-  for(const kind of ['malformed','occupied','save']){const {x,directory,deps}=fixture(t,{pending:kind!=='save'});if(kind==='malformed')x.pending='true';if(kind==='occupied')x.occupied=4;if(kind==='save')x.saveResult={err:3};
+test('automatic detection rejects malformed status and save failures',async t=>{
+  for(const kind of ['malformed','save']){const {x,directory,deps}=fixture(t,{pending:kind!=='save'});if(kind==='malformed')x.pending='true';if(kind==='occupied')x.occupied=4;if(kind==='save')x.saveResult={err:3};
     if(kind==='occupied')x.occupied=[2,3,4,5,6,7,8,9,10];
     await assert.rejects(()=>startSetup(directory,{includeWidget:true},deps));assert.equal(x.saves,kind==='save'?1:0);assert.ok(x.calls.every(r=>!r.keymap.discardChanges));}
 });
@@ -122,7 +122,7 @@ test('an overlay added while reviewing stops setup before shortcuts or save',asy
 
 test('insufficient overlay space names occupied slots and leaves the keyboard untouched',async t=>{
   const {x,directory,deps}=fixture(t,{pending:true});x.occupied=[2,3,4,5,6,7,8,9];
-  await assert.rejects(()=>startSetup(directory,{},deps),error=>{
+  await assert.rejects(()=>prepareSetup(directory,{reviewPending:true},deps),error=>{
     assert.equal(error.code,'KEYBOARD_OVERLAY_SPACE_REQUIRED');assert.match(error.message,/One more empty display slot is needed/);assert.match(error.message,/one is already available/);assert.match(error.message,/2, 3, 4, 5, 6, 7, 8, 9/);assert.equal(error.writesAttempted,false);return true;
   });
   assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
@@ -130,7 +130,7 @@ test('insufficient overlay space names occupied slots and leaves the keyboard un
 
 test('full overlay storage asks for two slots, not one, without changing the keyboard',async t=>{
   const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];
-  await assert.rejects(()=>startSetup(directory,{},deps),error=>{
+  await assert.rejects(()=>prepareSetup(directory,{},deps),error=>{
     assert.equal(error.code,'KEYBOARD_OVERLAY_SPACE_REQUIRED');assert.match(error.message,/Display slots are full\. Two empty overlay slots are needed/);assert.match(error.message,/Check setup → Copy setup report/);assert.doesNotMatch(error.message,/remove.*XPANEL|delete.*XPANEL/i);assert.equal(error.writesAttempted,false);return true;
   });
   assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
@@ -153,7 +153,7 @@ test('legacy slot recovery remains read-only while pending settings await approv
 });
 test('incomplete legacy records and explicit foreign slots never acquire all occupied overlays',async t=>{
  for(const modify of [b=>{delete b.ownedSlots;b.verified=false},b=>{delete b.ownedSlots;delete b.installedBinding},b=>{b.ownedSlots=null}]){
- const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));modify(backup);fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};x.edits=[];await assert.rejects(startSetup(directory,{includeWidget:true},deps));assert.equal(x.edits.length,0);
+ const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));modify(backup);fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.map.layers[1].bindings[26]={behaviorId:60498};x.edits=[];await assert.rejects(prepareSetup(directory,{includeWidget:true},deps));assert.equal(x.edits.length,0);
  }
 });
 
@@ -161,7 +161,7 @@ test('correct shortcuts alone cannot bypass missing legacy overlay ownership pro
  const {x,directory,deps}=fixture(t);await setup(directory,{includeWidget:true},deps);
  const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;delete backup.installedBinding;fs.writeFileSync(file,JSON.stringify(backup));
  x.occupied=[2,3,4,5,6,7,8,9,10];x.edits=[];const saves=x.saves,before=fs.readFileSync(file,'utf8');
- await assert.rejects(startSetup(directory,{includeWidget:true},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED',writesAttempted:false});
+ await assert.rejects(prepareSetup(directory,{includeWidget:true},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED',writesAttempted:false});
  assert.equal(x.edits.length,0);assert.equal(x.saves,saves);assert.equal(fs.readFileSync(file,'utf8'),before);
 });
 test('known two-slot allocation survives full storage and a shortcut reset without claiming foreign slots',async t=>{
@@ -220,8 +220,8 @@ test('recovery refuses full storage when too few inactive unbound slots exist',a
 
 test('explicit replacement always requires review even when no pending firmware flag exists',async t=>{
  const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];
- await assert.rejects(startSetup(directory,{},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED'});
- const result=await startSetup(directory,{reviewOccupied:true},deps);assert.equal(result.needsConfirmation,true);assert.equal(result.plan.pending,false);assert.deepEqual(result.plan.replacementSlots,[10,9]);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
+ await assert.rejects(prepareSetup(directory,{},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED'});
+ const plan=await prepareSetup(directory,{reviewOccupied:true},deps);assert.equal(plan.pending,false);assert.deepEqual(plan.replacementSlots,[10,9]);await assert.rejects(commitSetup(directory,plan,{},deps),{code:'SETUP_OVERLAY_CONFIRMATION_REQUIRED'});assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
 });
 
 test('replacement selection preserves an inactive original overlay restoration destination',async t=>{
@@ -331,3 +331,19 @@ test('interrupted first-install backup files remain absent or valid and setup ca
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory,'widget-shortcut.json'),'utf8')).original,original.layers[1].bindings[55]);
  }
 });
+
+test('automatic full-slot setup reclaims only two inactive unassigned slots and retains previews',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=10;x.map.layers[0].bindings[4]={behaviorId:42547,param1:9};
+ const result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,false);assert.equal(result.backup.verified,true);assert.deepEqual(result.backup.ownedSlots,[7,8]);assert.deepEqual(result.backup.reclaimedSlots,[8,7]);assert.ok(result.backup.preservedSlots.includes(10));assert.ok(result.backup.preservedSlots.includes(9));
+ const archive=JSON.parse(fs.readFileSync(path.join(directory,result.backup.overlayRecoveryRecord)));assert.equal(archive.thumbnailOnly,true);assert.deepEqual(archive.slots,[8,7]);for(const slot of archive.slots)assert.equal(Buffer.from(archive.previews[slot],'base64').toString(),'existing overlay');
+ const saves=x.saves;await startSetup(directory,{includeWidget:true},deps);assert.equal(x.saves,saves);
+});
+test('full slots with pending firmware settings select automatically but wait before saving key settings',async t=>{
+ const {x,directory,deps}=fixture(t,{pending:true,sticky:true});x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+ const result=await startSetup(directory,{includeWidget:true},deps);assert.equal(result.needsConfirmation,true);assert.equal(result.plan.automaticReplacement,true);assert.deepEqual(result.plan.replacementSlots,[10,9]);assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
+ await assert.rejects(commitSetup(directory,result.plan,{acceptOverlayReplacement:true},deps),{code:'SETUP_CONFIRMATION_REQUIRED'});
+ const saved=await commitSetup(directory,result.plan,{acceptPending:true,acceptOverlayReplacement:true},deps);assert.equal(saved.verified,true);assert.equal(saved.pendingAfterSetup,true);assert.equal((await startSetup(directory,{includeWidget:true},deps)).needsConfirmation,false);assert.equal(x.saves,1);
+});
+test('automatic allocation reclaims only one occupied slot when one is empty',async t=>{const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9];x.activeSlot=9;const result=await startSetup(directory,{},deps);assert.deepEqual(result.backup.ownedSlots,[8,10]);assert.deepEqual(result.backup.reclaimedSlots,[8]);});
+test('automatic allocation refuses storage with fewer than two eligible slots',async t=>{const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=10;for(let slot=2;slot<=8;slot++)x.map.layers[1].bindings[slot]={behaviorId:42547,param1:slot};await assert.rejects(startSetup(directory,{},deps),{code:'KEYBOARD_OVERLAY_REPLACEMENT_UNAVAILABLE'});assert.equal(x.saves,0);assert.equal(x.edits.length,0);});
+test('failed preview archive prevents automatic slot acquisition and key mutations',async t=>{const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];const rename=fs.renameSync;fs.renameSync=(from,to)=>{if(path.basename(to).startsWith('overlay-recovery-'))throw Object.assign(Error('disk full'),{code:'ENOSPC'});return rename(from,to);};try{await assert.rejects(startSetup(directory,{},deps),error=>error.writesAttempted===false);}finally{fs.renameSync=rename;}assert.equal(x.saves,0);assert.equal(x.edits.length,0);assert.equal(fs.existsSync(path.join(directory,'hardware.json')),false);});

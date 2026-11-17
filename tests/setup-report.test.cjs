@@ -18,8 +18,8 @@ test('report separates missing responses from consistently false status',async()
 
 test('exported allocation evidence omits serials, image bytes and key bindings',()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'allocation-report-'));try{
-  fs.writeFileSync(path.join(dir,'hardware.json'),JSON.stringify({serial:'SECRET',keyboardSerial:'SECRET-KEY',verified:true,ownedSlots:[9,10],originalBinding:{param1:98765},setupInProgress:false}));
-  const result=require('../src/setup-report.cjs').setupRecord(dir);assert.equal(result.allocation,'explicit');assert.deepEqual(result.ownedSlots,[9,10]);assert.doesNotMatch(JSON.stringify(result),/SECRET|param1|98765/);
+  fs.writeFileSync(path.join(dir,'hardware.json'),JSON.stringify({serial:'SECRET',keyboardSerial:'SECRET-KEY',verified:true,ownedSlots:[9,10],reclaimedSlots:[9,10,10,1,11,'SECRET'],previews:{9:'SECRET-IMAGE'},originalBinding:{param1:98765},setupInProgress:false}));
+  const result=require('../src/setup-report.cjs').setupRecord(dir);assert.equal(result.allocation,'explicit');assert.deepEqual(result.ownedSlots,[9,10]);assert.deepEqual(result.reclaimedSlots,[9,10]);assert.doesNotMatch(JSON.stringify(result),/SECRET|param1|98765/);
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 

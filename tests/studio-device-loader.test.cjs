@@ -83,3 +83,38 @@ test('interrupted transfer rejects early acknowledgement and closes its listener
 test('loader instances serialize operations and release locks on connection failure',async t=>{const f=fixture(t),other=new StudioDeviceLoader(f.dir,f.options);let release;const run=f.loader._run(()=>new Promise(r=>{release=r;}));await assert.rejects(other.inspect(),code('STUDIO_DEVICE_BUSY'));release();await run;const broken=new StudioDeviceLoader(f.dir,{connect(){throw new Error('Disconnected');}});await assert.rejects(broken.inspect(),/Disconnected/);assert.equal((await other.inspect()).nativeSlots,5);});
 
 test('selecting the same owned package reuses it without uploading again',async t=>{const f=fixture(t);const review=await f.loader.prepare({...f.input,slot:5,backup:f.copy(5)});await f.loader.execute(review.token,{confirmCatalogReplacement:true});f.device.log=[];const again=await f.loader.prepare(f.input);const result=await f.loader.execute(again.token);assert.equal(result.reused,true);assert.equal(result.transportConfirmed,true);assert.equal(f.device.log.filter(e=>[0,1,16,32].includes(e.cmd)).length,0);});
+
+test('ambiguous native transfer failure stops all same-session commands and retains explicit recovery',async t=>{
+ const f=fixture(t),before=clone(f.device.slots),review=await f.loader.prepare({...f.input,slot:5,backup:f.copy(5)});let stoppedAt;
+ f.device.beforeSend=cmd=>{if(cmd===16&&stoppedAt===undefined){stoppedAt=f.device.log.length;throw Object.assign(Error('USB write lost'),{code:'STUDIO_IO_ERROR'});}};
+ await assert.rejects(f.loader.execute(review.token,{confirmCatalogReplacement:true}),e=>e.code==='STUDIO_IO_ERROR'&&!e.previousSkinRestored);
+ assert.equal(f.device.log.length,stoppedAt,'must not query or roll back through an ambiguous transfer session');
+ assert.equal(f.loader._read(f.loader._paths(f.device.identity)).operation.stage,'failed');
+ f.device.beforeSend=null;const recovered=await f.loader.restoreLast();assert.equal(recovered.restored,true);assert.deepEqual(f.device.slots,before);
+});
+
+test('native transfer cannot accept an early reply that hides a later final-write failure',async t=>{
+ const f=fixture(t),s=f.device.open();let invalidated=0;
+ s.handle={invalidate(){invalidated++;}};
+ s.send=cmd=>{if(cmd===32){for(const listener of [...s.listeners])listener(null,32,Buffer.from([0,0]));return Promise.reject(Error('final write failed'));}};
+ await assert.rejects(f.loader._transfer(s,0,f.input.bytes),e=>e.message==='final write failed'&&e.requiresReconnect===true);
+ assert.equal(s.studioTransferUncertain,true);assert.equal(invalidated,1);assert.equal(s.listeners.size,0);
+});
+
+test('ambiguous restoration transfer does not send fallback skin commands on the failed session',async t=>{
+ const f=fixture(t),before=clone(f.device.slots),review=await f.loader.prepare({...f.input,slot:5,backup:f.copy(5)});
+ await f.loader.execute(review.token,{confirmCatalogReplacement:true});let stoppedAt;
+ f.device.beforeSend=cmd=>{if(cmd===16&&stoppedAt===undefined){stoppedAt=f.device.log.length;throw Error('restoration write interrupted');}};
+ await assert.rejects(f.loader.restoreLast(),e=>e.requiresReconnect===true);
+ assert.equal(f.device.log.length,stoppedAt);assert.ok(f.loader._read(f.loader._paths(f.device.identity)).operation);
+ f.device.beforeSend=null;await f.loader.restoreLast();assert.deepEqual(f.device.slots,before);
+});
+
+test('native transfer timeout invalidates the session and stops queued transfer continuation',async()=>{
+ const vm=require('node:vm'),source=require.resolve('../src/studio-device-loader.cjs');let timeout,invalidated=0;const box={module:{exports:{}},Buffer,setImmediate,setTimeout:fn=>{timeout=fn;return 1;},clearTimeout(){},require:name=>name.startsWith('.')?require(path.resolve(path.dirname(source),name)):require(name)};
+ vm.runInNewContext(fs.readFileSync(source,'utf8'),box);const loader=new box.module.exports.StudioDeviceLoader('unused'),sent=[];
+ let release;const s={listeners:new Set(),handle:{invalidate(){invalidated++;}},send:cmd=>{sent.push(cmd);if(cmd===16)return new Promise(resolve=>{release=resolve;});}};
+ const request=loader._transfer(s,0,Buffer.alloc(3000));const rejected=assert.rejects(request,e=>e.code==='STUDIO_UPLOAD_TIMEOUT'&&e.requiresReconnect===true);
+ await new Promise(resolve=>setImmediate(resolve));timeout();await rejected;release();await new Promise(resolve=>setImmediate(resolve));
+ assert.deepEqual(sent,[0,16]);assert.equal(invalidated,1);assert.equal(s.listeners.size,0);
+});

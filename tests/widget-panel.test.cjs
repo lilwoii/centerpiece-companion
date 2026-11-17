@@ -33,3 +33,33 @@ test('one extra can share the top and occupied placements swap without changing 
  config=Workspace.prototype.validate(update(config,{action:'add-widget',type:'weather'}));const before=structuredClone(config.extraWidgets);config=Workspace.prototype.validate(update(config,{action:'widget-position',index:2,position:'top'}));assert.deepEqual(config.widgetPositions,['lower','top']);assert.deepEqual(config.extraWidgets,before);config=Workspace.prototype.validate(update(config,{action:'remove-widget',index:1}));assert.deepEqual(config.widgetPositions,['top']);assert.equal(config.extraWidgets[0].type,'weather');
 });
 test('every explicit arrangement has disjoint cells inside the keyboard area',()=>{for(const order of [['top'],['lower'],['bottom'],['top','lower'],['bottom','top'],['lower','bottom'],['top','bottom','lower'],['bottom','lower','top']])for(const split of [50,60]){const p=cells(order.length+1,split,order);for(let i=0;i<p.length;i++){assert.ok(p[i].x+p[i].width<=194&&p[i].y+p[i].height<=211);for(let j=i+1;j<p.length;j++)assert.ok(p[i].x+p[i].width<=p[j].x||p[j].x+p[j].width<=p[i].x||p[i].y+p[i].height<=p[j].y||p[j].y+p[j].height<=p[i].y);}}});
+
+test('partial Steam download names cannot break the main widget or extra layouts',async()=>{
+ const data={now:1000,live:{downloads:{updatedAt:1000,items:[{name:null,done:10,total:100,source:'Steam · saved progress'}]}}};
+ for(const mode of ['single','connected','free']){
+  const config=c();config.widget={...config.widget,type:mode==='single'?'downloads':'text',text:'Primary stays here'};
+  if(mode!=='single')config.extraWidgets=[{...config.widget,type:'downloads'}];
+  if(mode==='free'){config.widgetLayout='free';config.extraWidgets[0]={...config.extraWidgets[0],x:800,y:450,width:130,height:80,zoom:1};}
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">'+panelSVG(config,data)+'</svg>';
+  assert.match(svg,/10%/);assert.match(svg,/Download/);if(mode!=='single')assert.match(svg.replace(/<[^>]+>/g,''),/Primary stays here/);
+  assert.doesNotMatch(svg,/NaN|Infinity/);await sharp(Buffer.from(svg)).png().toBuffer();
+ }
+});
+
+test('download render boundary tolerates partial sensor collections and progress',async()=>{
+ const monitor=require('../src/monitor-widgets.cjs');
+ for(const items of [null,{},[null,{},false], [{name:'Partial',total:100}], [{name:123,total:100,done:10}], [{name:'Partial',total:100,done:101}]]){
+  const r={updatedAt:1000,items},config=c();config.widget={...config.widget,type:'text',text:'Primary stays here'};config.extraWidgets=[{...config.widget,type:'downloads',x:800,y:450,width:130,height:80,zoom:1}];config.widgetLayout='free';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">'+panelSVG(config,{now:1000,live:{downloads:r}})+monitor.render('downloads',r,194,94,1000)+'</svg>';
+  assert.doesNotMatch(svg,/NaN|Infinity|undefined/);assert.match(svg.replace(/<[^>]+>/g,''),/Primary stays here/);await sharp(Buffer.from(svg)).png().toBuffer();
+ }
+});
+
+test('XML-forbidden metadata and pasted text cannot invalidate a full keyboard frame',async()=>{
+ const text='Song\u0000\u0001\u000b\u000c\u001f\ufffe\uffff <&> 😀 日本語 한글 Русский';
+ for(const type of ['musicbee','spotify','text','downloads']){
+  const config=c();config.widget={...config.widget,type,text};const data={now:1000,media:{available:true,title:text,artist:text,status:'Paused',duration:100,position:10},musicBee:{available:true,title:text,artist:text,status:'Paused',duration:100,position:10},live:{downloads:{updatedAt:1000,items:[{name:text,source:text,done:1,total:2}]}}};
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="550">'+panelSVG(config,data)+'</svg>';assert.doesNotMatch(svg,/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/);await sharp(Buffer.from(svg)).png().toBuffer();
+ }
+ const escaped=require('../src/widgets.cjs').esc('😀 日本語 한글 Русский & < > " \'\n\t');assert.equal(escaped,'😀 日本語 한글 Русский &amp; &lt; &gt; &quot; &apos;\n\t');
+});

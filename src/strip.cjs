@@ -9,7 +9,7 @@ const {catalog}=require('./catalog.cjs');
 const icons=require('./icons.json');
 const{reading,weatherIcon,panelSVG}=require('./widgets.cjs');const layout=require('./layout.json');const{physical}=require('./keymap.cjs');
 const{languageLabel}=require('./language-labels.js');
-const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const escape=require('./svg-text.cjs').escape;
 function configuredSVG(selected,config,locks,data={}){
  const theme=appearance.appearance(config.appearance),now=data.animationTime??data.now??Date.now();
  if(theme.transparentPlugins){theme.stripOpacity=0;theme.tileOpacity=0;}
@@ -69,7 +69,14 @@ class StripController extends DisplayCache {
   if(!states.some(s=>this.key(...s)===this.key(...desired)))states[states.length-1]=desired;
   return states;
  }
+ connect(){if(this.stripCloseOperation||this.stripApplyOperation)throw Error('Display is busy. Wait for its current operation before reconnecting.');return super.connect();}
  async apply(config,locks){
+  if(this.closing)throw Error('Display restoration is pending. Retry Quit or reconnect the keyboard.');
+  if(this.stripApplyOperation)throw Error('Display is busy. Try again.');
+  const operation=this.applyCurrent(config,locks);this.stripApplyOperation=operation;
+  try{return await operation;}finally{if(this.stripApplyOperation===operation)this.stripApplyOperation=null;}
+ }
+ async applyCurrent(config,locks){
   this.stopPluginAnimation();
   let previousLanguage,changedLanguage=false;
   try{
@@ -98,6 +105,27 @@ class StripController extends DisplayCache {
   }catch(error){if(this.som)try{await this.legends.restore(this.som);if(changedLanguage){await this.som.language(previousLanguage);if(await this.som.language()!==previousLanguage)throw Error('The previous legend language could not be restored.');}}catch(restoreError){throw Error(error.message+' '+restoreError.message);}throw error;}
  }
  detach(){this.stopPluginAnimation();super.detach();}
- async close(){this.stopPluginAnimation();await this.pluginAnimationPromise;if(this.som)await this.legends.restore(this.som);return super.close();}
+ async close(){
+  if(this.stripCloseOperation)return this.stripCloseOperation;
+  // Guard the entire subclass cleanup, including native legend restoration.
+  // Waiting until super.close() leaves an upload window before that call.
+  this.closing=true;this.clearLiveTimer();this.livePending=false;this.stopPluginAnimation();
+  const som=this.som,waiting=[this.pluginAnimationPromise,this.stripApplyOperation].filter(Boolean);
+  const operation=(async()=>{
+   let settling=waiting.length>0;if(settling)void Promise.allSettled(waiting).then(()=>{settling=false;});
+   const deadline=Date.now()+25000;
+   while(settling||this.updating||this.watching){
+    if(this.som!==som)return;
+    if(Date.now()>deadline)throw Error('Keyboard display did not finish its current operation. Retry Quit or reconnect the keyboard.');
+    await new Promise(resolve=>setTimeout(resolve,15));
+   }
+   if(this.som!==som)return;
+   if(som)await this.legends.restore(som);
+   if(this.som!==som)return;
+   return super.close();
+  })();
+  this.stripCloseOperation=operation;
+  try{return await operation;}finally{if(this.stripCloseOperation===operation)this.stripCloseOperation=null;}
+ }
 }
 module.exports={SLOTS,stripSVG,configuredSVG,renderStrip,StripController,mediaKeySVG};

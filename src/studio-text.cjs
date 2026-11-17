@@ -1,6 +1,6 @@
 const sharp=require('sharp'),crypto=require('node:crypto');
 const M=require('../studio/model.js');
-const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const escape=require('./svg-text.cjs').escape;
 function svg(layer,advances=[]){
  const l=M.validateLayer(layer,3600),w=Math.ceil(l.width),h=Math.ceil(l.height);
  if(w*h>16*1024*1024)throw Error('This text layer is too large to render. Reduce its dimensions.');

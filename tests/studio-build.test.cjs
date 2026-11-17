@@ -123,3 +123,31 @@ test('collection blend incompatibility fails before allocating a native job',asy
  const before=JSON.stringify(scene);await assert.rejects(builder.start(scene),{code:'STUDIO_BUILD_COLLECTION_BLEND'});
  assert.equal(JSON.stringify(scene),before);assert.equal(builder.jobs.size,0);
 });
+function buildWorkerFixture(t,{throwSpawn=false,throwClose=false}={}){
+ const vm=require('node:vm'),{createRequire}=require('node:module'),{EventEmitter}=require('node:events'),{PassThrough}=require('node:stream'),file=path.resolve(__dirname,'../src/studio-build.cjs'),localRequire=createRequire(file),child=new EventEmitter(),timers=new Set();let kills=0;
+ child.stdout=new PassThrough();child.stderr=new PassThrough();child.kill=()=>kills++;
+ const context={process,Buffer,__dirname:path.dirname(file),module:{exports:{}},require:n=>n==='node:fs'&&throwClose?{...fs,closeSync(fd){fs.closeSync(fd);throw Object.assign(Error('log close failed'),{code:'EIO'});}}:n==='node:child_process'?{spawn:()=>{if(throwSpawn)throw Error('spawn unavailable');return child;},execFile:()=>{}}:localRequire(n),setTimeout:fn=>{timers.add(fn);return fn;},clearTimeout:fn=>timers.delete(fn)};
+ vm.runInNewContext(fs.readFileSync(file,'utf8'),context);const folder=fs.mkdtempSync(path.join(os.tmpdir(),'build-pipe-'));t.after(()=>fs.rmSync(folder,{recursive:true,force:true}));
+ return{child,timers,kills:()=>kills,run:context.module.exports.run,folder};
+}
+test('build output pipe failures fail the job safely and ignore late output',async t=>{
+ for(const stream of ['stdout','stderr']){const f=buildWorkerFixture(t),logFile=path.join(f.folder,'tool.log'),pending=f.run('mock',[],{cwd:f.folder,logFile}),rejected=assert.rejects(pending,{code:'STUDIO_BUILD_TOOL_IO'});
+  f.child.stdout.write('useful log\n');assert.doesNotThrow(()=>f.child[stream].emit('error',Error('broken pipe')));await rejected;
+  assert.equal(f.timers.size,0);assert.equal(f.kills(),1);f.child.stdout.write('late data');f.child.emit('close',0);assert.equal(fs.readFileSync(logFile,'utf8'),'useful log\n');
+  fs.renameSync(logFile,logFile+'.closed');
+ }
+});
+test('synchronous build spawn failure closes its log and leaves no timeout',async t=>{
+ const f=buildWorkerFixture(t,{throwSpawn:true}),logFile=path.join(f.folder,'tool.log');await assert.rejects(f.run('mock',[],{cwd:f.folder,logFile}),{code:'STUDIO_BUILD_TOOL_START'});
+ assert.equal(f.timers.size,0);fs.renameSync(logFile,logFile+'.closed');
+});
+
+
+test('build log close failures reject safely and preserve an earlier tool failure',async t=>{
+ for(const code of [0,1]){
+  const f=buildWorkerFixture(t,{throwClose:true}),pending=f.run('mock',[],{cwd:f.folder,logFile:path.join(f.folder,'tool.log')});
+  const rejected=assert.rejects(pending,{code:code?'STUDIO_BUILD_TOOL_FAILED':'EIO'});
+  assert.doesNotThrow(()=>f.child.emit('close',code));await rejected;assert.equal(f.timers.size,0);assert.doesNotThrow(()=>f.child.emit('close',code));
+ }
+ const f=buildWorkerFixture(t,{throwClose:true,throwSpawn:true});await assert.rejects(f.run('mock',[],{cwd:f.folder,logFile:path.join(f.folder,'spawn.log')}),{code:'STUDIO_BUILD_TOOL_START'});assert.equal(f.timers.size,0);
+});

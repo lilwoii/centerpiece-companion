@@ -1,7 +1,7 @@
 const zlib = require('node:zlib');
 const fonts = Object.freeze({ sans:'Arial', system:'Segoe UI', mono:'Consolas', serif:'Georgia', rounded:'Trebuchet MS', emoji:'Segoe UI Emoji' });
 const positions=['top-left','top-center','top-right','center-left','center','center-right','bottom-left','bottom-center','bottom-right'];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const xmlEscape=require('./svg-text.cjs').escape,esc=s=>xmlEscape(s??'');
 function color(v,fallback){if(v===undefined)return fallback;if(typeof v!=='string'||!/^#[0-9a-f]{6}$/i.test(v))throw Error('Choose a valid six-digit color.');return v;}
 function choice(v,allowed,fallback){if(v===undefined)return fallback;if(!allowed.includes(v))throw Error('Choose a supported appearance option.');return v;}
 function number(v,min,max,fallback){if(v===undefined)return fallback;if(!Number.isFinite(v)||v<min||v>max)throw Error(`Choose a number between ${min} and ${max}.`);return v;}

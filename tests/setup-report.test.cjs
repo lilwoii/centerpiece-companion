@@ -14,3 +14,22 @@ test('report repeats read-only queries, summarizes stable keymaps, and excludes 
  class Studio{constructor(){this.serial='PRIVATE-SERIAL';}close(){closed=true;}async request(r){requests.push(r);if(r.keymap.checkUnsavedChanges)return{keymap:{checkUnsavedChanges:true}};if(r.keymap.getKeymap)return{keymap:{getKeymap:map}};if(r.keymap.getPhysicalLayouts)return{keymap:{getPhysicalLayouts:{layouts:[{name:'Private layout',keys:Array(68).fill({})}],activeLayoutIndex:0}}};throw Error('Unexpected request');}}
  try{const result=await collectSetupReport({version:'test',directory:dir,Studio,inspect:async()=>({keyboard:true,display:true,keyboardVersion:'1.2.3',displayVersion:'4.5.6'}),wait:async()=>{}});assert.equal(result.classification,'pending_reported_consistently');assert.equal(result.keymap.stable,true);assert.equal(result.compatibility.layout68,true);assert.equal(result.compatibility.pluginKey,'stock');assert.equal(closed,true);assert.equal(requests.length,6);for(const r of requests)assert.ok(Object.keys(r.keymap).every(k=>['checkUnsavedChanges','getKeymap','getPhysicalLayouts'].includes(k)));assert.doesNotMatch(JSON.stringify(result),/PRIVATE-SERIAL|Private name|Private layout|param1|behaviorId|bindings/);assert.deepEqual(fs.readdirSync(dir),[]);}finally{fs.rmdirSync(dir);}});
 test('report separates missing responses from consistently false status',async()=>{for(const pending of [false,undefined]){class Studio{close(){}async request(r){return r.keymap.checkUnsavedChanges?{keymap:{checkUnsavedChanges:pending}}:{};}}const report=await collectSetupReport({version:'test',directory:'missing-setup-report-directory',Studio,inspect:async()=>({}),wait:async()=>{}});assert.equal(report.classification,pending===false?'no_pending_reported':'query_failed');assert.ok(report.queries.some(q=>q.status==='failed'));}});
+
+
+test('exported allocation evidence omits serials, image bytes and key bindings',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'allocation-report-'));try{
+  fs.writeFileSync(path.join(dir,'hardware.json'),JSON.stringify({serial:'SECRET',keyboardSerial:'SECRET-KEY',verified:true,ownedSlots:[9,10],originalBinding:{param1:98765},setupInProgress:false}));
+  const result=require('../src/setup-report.cjs').setupRecord(dir);assert.equal(result.allocation,'explicit');assert.deepEqual(result.ownedSlots,[9,10]);assert.doesNotMatch(JSON.stringify(result),/SECRET|param1|98765/);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+
+test('setup report includes unfinished optional shortcut status without private recovery data',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'shortcut-report-'));try{
+  const file=path.join(dir,'plugin-shortcuts.json'),read=()=>require('../src/setup-report.cjs').setupRecord(dir);
+  assert.deepEqual(read().optionalShortcuts,{present:false,readable:false});
+  fs.writeFileSync(file,JSON.stringify({serial:'PRIVATE-SERIAL',inProgress:true,planned:{entries:[{position:33,original:{behaviorId:123}}]}}));
+  assert.deepEqual(read().optionalShortcuts,{present:true,readable:true,inProgress:true});assert.doesNotMatch(JSON.stringify(read()),/PRIVATE-SERIAL|planned|entries|behaviorId/);
+  fs.writeFileSync(file,'broken json');assert.deepEqual(read().optionalShortcuts,{present:true,readable:false});
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {DisplayCache}=require('../src/display-cache.cjs'),{ConnectionRecovery}=require('../src/connection-recovery.cjs');
 test('display read timeouts have a distinct classification and release their response listener',async()=>{const {Som}=require('../src/som.cjs'),client={listeners:new Set()};await assert.rejects(Som.prototype.wait.call(client,()=>{},()=>{},1),error=>error.code==='DISPLAY_REQUEST_TIMEOUT');assert.equal(client.listeners.size,0);});
-function fixture(){let time=10000,active=1;const uploads=[],timers=[];const cache=new DisplayCache('.',(selected,_config,locks,data)=>`<svg width="4" height="4"><rect width="4" height="4" fill="rgb(${data.revision||0},0,0)"/><title>${selected}/${locks.caps}/${data.revision}</title></svg>`,{now:()=>time,setTimeout:(fn,delay)=>{const timer={fn,delay,unref(){}};timers.push(timer);return timer;},clearTimeout:()=>{}});cache.config={slots:[],widget:{type:'clock'},weatherMotion:false};cache.data={revision:0};cache.som={currentSlot:async()=>active,uploadOverlay:async slot=>{assert.notEqual(slot,active);uploads.push(slot);active=slot;},selectSlot:slot=>{active=slot;}};return{cache,uploads,timers,advance:ms=>time+=ms,activate:slot=>active=slot};}
+function fixture(){let time=10000,active=1;const uploads=[],timers=[];const cache=new DisplayCache('.',(selected,_config,locks,data)=>`<svg width="4" height="4"><rect width="4" height="4" fill="rgb(${data.revision||0},0,0)"/><title>${selected}/${locks.caps}/${data.revision}</title></svg>`,{now:()=>time,setTimeout:(fn,delay)=>{const timer={fn,delay,unref(){}};timers.push(timer);return timer;},clearTimeout:()=>{}});cache.config={slots:[],widget:{type:'clock'},weatherMotion:false};cache.data={revision:0};cache.som={currentSlot:async()=>active,uploadOverlay:async slot=>{assert.notEqual(slot,active);uploads.push(slot);active=slot;},selectSlot:slot=>{active=active===slot?0:slot;}};return{cache,uploads,timers,advance:ms=>time+=ms,activate:slot=>active=slot};}
 test('an externally changed active overlay is never overwritten, including a two-slot allocation',async()=>{for(const pool of [[2,3,4,5,6,7,8,9,10],[9,10]]){const f=fixture();f.cache.pool=pool;await f.cache.refreshLive();const next=f.cache.spare();f.activate(next);f.cache.data.revision++;await f.cache.refreshLive();assert.equal(f.uploads.length,2);assert.notEqual(f.uploads[1],next);assert.equal(f.cache.cache.get('idle:0'),f.uploads[1]);assert.equal(new Set(f.cache.cache.values()).size,f.cache.cache.size);f.cache.clearLiveTimer();}});
 test('unreadable or invalid active slots cancel the upload before any image is overwritten',async()=>{for(const invalid of [11,undefined,'timeout']){const f=fixture();await f.cache.refreshLive();f.cache.som.currentSlot=async()=>{if(invalid==='timeout')throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return invalid;};f.cache.data.revision++;await assert.rejects(f.cache.refreshLive());assert.equal(f.uploads.length,1);assert.ok(f.cache.error);f.cache.clearLiveTimer();}});
 test('display status polling is bounded and isolated read timeouts do not force reconnects',async()=>{const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;let reads=0;f.cache.som.currentSlot=async()=>{reads++;throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});};await f.cache.reconcile();f.advance(500);await f.cache.reconcile();assert.equal(reads,1);f.advance(2500);await f.cache.reconcile();assert.equal(reads,2);f.advance(2500);await assert.rejects(f.cache.reconcile(),/timeout/);assert.equal(f.cache.statusTimeouts,3);assert.equal(f.uploads.length,1);f.cache.clearLiveTimer();});
@@ -67,7 +67,7 @@ test('one lost pre-upload status reply retries without disconnecting or rebuildi
  await f.cache.refreshLive();const read=f.cache.som.currentSlot;let reads=0;
  f.cache.som.currentSlot=async()=>{if(++reads===1)throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return read();};
  f.cache.data.revision++;await f.cache.refreshLive();
- assert.equal(reads,2);assert.equal(f.uploads.length,2);assert.equal(f.cache.error,'');assert.equal(f.cache.statusTimeouts,1);
+ assert.equal(reads,3);assert.equal(f.uploads.length,2);assert.equal(f.cache.error,'');assert.equal(f.cache.statusTimeouts,1);
  assert.ok(events.some(e=>e.kind==='display-status-timeout'&&e.details.phase==='before-upload'&&e.details.retrying));
  f.cache.clearLiveTimer();
 });
@@ -193,4 +193,81 @@ test('an upload that activates before its acknowledgement fails is not overwritt
 test('runtime legacy allocation excludes preserved foreign slots exactly like setup',()=>{
  const {ownedPool}=require('../src/display-cache.cjs');assert.deepEqual(ownedPool({preservedSlots:[2,3,4,5,6,7,8]}),[9,10]);
  for(const manifest of [{ownedSlots:[9,10],preservedSlots:[10]},{preservedSlots:null},{preservedSlots:[2,2]},{preservedSlots:[2,3,4,5,6,7,8,9]}])assert.throws(()=>ownedPool(manifest),/allocation is invalid/);
+});
+
+test('close waits for a pending status read and never reselects a companion overlay during restoration',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.selectionAt=0;f.cache.manifest={originalSlot:1};
+ let resolveRead,reads=0,restores=0,closed=0,selections=0;
+ f.cache.som.currentSlot=()=>{reads++;return new Promise(resolve=>{resolveRead=resolve;});};
+ f.cache.som.activate=async()=>{restores++;assert.equal(f.cache.watching,false);};f.cache.som.close=()=>closed++;f.cache.som.selectSlot=()=>selections++;
+ const watching=f.cache.reconcile();await Promise.resolve();const closing=f.cache.close();
+ assert.equal(restores,0,'restore must not overlap the uncorrelated status reply');resolveRead(1);await watching;await closing;
+ assert.equal(reads,1);assert.equal(selections,0);assert.equal(restores,1);assert.equal(closed,1);
+});
+
+test('concurrent close requests perform one restoration',async()=>{
+ const f=fixture();f.cache.manifest={originalSlot:1};let release,restores=0,closed=0;
+ f.cache.som.activate=async()=>{restores++;await new Promise(resolve=>{release=resolve;});};f.cache.som.close=()=>closed++;
+ const a=f.cache.close(),b=f.cache.close();assert.equal(restores,1);release();await Promise.all([a,b]);assert.equal(closed,1);assert.equal(restores,1);
+});
+
+test('close waits for an acknowledged upload before restoring and suppresses pending live work',async()=>{
+ const f=fixture();await f.cache.refreshLive();f.cache.manifest={originalSlot:1};f.cache.data.revision++;
+ let release,enteredResolve,restores=0,closed=0;const entered=new Promise(resolve=>{enteredResolve=resolve;}),upload=f.cache.som.uploadOverlay;
+ f.cache.som.uploadOverlay=async slot=>{enteredResolve();await new Promise(resolve=>{release=resolve;});await upload(slot);};
+ f.cache.som.activate=async()=>{restores++;assert.equal(f.cache.updating,false);};f.cache.som.close=()=>closed++;
+ const updating=f.cache.refreshLive();await entered;f.cache.livePending=true;const closing=f.cache.close();assert.equal(restores,0);release();await updating;await closing;
+ assert.equal(restores,1);assert.equal(closed,1);assert.equal(f.uploads.length,2);assert.equal(f.cache.livePending,false);assert.equal(f.cache.som,null);
+});
+
+test('a completed old close cannot clear or close a replacement session after explicit detach',async()=>{
+ const f=fixture();f.cache.manifest={originalSlot:1};let release,oldCloses=0,newCloses=0;
+ const old=f.cache.som;old.activate=()=>new Promise(resolve=>{release=resolve;});old.close=()=>oldCloses++;
+ const closing=f.cache.close();f.cache.detach();const replacement={close:()=>newCloses++};f.cache.som=replacement;release();await closing;
+ assert.equal(f.cache.som,replacement);assert.equal(oldCloses,1);assert.equal(newCloses,0);
+});
+
+test('sustained four-widget updates stay bounded across repeated ambiguous failures and new sessions',async()=>{
+ for(const pool of [[2,10],[3,7,10],[2,3,4,5,6,7,8,9,10]]){
+  const f=fixture();f.cache.pool=pool;f.cache.config.slots=Array.from({length:5},()=>({plugin:'network'}));f.cache.config.widget={type:'cpu'};f.cache.config.extraWidgets=[{type:'gpu'},{type:'network'},{type:'clock'}];
+  const transport=f.cache.som;let failNext=false,failures=0,closed=0;
+  function session(){return{...transport,close(){closed++;},uploadOverlay:async slot=>{assert.ok(pool.includes(slot));await transport.uploadOverlay(slot);if(failNext){failNext=false;failures++;throw Object.assign(Error('Stress lost upload acknowledgement'),{code:'DISPLAY_REQUEST_TIMEOUT'});}}};}
+  f.cache.som=session();await f.cache.apply(f.cache.config,{caps:false});
+  for(let step=0;step<400;step++){
+   f.cache.desired=['idle','previous','toggle','next','fourth','fifth'][step%6];f.cache.caps=!!(step%2);f.cache.layer=!!(step%3);f.cache.data.revision=(step+1)%251;f.advance(2000);
+   failNext=step%61===60;
+   if(failNext){await assert.rejects(f.cache.refreshLive(),/Stress lost/);const written=f.uploads.length;await assert.rejects(f.cache.refreshLive());assert.equal(f.uploads.length,written);f.cache.detach();f.cache.som=session();await f.cache.apply(f.cache.config,{caps:f.cache.caps});}
+   else await f.cache.refreshLive();
+   for(const collection of [f.cache.cache,f.cache.frames,f.cache.frameContent,f.cache.frameHashes,f.cache.usage])assert.ok(collection.size<=pool.length-1,'retained frame state is bounded by slot allocation');
+   assert.equal(new Set(f.cache.cache.values()).size,f.cache.cache.size);assert.equal(f.cache.error,'');assert.equal(f.cache.cache.get(f.cache.key()),f.cache.lastSlot);
+  }
+  assert.equal(failures,6);assert.equal(closed,6);f.cache.clearLiveTimer();
+ }
+});
+
+test('a delayed timed-out pre-upload reply cannot authorize overwriting the newly active slot',async()=>{
+ const f=fixture();await f.cache.refreshLive();const old=f.cache.lastSlot,target=f.cache.spare(),read=f.cache.som.currentSlot;f.activate(target);let reads=0,attempts=0;const upload=f.cache.som.uploadOverlay;
+ f.cache.som.currentSlot=async()=>{if(++reads===1)throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return reads===2?old:read();};
+ f.cache.som.uploadOverlay=async(...args)=>{attempts++;return upload(...args);};f.cache.data.revision++;
+ await assert.rejects(f.cache.refreshLive(),{code:'DISPLAY_STATUS_UNSTABLE'});assert.equal(reads,3);assert.equal(attempts,0);assert.equal(f.uploads.length,1);f.cache.clearLiveTimer();
+});
+
+test('status recovery confirmation failures stop before upload with bounded reads',async()=>{
+ for(const confirmation of ['timeout',11]){
+  const f=fixture();await f.cache.refreshLive();const active=f.cache.lastSlot;let reads=0;
+  f.cache.som.currentSlot=async()=>{reads++;if(reads===1||reads===3&&confirmation==='timeout')throw Object.assign(Error('timeout'),{code:'DISPLAY_REQUEST_TIMEOUT'});return reads===2?active:confirmation;};
+  f.cache.data.revision++;await assert.rejects(f.cache.refreshLive());assert.equal(reads,3);assert.equal(f.uploads.length,1);f.cache.clearLiveTimer();
+ }
+});
+
+test('healthy pre-upload status reads do not gain recovery confirmation polling',async()=>{
+ const f=fixture(),read=f.cache.som.currentSlot;let reads=0;f.cache.som.currentSlot=async()=>{reads++;return read();};
+ for(let i=0;i<5;i++){f.cache.data.revision=i;await f.cache.refreshLive();}
+ assert.equal(reads,5);assert.equal(f.uploads.length,5);f.cache.clearLiveTimer();
+});
+
+
+test('slot diagnostics identify read timing and phase and reset on detachment',async()=>{
+ const f=fixture();await f.cache.refreshLive();assert.equal(f.cache.lastObservedPhase,'before-upload');assert.equal(f.cache.lastObservedSlot,1);assert.ok(Number.isFinite(f.cache.lastObservedAt));assert.notEqual(f.cache.lastObservedSlot,f.cache.lastSlot,'a pre-upload observation normally differs after activation');
+ f.cache.selectionAt=0;await f.cache.reconcile();assert.equal(f.cache.lastObservedPhase,'reconcile');assert.equal(f.cache.lastObservedSlot,f.cache.lastSlot);f.cache.som.close=()=>{};f.cache.detach();assert.equal(f.cache.lastObservedSlot,null);assert.equal(f.cache.lastObservedAt,null);assert.equal(f.cache.lastObservedPhase,null);
 });

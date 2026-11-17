@@ -1,6 +1,6 @@
 const appearance=require('./appearance.cjs');
 const {positionAt}=require('./playback-clock.cjs');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const xmlEscape=require('./svg-text.cjs').escape,esc=s=>xmlEscape(s??'');
 function weatherIcon(kind,phase=Math.floor(Date.now()/500)%8,windy=false){
  const drift=[-3,-2,0,2,3,2,0,-2][phase%8],shine=[.45,.7,.95,1,.7,.5,.8,1][phase%8],pulse=[6.4,6.9,7.5,7.1,6.5,6.9,7.5,7.1][phase%8];
  const sun=`<g transform="rotate(${phase%8*5-15} 16 16)"><circle cx="16" cy="16" r="${pulse}" fill="#f7c948"/><circle cx="16" cy="16" r="${pulse+2.5}" fill="none" stroke="#ffe58a" stroke-opacity="${shine*.45}" stroke-width="1.5"/><path opacity="${shine}" d="M16 0V5M16 27V32M0 16H5M27 16H32M4 4L8 8M24 24L28 28M4 28L8 24M24 8L28 4" stroke="#f7c948" stroke-width="2.8" stroke-linecap="round"/></g>`;
@@ -61,7 +61,7 @@ function compact(w,config,data,width,height){
  if(['performance','downloads','market'].includes(type)){
   if(!r||r.error||!r.updatedAt||(type!=='market'&&now-r.updatedAt>(type==='performance'?4000:130000)))return title+wait(type==='performance'?'Waiting for game launch':type==='downloads'?'Waiting for active download':'Waiting for market source');
   if(type==='performance'){const points=(r.graph||[]).map((v,i,a)=>`${6+i*(width-12)/Math.max(1,a.length-1)},${height-14-Math.min(1,v/Math.max(33.3,...a))*(height>70?10:6)}`).join(' ');return title+text(Math.round(r.fps)+'',height>70?48:35,22)+`<polyline points="${points}" fill="none" stroke="#83dbba" stroke-width="1"/>`+text(r.frameMs.toFixed(1)+' ms',height-5,8,'#a8b5c9');}
-  if(type==='downloads'){const a=r.items||[],item=a[Math.floor(now/5000)%Math.max(1,a.length)];if(!item)return title+wait('Waiting for active download');if(!(item.total>0))return title+wait('Waiting for download size');return title+text(Math.floor(item.done/item.total*100)+'%',height>70?48:35,20)+text(item.name.slice(0,max),height-9,9,'#a8b5c9');}
+  if(type==='downloads'){const a=require('./monitor-widgets.cjs').downloadItems(r),item=a[Math.floor(now/5000)%Math.max(1,a.length)];if(!item)return title+wait('Waiting for active download');if(!require('./monitor-widgets.cjs').validDownload(item))return title+wait('Waiting for download size');return title+text(Math.floor(item.done/item.total*100)+'%',height>70?48:35,20)+text(item.name.slice(0,max),height-9,9,'#a8b5c9');}
   return require('./monitor-widgets.cjs').render('market',r,width,height,now);
  }
  if(type==='text')return appearance.textSVG(w.text,width,height,w.textStyle);
@@ -85,7 +85,7 @@ function dense(w,config,data,width,height){
   value='Waiting…';detail='Waiting for playback';
  }
  else if(type==='performance'){const fresh=r?.updatedAt&&now-r.updatedAt<4000&&!r.error;value=fresh?Math.round(r.fps)+' FPS':'Waiting…';detail=fresh?r.frameMs.toFixed(1)+' ms':'Waiting for game';}
- else if(type==='downloads'){const item=r?.items?.[0],valid=r?.updatedAt&&now-r.updatedAt<130000&&!r.error&&item?.total>0;value=valid?Math.floor(item.done/item.total*100)+'%':'Waiting…';detail=valid?item.name:'Waiting for download';}
+ else if(type==='downloads'){const item=require('./monitor-widgets.cjs').downloadItems(r)[0],valid=r?.updatedAt&&now-r.updatedAt<130000&&!r.error&&require('./monitor-widgets.cjs').validDownload(item);value=valid?Math.floor(item.done/item.total*100)+'%':'Waiting…';detail=valid?item.name:'Waiting for download';}
  else if(type==='calendar'){const d=new Date(now);value=d.toLocaleDateString(undefined,{month:'short',day:'numeric'});detail=d.toLocaleDateString(undefined,{weekday:'long'});}
  else if(type==='text'){value=w.text;}
  else if(type==='obs'){value=data.obs?.connected?(data.obs.streaming?'ON AIR':data.obs.recording?'RECORDING':'Ready'):'Waiting…';detail=data.obs?.connected?'OBS':'Waiting for OBS';}

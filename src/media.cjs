@@ -27,11 +27,13 @@ class MediaTransport {
       if(this.process!==proc)return;
       let data;
       try { data = JSON.parse(line); } catch { return; }
+      if(!data||typeof data!=='object'||Array.isArray(data))return;
       const pending = this.pending.get(data.id);
       if (!pending) return;
       clearTimeout(pending.timer);
       this.pending.delete(data.id);
-      data.ok ? sanitizeMedia(data.result).then(pending.resolve,pending.reject) : pending.reject(new Error(data.error));
+      if(data.ok===true&&(!data.result||typeof data.result!=='object'||Array.isArray(data.result))){pending.reject(new Error('Windows media returned an invalid response. Try again.'));return;}
+      data.ok===true ? sanitizeMedia(data.result).then(pending.resolve,pending.reject) : pending.reject(new Error(typeof data.error==='string'?data.error:'Windows media returned an invalid response. Try again.'));
     });
     proc.stderr.resume();
     const ended = () => {
@@ -41,6 +43,9 @@ class MediaTransport {
     proc.on('exit', ended);
     proc.on('error', ended);
     proc.stdin.on('error', ended);
+    proc.stdout.on('error', ended);
+    proc.stderr.on('error', ended);
+    lines.on('error', ended);
   }
   failAll(message) {
     for (const item of this.pending.values()) { clearTimeout(item.timer); item.reject(new Error(message)); }

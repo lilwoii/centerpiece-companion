@@ -1,7 +1,13 @@
 const fs=require('node:fs'),path=require('node:path'),{createHash}=require('node:crypto');
 const{pendingChanges}=require('./studio-response.cjs');
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-function setupRecord(directory){try{const m=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));return{present:true,verified:m.verified===true,restored:m.restored===true,allocation:m.ownedSlots===undefined?'legacy':Array.isArray(m.ownedSlots)?'explicit':'invalid',ownedSlots:Array.isArray(m.ownedSlots)?m.ownedSlots.filter(n=>Number.isInteger(n)&&n>=2&&n<=10).slice(0,9):[],setupInProgress:m.setupInProgress===true};}catch{return{present:false};}}
+function hardwareRecord(directory){try{const m=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));return{present:true,readable:true,verified:m.verified===true,restored:m.restored===true,allocation:m.ownedSlots===undefined?'legacy':Array.isArray(m.ownedSlots)?'explicit':'invalid',ownedSlots:Array.isArray(m.ownedSlots)?m.ownedSlots.filter(n=>Number.isInteger(n)&&n>=2&&n<=10).slice(0,9):[],setupInProgress:m.setupInProgress===true};}catch(error){return{present:error.code!=='ENOENT',readable:false,status:error.code==='ENOENT'?'missing':'unreadable'};}}
+function setupRecord(directory){
+ const result=hardwareRecord(directory);
+ try{const value=JSON.parse(fs.readFileSync(path.join(directory,'plugin-shortcuts.json'),'utf8'));result.optionalShortcuts={present:true,readable:!!value&&typeof value==='object'&&!Array.isArray(value),inProgress:value?.inProgress===true};}
+ catch(error){result.optionalShortcuts={present:error.code!=='ENOENT',readable:false};}
+ return result;
+}
 async function collectSetupReport({version,directory,Studio=require('./studio.cjs').Studio,inspect=require('./device.cjs').inspectDevice,wait=ms=>new Promise(r=>setTimeout(r,ms))}){
  const report={format:1,appVersion:version,platform:process.platform,architecture:process.arch,readOnly:true,setup:setupRecord(directory),interfaces:{},pendingSamples:[],queries:[],classification:'not_checked'};
  try{const d=await inspect(true);report.interfaces={keyboard:!!d.keyboard,display:!!d.display};for(const k of ['keyboardVersion','displayVersion'])if(typeof d[k]==='string')report[k]=d[k].replace(/[^\w. +()\/-]/g,'').slice(0,100);for(const k of ['keyboardError','displayError'])if(d[k])report.queries.push({query:k,status:'failed'});}catch{report.queries.push({query:'device_versions',status:'failed'});}
@@ -14,4 +20,4 @@ async function collectSetupReport({version,directory,Studio=require('./studio.cj
  }catch{report.classification='keyboard_query_unavailable';}finally{studio?.close();}
  return report;
 }
-module.exports={collectSetupReport};
+module.exports={collectSetupReport,setupRecord};

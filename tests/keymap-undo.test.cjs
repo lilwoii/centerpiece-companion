@@ -77,3 +77,13 @@ test('key editor never treats missing or rejected save acknowledgements as succe
   }finally{f.cleanup();}
  }
 });
+
+
+test('identical maps on two identityless keyboards cannot authorize a binding mutation',async()=>{
+ for(const serial of [undefined,null,'','   ']){const f=fixture();try{
+  const map=structuredClone(f.e.snapshot);let device=0,writes=0;f.e.use=async fn=>fn({serial,request:async({keymap:q})=>{
+   if(q.getKeymap)return{keymap:{getKeymap:structuredClone(map)}};if(q.checkUnsavedChanges)return{keymap:{checkUnsavedChanges:false}};writes++;throw Error('Mutation reached unknown keyboard '+device);
+  }});
+  await f.e.read();device=1;await assert.rejects(f.e.change(0,10,0x70046,0,null),/identity/i);assert.equal(writes,0);assert.deepEqual(fs.readdirSync(f.e.directory),[]);
+ }finally{f.cleanup();}}
+});

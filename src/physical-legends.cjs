@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path');
 const {physical,label}=require('./keymap.cjs');
 const {bindingLegend}=require('./language-labels.js');
 const media=require('./media-icons.js');
-const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const escape=require('./svg-text.cjs').escape;
 // No opaque rectangles: native legends are switched off only after all replacement
 // frames have been uploaded successfully. Positions are read, never rewritten.
 function svg(model,config,locks,data){

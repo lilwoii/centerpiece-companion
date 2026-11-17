@@ -13,3 +13,12 @@ test('a connection established during probing avoids an unnecessary install',asy
  let resolve,installs=0;const flow=new MusicBeeSetupFlow({probe:()=>new Promise(r=>resolve=r),install:async()=>{installs++;return{message:'restart'};},onChange:()=>{}});
  const pending=flow.ensure();flow.connected();resolve({available:false});await pending;assert.equal(installs,0);assert.equal(flow.state.status,'connected');
 });
+
+test('closing MusicBee setup during probing prevents installation and ignores later requests',async()=>{
+ let resolve,installs=0,probes=0,changes=0;const flow=new MusicBeeSetupFlow({probe:()=>{probes++;return new Promise(r=>resolve=r);},install:async()=>{installs++;return{message:'restart'};},onChange:()=>changes++});
+ const pending=flow.ensure();flow.close();const count=changes;resolve({available:false});await pending;await flow.ensure();flow.connected();assert.equal(installs,0);assert.equal(probes,1);assert.equal(changes,count);
+});
+test('closing MusicBee setup lets an accepted installation settle without late callbacks',async()=>{
+ let resolve,changes=0;const flow=new MusicBeeSetupFlow({probe:async()=>({available:false}),install:()=>new Promise(r=>resolve=r),onChange:()=>changes++});
+ const pending=flow.ensure();await new Promise(r=>setImmediate(r));flow.close();const count=changes;resolve({message:'restart'});await pending;assert.equal(changes,count);assert.equal(flow.pending,null);
+});

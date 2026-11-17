@@ -1,11 +1,14 @@
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const xmlEscape=require('./svg-text.cjs').escape,esc=s=>xmlEscape(s??'');
 const titles={performance:'GAME PERFORMANCE',downloads:'DOWNLOAD PROGRESS',market:'MARKET WATCHLIST'};
+// Steam manifests can have valid progress before their name field is available.
+function downloadItems(r){return (Array.isArray(r?.items)?r.items:[]).slice(0,20).filter(item=>item&&typeof item==='object'&&!Array.isArray(item)).map(item=>({...item,name:typeof item.name==='string'&&item.name.trim()?item.name:'Download',source:typeof item.source==='string'?item.source:'Download source'}));}
+function validDownload(item){return Number.isFinite(item?.total)&&item.total>0&&Number.isFinite(item.done)&&item.done>=0&&item.done<=item.total;}
 function render(type,r,width,height,now=Date.now()){
  if(!titles[type])return null;const text=(s,x,y,size=11,color='#edf2fa')=>`<text x="${x}" y="${y}" font-family="Arial" font-size="${size}" fill="${color}">${esc(s)}</text>`;
  let out=text(type==='performance'&&r?.game?r.game.slice(0,26):titles[type],8,16,10,'#a8b5c9');const maxAge=type==='performance'?4000:130000;
  if(!r||r.error||!r.updatedAt||(type!=='market'&&now-r.updatedAt>maxAge)){const msg=r?.error||({performance:'Waiting for game launch',downloads:'Waiting for active download',market:'Waiting for market source'})[type];return out+require('./waiting.cjs').render(msg,width,height,now);}
  if(type==='performance'){out+=text(Math.round(r.fps)+' FPS',8,42,24)+text(r.frameMs.toFixed(1)+' ms',width-66,40,11);const a=r.graph||[],max=Math.max(33.3,...a),points=a.map((v,i)=>`${8+i*(width-16)/Math.max(1,a.length-1)},${height-8-Math.min(1,v/max)*28}`).join(' ');out+=`<polyline points="${points}" fill="none" stroke="#83dbba" stroke-width="1.5"/>`;}
- if(type==='downloads'){const items=r.items||[],item=items[Math.floor(now/5000)%Math.max(1,items.length)];if(!item)return out+require('./waiting.cjs').render('Waiting for active download',width,height,now);out+=text(item.name.slice(0,25),8,35,12);{const valid=Number.isFinite(item.total)&&item.total>0&&Number.isFinite(item.done)&&item.done>=0&&item.done<=item.total;if(!valid)return out+text('Size unavailable',8,61,16);out+=text(Math.floor(item.done/item.total*100)+'%',8,60,24)+text(((item.total-item.done)/1073741824).toFixed(2)+' GiB left',70,60,11)+text((item.source+(item.observedAt?' · '+Math.max(0,Math.floor((now-item.observedAt)/60000))+'m old':'')).slice(0,42),8,height-6,8,'#a8b5c9');}}
+ if(type==='downloads'){const items=downloadItems(r),item=items[Math.floor(now/5000)%Math.max(1,items.length)];if(!item)return out+require('./waiting.cjs').render('Waiting for active download',width,height,now);out+=text(item.name.slice(0,25),8,35,12);{const valid=validDownload(item);if(!valid)return out+text('Size unavailable',8,61,16);out+=text(Math.floor(item.done/item.total*100)+'%',8,60,24)+text(((item.total-item.done)/1073741824).toFixed(2)+' GiB left',70,60,11)+text((item.source+(item.observedAt?' · '+Math.max(0,Math.floor((now-item.observedAt)/60000))+'m old':'')).slice(0,42),8,height-6,8,'#a8b5c9');}}
  if(type==='market'){
   const items=(r.items||[r]).slice(0,4),cols=items.length===1?1:2,rows=Math.ceil(items.length/cols),cw=width/cols,ch=height/rows;out='';
   for(const [index,q] of items.entries()){const x=(index%cols)*cw,y=Math.floor(index/cols)*ch,icon=require('./market-logo.cjs').logo(q.symbol),name=q.label||require('./market-symbols.cjs').label(q.symbol||'');
@@ -39,4 +42,4 @@ function compactMarket(r,width,height,now=Date.now()){
  }).join('')+'</g>';
 
 }
-module.exports={render,compactMarket};
+module.exports={render,compactMarket,downloadItems,validDownload};

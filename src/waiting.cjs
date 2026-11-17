@@ -1,4 +1,4 @@
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const xmlEscape=require('./svg-text.cjs').escape,esc=s=>xmlEscape(s??'');
 function label(now=Date.now()){return 'Waiting'+'.'.repeat(1+Math.floor(now/650)%3);}
 function render(reason,width=194,height=94,now=Date.now()){
  const size=Math.min(22,(width-12)/5.7),max=Math.max(10,Math.floor((width-12)/4.5)),words=String(reason||'Waiting for source').split(' '),lines=[''];

@@ -10,6 +10,7 @@ function value(){state.desk.config=workspace.config;state.desk.timer=timer.view(
 function changed(){const current=value();for(const listener of listeners)listener(current);return current;}
 const methods=Object.fromEntries([...fs.readFileSync(path.join(__dirname,'../src/preload.cjs'),'utf8').matchAll(/^\s+(\w+):/gm)].map(m=>[m[1],async()=>value()]));
 Object.assign(methods,{
+ indicatorPositions:async()=>require('../src/indicator-placement.cjs').positions(),
  checkSetup:async()=>{state.setupReport={format:1,readOnly:true,appVersion:'test',pendingSamples:[true,true,true],classification:'pending_reported_consistently'};return changed();},
  copySetupReport:async()=>true,
  setStripVisible:async enabled=>{workspace.config=workspace.validate({...workspace.config,stripEnabled:enabled});state.feedback=enabled?'Plugin strip shown.':'Plugin strip hidden.';return changed();},
@@ -21,13 +22,13 @@ Object.assign(methods,{
  profileAction:async(action,input)=>{if(action==='create'||action==='replace')profiles.save(input.name,action==='replace'?input.id:undefined);else if(action==='link')profiles.link(input.id,input.app);else if(action==='enable')profiles.enable(input.enabled);else if(action==='load')await profiles.load(input.id);else if(action==='remove')profiles.remove(input.id);return changed();}
 });
 if(process.argv.includes('--setup-recovery-test')){
- let fail=false,confirmed=0,canceled=0,started=0;const setupReviews=[];methods.subscribeSetupReview=callback=>{setupReviews.push(callback);return()=>{};};
+ let fail=false,confirmed=0,canceled=0,started=0,replacements=false;const setupReviews=[];methods.subscribeSetupReview=callback=>{setupReviews.push(callback);return()=>{};};
  state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',stage:'read_pending_status',canRecover:true,message:'The keyboard reports pending configuration changes.'};
- methods.setupKeyboard=async()=>{started++;state.setupFailure=null;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};return changed();};
- methods.prepareSetupRecovery=async()=>({token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2});
+ methods.setupKeyboard=async()=>{started++;state.setupFailure=null;state.setupReviewAvailable=true;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};return changed();};
+ methods.prepareSetupRecovery=async()=>{state.setupFailure=null;state.setupReviewAvailable=true;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2,retryIncomplete:fail==='save',replacementSlots:replacements?[9,10]:[]};changed();return state.setupRecovery;};
  methods.cancelSetupRecovery=async()=>{canceled++;state.setupRecovery=null;changed();return true;};
- methods.confirmSetupRecovery=async token=>{if(token!=='test-review')throw Error('Wrong review');confirmed++;state.setupRecovery=null;if(fail)throw Error('The current configuration changed. Nothing was saved.');state.strip=true;state.setupFailure=null;state.feedback='Keyboard setup complete.';return changed();};
- contextBridge.exposeInMainWorld('setupTest',{fail:value=>{fail=value;},counts:()=>({confirmed,canceled,started}),automaticReview:()=>{state.setupRunning=false;state.setupFailure=null;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};changed();for(const callback of setupReviews)callback(state.setupRecovery);},running:enabled=>{state.setupRunning=enabled;changed();},rebroadcast:()=>changed(),reset:()=>{state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',canRecover:true};return changed();}});
+ methods.confirmSetupRecovery=async(token,acceptOverlayReplacement)=>{if(replacements&&acceptOverlayReplacement!==true)throw Error('Explicit overlay approval required');if(token!=='test-review')throw Error('Wrong review');confirmed++;state.setupRecovery=null;if(fail){state.setupFailure={code:fail==='save'?'KEYBOARD_SAVE_FAILED':'KEYBOARD_CONFIGURATION_CHANGED',canRecover:false,message:fail==='save'?'The keyboard rejected the save.':'The current configuration changed. Nothing was saved.'};state.setupReviewAvailable=true;changed();throw Error(state.setupFailure.message);}state.setupReviewAvailable=false;state.strip=true;state.setupFailure=null;state.feedback='Keyboard setup complete.';return changed();};
+ contextBridge.exposeInMainWorld('setupTest',{replacements:()=>{replacements=true;state.strip=false;state.setupFailure={code:'KEYBOARD_OVERLAY_SPACE_REQUIRED',canRecover:true};return changed();},fail:value=>{fail=value;},counts:()=>({confirmed,canceled,started}),automaticReview:()=>{state.setupRunning=false;state.setupFailure=null;state.setupReviewAvailable=true;state.setupRecovery={token:'test-review',pending:true,shortcuts:['L1 + P','L1 + /'],layerCount:2};changed();for(const callback of setupReviews)callback(state.setupRecovery);},running:enabled=>{state.setupRunning=enabled;changed();},rebroadcast:()=>changed(),reset:()=>{state.strip=false;state.setupFailure={code:'KEYBOARD_PENDING_CHANGES',canRecover:true};return changed();}});
 }
 if(process.argv.includes('--setup-feedback-test')){
  let failureCode='KEYBOARD_OVERLAY_OCCUPIED';

@@ -30,6 +30,7 @@ class KeymapEditor{
   if(swapPosition!==null&&(!Number.isInteger(swapPosition)||swapPosition<0||swapPosition>67||swapPosition===63||(layerId===1&&[26,55,62].includes(swapPosition))||swapPosition===position))throw Error('Choose a different, unreserved key to swap.');
   if(!restore&&swapPosition===null&&(!choices.some(c=>c.value===value)||!Number.isInteger(mods)||mods<0||mods>15))throw Error('Choose a supported key and modifiers.');
   return this.use(async s=>{
+   if(typeof this.serial!=='string'||!this.serial.trim()||typeof s.serial!=='string'||!s.serial.trim())throw Error('The keyboard identity is unavailable. Reconnect and read its bindings before editing.');
    if(s.serial!==this.serial)throw Error('A different keyboard is connected. Read its bindings first.');
    if(await require('./studio-response.cjs').pendingChanges(s))throw Error('Save or discard XPANEL changes first.');
    const map=(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;

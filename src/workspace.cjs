@@ -26,7 +26,29 @@ class Workspace{
  saveMusicTarget(target){return this.save({...this.config,youtubeMusicTarget:require('./music-source.cjs').playerTarget(target),youtubeMusicSource:''});}
  saveSlot(input){if(!input||!Number.isInteger(input.index)||input.index<0||input.index>=this.config.slots.length)throw Error('Choose a valid plugin position.');const slot=validateSlot(input.slot),slots=[...this.config.slots];slots[input.index]=slot;return this.save({...this.config,slots});}
  view(){return{timer:this.countdown.view(),obsStatus:this.obsStatus,language:this.language,catalog,config:this.config,locks:this.locks,obsConnected:!!this.obs,live:this.live.state,chat:this.chat.state};}
- async connectObs(password,port){if(typeof password!=='string'||password.length>512||!Number.isInteger(port)||port<1||port>65535)throw Error('Enter an OBS port and password.');const obs=new OBSWebSocket();obs.on('error',()=>{});obs.on('ConnectionClosed',()=>{if(this.obs===obs){this.obs=null;this.obsStatus={connected:false};}});try{await obs.connect(`ws://127.0.0.1:${port}`,password,{rpcVersion:1});}catch{await obs.disconnect().catch(()=>{});throw Error('Could not connect. Enable OBS WebSocket Server and check the port and password.');}if(this.obs)await this.obs.disconnect();this.obs=obs;this.obsStatus={connected:true};void this.sampleObs();return true;}
+ async connectObs(password,port){
+  if(this.closed)throw Error('Companion connections are closed.');
+  if(typeof password!=='string'||password.length>512||!Number.isInteger(port)||port<1||port>65535)throw Error('Enter an OBS port and password.');
+  const revision=this.obsRevision=(this.obsRevision||0)+1,obs=new OBSWebSocket();this.pendingObs??=new Set();this.pendingObs.add(obs);
+  const cancelled=()=>this.closed||revision!==this.obsRevision;
+  obs.on('error',()=>{});obs.on('ConnectionClosed',()=>{if(this.obs===obs){this.obs=null;this.obsStatus={connected:false};}});
+  try{
+   try{await obs.connect(`ws://127.0.0.1:${port}`,password,{rpcVersion:1});}catch{await obs.disconnect().catch(()=>{});throw Error(cancelled()?'OBS connection was cancelled.':'Could not connect. Enable OBS WebSocket Server and check the port and password.');}
+   if(cancelled()){await obs.disconnect().catch(()=>{});throw Error('OBS connection was cancelled.');}
+   if(this.obs)await this.obs.disconnect();
+   if(cancelled()){await obs.disconnect().catch(()=>{});throw Error('OBS connection was cancelled.');}
+   this.obs=obs;this.obsStatus={connected:true};void this.sampleObs();return true;
+  }catch(error){if(this.obs!==obs)await obs.disconnect().catch(()=>{});throw error;}finally{this.pendingObs.delete(obs);}
+ }
+
+ async disconnectObs(){
+  this.obsRevision=(this.obsRevision||0)+1;
+  for(const pending of this.pendingObs||[])void pending.disconnect().catch(()=>{});
+  this.pendingObs?.clear();const obs=this.obs;
+  await obs?.disconnect();
+  // A new Connect can finish while the old disconnect is pending.
+  if(this.obs===obs){this.obs=null;this.obsStatus={connected:false};}
+ }
  async sampleObs(){const obs=this.obs;if(!obs||this.obsSampling)return;this.obsSampling=true;let timeout;try{const [record,stream]=await Promise.race([Promise.all([obs.call('GetRecordStatus'),obs.call('GetStreamStatus')]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('OBS timed out')),4000);})]);if(this.obs===obs)this.obsStatus={connected:true,recording:record.outputActive,streaming:stream.outputActive,recordSeconds:Math.floor(record.outputDuration/1000),streamSeconds:Math.floor(stream.outputDuration/1000)};}catch{if(this.obs===obs){this.obsStatus={connected:false,error:'OBS status unavailable. Reconnect in Connections.'};this.obs=null;void obs.disconnect().catch(()=>{});}}finally{clearTimeout(timeout);this.obsSampling=false;}}
  async run(index){if(!Number.isInteger(index)||index<0||index>=this.config.slots.length)throw Error('Invalid slot');const slot=this.config.slots[index];if(!slot)throw Error('This position is empty. Add a plugin first.');const p=catalog.find(p=>p.id===slot.plugin);
  if(slot.plugin==='decoration')return;
@@ -47,6 +69,6 @@ class Workspace{
  throw Error('Choose an action for this plugin.');
  }
  async pick(){const result=await this.dialog.showOpenDialog({title:'Choose an app to launch',properties:['openFile'],filters:[{name:'Windows apps',extensions:['exe','lnk']}]});return result.canceled?'':result.filePaths[0];}
- close(){this.live.resources.close();this.system.close();this.obs?.disconnect().catch(()=>{});this.chat.close();}
+ close(){this.closed=true;this.obsRevision=(this.obsRevision||0)+1;for(const obs of this.pendingObs||[])void obs.disconnect().catch(()=>{});this.pendingObs?.clear();this.live.resources.close();this.system.close();const obs=this.obs;this.obs=null;this.obsStatus={connected:false};obs?.disconnect().catch(()=>{});this.chat.close();}
 }
 module.exports={Workspace,defaults};

@@ -7,7 +7,7 @@ function fixture(t, options={}) {
   const x={pending:options.pending??false,map:{availableLayers:6,layers:[{bindings:Array.from({length:68},()=>({behaviorId:50397,param1:0x70004}))},{id:1,bindings:Array.from({length:68},()=>({behaviorId:56811}))}]},layouts:{layouts:[{keys:Array.from({length:68},()=>({width:100,height:100}))}]},calls:[],saves:0,edits:[],closed:0};
   x.map.layers[0].bindings[63]={behaviorId:54567,param1:1};x.map.layers[1].bindings[26]={behaviorId:60498};
   class Studio{constructor(){this.serial=x.serial||'keyboard';}close(){x.closed++;}async request(r){x.calls.push(r);if(r.keymap.checkUnsavedChanges)return{keymap:{checkUnsavedChanges:x.pending}};if(r.keymap.getKeymap){x.onRead?.();return{keymap:{getKeymap:structuredClone(x.map)}};}if(r.keymap.getPhysicalLayouts)return{keymap:{getPhysicalLayouts:structuredClone(x.layouts)}};if(r.keymap.setLayerBinding){const e=r.keymap.setLayerBinding;x.edits.push(e);assert.ok(fs.readdirSync(directory).some(n=>n.startsWith('setup-checkpoint-')),'checkpoint before mutation');if(x.editError)throw x.editError;x.map.layers.find(l=>l.id===e.layerId).bindings[e.keyPosition]=structuredClone(e.binding);x.afterEdit?.();return{keymap:{setLayerBinding:x.bindingResult??0}};}if(r.keymap.saveChanges){x.saves++;if(x.saveError)throw x.saveError;if(!options.sticky)x.pending=false;return{keymap:{saveChanges:x.saveResult??{ok:true}}};}throw Error('Unexpected write: '+JSON.stringify(r));}}
-  class Som{constructor(){this.serial='display';}close(){}async readOverlay(n){(x.overlayReads??=[]).push(n);if(x.occupied===n||x.occupied?.includes?.(n))return Buffer.from('existing overlay');return null;}async currentSlot(){return x.activeSlot??0;}}
+  class Som{constructor(){this.serial='display';}close(){}async readOverlay(n){(x.overlayReads??=[]).push(n);if(x.occupied===n||x.occupied?.includes?.(n))return Buffer.from(x.overlayBytes?.[n]||'existing overlay');return null;}async currentSlot(){return x.activeSlot??0;}}
   return {x,directory,deps:{Studio,Som}};
 }
 
@@ -178,4 +178,156 @@ test('missing ownedSlots never reclaims overlays explicitly preserved in the sam
 });
 test('malformed preserved-slot metadata never authorizes a legacy full-pool fallback',async t=>{
  for(const preservedSlots of ['bad',[2,2],[1],[11]]){const {x,directory,deps}=fixture(t);await setup(directory,{},deps);const file=path.join(directory,'hardware.json'),backup=JSON.parse(fs.readFileSync(file));delete backup.ownedSlots;backup.preservedSlots=preservedSlots;fs.writeFileSync(file,JSON.stringify(backup));x.occupied=[2,3,4,5,6,7,8,9,10];x.edits=[];await assert.rejects(startSetup(directory,{},deps),{code:'SETUP_BACKUP_UNREADABLE',writesAttempted:false});assert.equal(x.edits.length,0);}
+});
+
+
+test('explicit full-storage review proposes only two inactive unbound overlays and writes nothing',async t=>{
+ const {x,directory,deps}=fixture(t,{pending:true});x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=10;
+ x.map.layers[0].bindings[4]={behaviorId:42547,param1:9};x.map.layers[1].bindings[4]={behaviorId:42547,param1:8};
+ const plan=await prepareSetup(directory,{reviewPending:true,reviewOccupied:true},deps);
+ assert.deepEqual(plan.replacementSlots,[7,6]);assert.deepEqual(plan.ownedSlots,[6,7]);assert.deepEqual(plan.preservedSlots,[2,3,4,5,8,9,10]);assert.ok(Object.values(plan.replacementHashes).every(hash=>/^[a-f0-9]{64}$/.test(hash)));
+ assert.equal(x.edits.length,0);assert.equal(x.saves,0);assert.deepEqual(fs.readdirSync(directory),[]);
+ await assert.rejects(commitSetup(directory,plan,{acceptPending:true},deps),{code:'SETUP_OVERLAY_CONFIRMATION_REQUIRED'});assert.deepEqual(fs.readdirSync(directory),[]);
+ await assert.rejects(commitSetup(directory,plan,{acceptOverlayReplacement:true},deps),{code:'SETUP_CONFIRMATION_REQUIRED'});assert.equal(x.edits.length,0);
+ const saved=await commitSetup(directory,plan,{acceptPending:true,acceptOverlayReplacement:true},deps);assert.deepEqual(saved.ownedSlots,[6,7]);assert.deepEqual(saved.preservedSlots,[2,3,4,5,8,9,10]);assert.equal(saved.verified,true);assert.equal(x.saves,1);
+});
+
+test('replacement review only takes the one extra slot needed when another is empty',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9];x.activeSlot=9;
+ const plan=await prepareSetup(directory,{reviewOccupied:true},deps);assert.deepEqual(plan.replacementSlots,[8]);assert.deepEqual(plan.ownedSlots,[8,10]);
+ const saved=await commitSetup(directory,plan,{acceptOverlayReplacement:true},deps);assert.deepEqual(saved.ownedSlots,[8,10]);assert.deepEqual(saved.preservedSlots,[2,3,4,5,6,7,9]);
+});
+
+test('changed replacement content, active selection, mapping, or occupancy cancels before any write',async t=>{
+ for(const kind of ['content','active','mapping','empty','device','expired']){
+  const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+  const plan=await prepareSetup(directory,{reviewOccupied:true},deps);assert.deepEqual(plan.replacementSlots,[10,9]);
+  if(kind==='content')x.overlayBytes={10:'replaced externally'};
+  if(kind==='active')x.activeSlot=10;
+  if(kind==='mapping')x.map.layers[0].bindings[2]={behaviorId:42547,param1:10};
+  if(kind==='empty')x.occupied=x.occupied.filter(n=>n!==10);
+  if(kind==='device')x.serial='different';
+  if(kind==='expired')plan.createdAt=0;
+  await assert.rejects(commitSetup(directory,plan,{acceptOverlayReplacement:true},deps));assert.equal(x.edits.length,0,kind);assert.equal(x.saves,0,kind);assert.deepEqual(fs.readdirSync(directory),[],kind);
+ }
+});
+
+test('recovery refuses full storage when too few inactive unbound slots exist',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=10;
+ for(let slot=2;slot<=8;slot++)x.map.layers[1].bindings[slot]={behaviorId:42547,param1:slot};
+ await assert.rejects(prepareSetup(directory,{reviewOccupied:true},deps),{code:'KEYBOARD_OVERLAY_REPLACEMENT_UNAVAILABLE'});assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
+});
+
+test('explicit replacement always requires review even when no pending firmware flag exists',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];
+ await assert.rejects(startSetup(directory,{},deps),{code:'KEYBOARD_OVERLAY_SPACE_REQUIRED'});
+ const result=await startSetup(directory,{reviewOccupied:true},deps);assert.equal(result.needsConfirmation,true);assert.equal(result.plan.pending,false);assert.deepEqual(result.plan.replacementSlots,[10,9]);assert.equal(x.edits.length,0);assert.deepEqual(fs.readdirSync(directory),[]);
+});
+
+test('replacement selection preserves an inactive original overlay restoration destination',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+ fs.writeFileSync(path.join(directory,'hardware.json'),JSON.stringify({serial:'display',keyboardSerial:'keyboard',originalSlot:10,verified:false,originalBinding:{behaviorId:60498},layerId:1,keyPosition:26}));
+ const plan=await prepareSetup(directory,{reviewOccupied:true},deps);assert.deepEqual(plan.replacementSlots,[9,8]);assert.ok(plan.preservedSlots.includes(10));
+});
+
+
+test('full-slot reviewed recovery renders, closes and reconnects without touching unselected overlays',async t=>{
+ const {x,directory,deps}=fixture(t,{pending:true});x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+ x.overlayBytes=Object.fromEntries(x.occupied.map(slot=>[slot,Buffer.from('original overlay '+slot)]));
+ const originals=Object.fromEntries(Object.entries(x.overlayBytes).map(([slot,bytes])=>[slot,Buffer.from(bytes)]));
+ const plan=await prepareSetup(directory,{reviewPending:true,reviewOccupied:true,includeWidget:true},deps);assert.deepEqual(plan.ownedSlots,[9,10]);
+ await commitSetup(directory,plan,{acceptPending:true,acceptOverlayReplacement:true},deps);
+ const writes=[];deps.Som.prototype.uploadOverlay=async function(slot,bytes){assert.ok([9,10].includes(slot));assert.notEqual(slot,x.activeSlot,'never overwrite the active frame');writes.push(slot);x.overlayBytes[slot]=Buffer.from(bytes);x.activeSlot=slot;};
+ deps.Som.prototype.selectSlot=function(slot){assert.ok([9,10].includes(slot));x.activeSlot=slot;};
+ deps.Som.prototype.activate=async function(slot){assert.equal(slot,1);x.activeSlot=slot;};
+ const vm=require('node:vm'),box={module:{exports:{}},Buffer,structuredClone,setTimeout,clearTimeout,require:name=>name==='./som.cjs'?{Som:deps.Som}:name.startsWith('./')?require(path.join(__dirname,'../src',name)):require(name)};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../src/display-cache.cjs'),'utf8'),box);
+ let now=10000;const cache=new box.module.exports.DisplayCache(directory,(selected,_config,locks,data)=>'<svg width="4" height="4"><rect width="4" height="4" fill="rgb('+(data.revision||0)+',0,0)"/><title>'+selected+'/'+locks.caps+'</title></svg>',{now:()=>now,setTimeout:()=>({unref(){}}),clearTimeout(){}});
+ t.after(()=>cache.detach());const config={slots:[{plugin:'spotify'},null,null,null],widget:{type:'spotify'},extraWidgets:[{type:'cpu'},{type:'network'}],weatherMotion:false};
+ assert.equal(cache.connect(),true);await cache.apply(config,{caps:false});
+ for(let n=1;n<=24;n++){cache.desired=['idle','previous','toggle','next'][n%4];cache.caps=!!(n%2);cache.layer=!!(n%3);cache.data={revision:n,media:{available:true,title:'track '+Math.floor(n/4)}};now+=2000;await cache.refreshLive();assert.equal(cache.error,'');}
+ await cache.close();assert.equal(x.activeSlot,1);const saves=x.saves;
+ const again=await startSetup(directory,{includeWidget:true},deps);assert.equal(again.needsConfirmation,false);assert.equal(x.saves,saves);assert.deepEqual(again.backup.ownedSlots,[9,10]);
+ assert.equal(cache.connect(),true);await cache.apply(config,{caps:true});await cache.close();
+ assert.ok(writes.length>20);assert.equal(x.activeSlot,1);for(const slot of [2,3,4,5,6,7,8])assert.deepEqual(x.overlayBytes[slot],originals[slot]);
+});
+
+
+test('recovery of a partial manifest records the reviewed restoration baseline',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=3;
+ const original=structuredClone(x.map.layers[1].bindings[26]);
+ fs.writeFileSync(path.join(directory,'hardware.json'),JSON.stringify({serial:'display',keyboardSerial:'keyboard',verified:false}));
+ const plan=await prepareSetup(directory,{reviewOccupied:true},deps);const saved=await commitSetup(directory,plan,{acceptOverlayReplacement:true},deps);
+ assert.deepEqual(saved.originalBinding,original);assert.equal(saved.originalSlot,3);assert.equal(saved.layerId,1);assert.equal(saved.keyPosition,26);assert.deepEqual(saved.ownedSlots,[9,10]);
+ const persisted=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));assert.deepEqual(persisted.originalBinding,original);assert.equal(persisted.originalSlot,3);
+});
+
+test('partial recovery preserves existing valid original binding and slot zero',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;const originalBinding={behaviorId:50397,param1:0x70005};
+ fs.writeFileSync(path.join(directory,'hardware.json'),JSON.stringify({serial:'display',keyboardSerial:'keyboard',verified:false,originalBinding,originalSlot:0}));
+ const plan=await prepareSetup(directory,{reviewOccupied:true},deps);const saved=await commitSetup(directory,plan,{acceptOverlayReplacement:true},deps);
+ assert.deepEqual(saved.originalBinding,originalBinding);assert.equal(saved.originalSlot,0);
+});
+
+test('malformed original restoration metadata cannot be silently replaced by a recovery baseline',async t=>{
+ for(const invalid of [{originalBinding:null},{originalBinding:{}},{originalBinding:{behaviorId:'50397'}},{originalBinding:{behaviorId:50397,param1:null}},{originalSlot:null},{originalSlot:11}]){
+  const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];const file=path.join(directory,'hardware.json');fs.writeFileSync(file,JSON.stringify({serial:'display',keyboardSerial:'keyboard',verified:false,...invalid}));const before=fs.readFileSync(file,'utf8');
+  await assert.rejects(prepareSetup(directory,{reviewOccupied:true},deps),{code:'SETUP_BACKUP_UNREADABLE',writesAttempted:false});assert.equal(fs.readFileSync(file,'utf8'),before);assert.equal(x.edits.length,0);assert.equal(x.saves,0);
+ }
+});
+
+
+test('reviewed retry persists unfinished setup even when the firmware pending flag is false',async t=>{
+ const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+ const plan=await prepareSetup(directory,{reviewOccupied:true,includeWidget:true},deps);x.saveResult={err:1};
+ await assert.rejects(commitSetup(directory,plan,{acceptOverlayReplacement:true},deps),{code:'KEYBOARD_SAVE_FAILED'});
+ const before=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));assert.equal(before.setupInProgress,true);assert.equal(before.verified,false);assert.equal(x.pending,false);
+ const edits=x.edits.length;x.saveResult={ok:true};const retry=await startSetup(directory,{includeWidget:true},deps);
+ assert.equal(retry.needsConfirmation,true,'uncertain persistence requires a fresh review');assert.equal(x.saves,1,'read-only retry must not silently save');
+ await assert.rejects(commitSetup(directory,retry.plan,{},deps),{code:'SETUP_CONFIRMATION_REQUIRED'});assert.equal(x.saves,1);
+ const result=await commitSetup(directory,retry.plan,{acceptPending:true},deps);assert.equal(x.saves,2);assert.equal(x.edits.length,edits);assert.equal(result.verified,true);assert.equal(result.setupInProgress,false);assert.deepEqual(result.ownedSlots,[9,10]);assert.deepEqual(result.originalBinding,before.originalBinding);assert.equal(result.originalSlot,1);
+});
+
+
+test('interrupted approved recovery retains its allocation and original settings through a fresh review',async t=>{
+ for(const fault of ['binding-timeout','save-timeout','save-rejection']){
+  const {x,directory,deps}=fixture(t);x.occupied=[2,3,4,5,6,7,8,9,10];x.activeSlot=1;
+  const original=structuredClone(x.map.layers[1].bindings[26]);const plan=await prepareSetup(directory,{reviewOccupied:true,includeWidget:true},deps);
+  if(fault==='binding-timeout')x.editError=Error('Interrupted binding');else if(fault==='save-timeout')x.saveError=Error('Interrupted save');else x.saveResult={err:1};
+  await assert.rejects(commitSetup(directory,plan,{acceptOverlayReplacement:true},deps));
+  const failed=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));assert.equal(failed.verified,false);assert.equal(failed.setupInProgress,true);assert.deepEqual(failed.ownedSlots,[9,10]);
+  x.editError=null;x.saveError=null;x.saveResult={ok:true};const retry=await startSetup(directory,{includeWidget:true},deps);assert.equal(retry.needsConfirmation,true);assert.deepEqual(retry.plan.ownedSlots,[9,10]);assert.equal(retry.plan.replacementSlots,undefined);
+  const result=await commitSetup(directory,retry.plan,{acceptPending:true},deps);assert.equal(result.verified,true);assert.equal(result.setupInProgress,false);assert.equal(result.originalSlot,1);assert.deepEqual(result.originalBinding,original);assert.deepEqual(result.preservedSlots,[2,3,4,5,6,7,8]);
+ }
+});
+
+test('ordinary setup rejects a changed active overlay before storing a stale restoration target',async t=>{
+ const {x,directory,deps}=fixture(t,{pending:true});x.activeSlot=1;
+ const plan=await prepareSetup(directory,{reviewPending:true},deps);x.activeSlot=4;
+ await assert.rejects(commitSetup(directory,plan,{acceptPending:true},deps),{code:'KEYBOARD_CONFIGURATION_CHANGED',writesAttempted:false});
+ assert.equal(x.edits.length,0);assert.equal(x.saves,0);assert.deepEqual(fs.readdirSync(directory),[]);
+});
+
+
+test('interrupted first-install backup files remain absent or valid and setup can be reviewed again',async t=>{
+ for(const basename of ['keymap-original.json','widget-shortcut.json']){
+  const {x,directory,deps}=fixture(t),vm=require('node:vm');let armed=true;
+  const io={...fs,writeFileSync:(file,data,options)=>{
+   if(armed&&path.basename(file).startsWith(basename)){
+    armed=false;fs.writeFileSync(file,'{partial',options);throw Object.assign(Error('disk full'),{code:'ENOSPC'});
+   }
+   return fs.writeFileSync(file,data,options);
+  }};
+  const box={module:{exports:{}},Buffer,structuredClone,require:name=>name==='node:fs'?io:name.startsWith('./')?require(path.join(__dirname,'../src',name)):require(name)};
+  vm.runInNewContext(fs.readFileSync(require.resolve('../src/setup-transaction.cjs'),'utf8'),box);
+  const a=box.module.exports,original=structuredClone(x.map);
+  await assert.rejects(a.setup(directory,{includeWidget:true},deps),{code:'SETUP_BACKUP_WRITE_FAILED',writesAttempted:false});
+  assert.deepEqual(x.map,original);assert.equal(x.edits.length,0);assert.equal(x.saves,0);
+  assert.equal(fs.existsSync(path.join(directory,basename)),false);
+  assert.ok(fs.readdirSync(directory).every(name=>!name.endsWith('.tmp')));
+  const retry=await a.startSetup(directory,{includeWidget:true},deps);
+  const result=retry.needsConfirmation?await a.commitSetup(directory,retry.plan,{acceptPending:true},deps):retry.backup;
+  assert.equal(result.verified,true);assert.equal(result.setupInProgress,false);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory,'widget-shortcut.json'),'utf8')).original,original.layers[1].bindings[55]);
+ }
 });

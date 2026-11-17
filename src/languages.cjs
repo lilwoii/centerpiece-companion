@@ -1,6 +1,15 @@
 const{spawn}=require('node:child_process'),path=require('node:path');
 const {physical}=require('./keymap.cjs');
-function invoke(action,id){return new Promise((resolve,reject)=>{const child=spawn(path.join(process.env.SystemRoot||'C:/Windows','System32/WindowsPowerShell/v1.0/powershell.exe'),['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.join(__dirname,'languages.ps1')],{windowsHide:true});let out='',failed=false;const timer=setTimeout(()=>{failed=true;child.kill();reject(Error('Windows layout lookup timed out.'));},8000);child.stdout.setEncoding('utf8');child.stdout.on('data',b=>{out+=b;if(out.length>200000){failed=true;child.kill();reject(Error('Layout response too large.'));}});child.stderr.resume();child.on('error',()=>{clearTimeout(timer);reject(Error('Windows layout lookup is unavailable.'));});child.on('exit',code=>{clearTimeout(timer);if(failed)return;try{if(code)throw Error();resolve(JSON.parse(out));}catch{reject(Error('Windows could not read that layout.'));}});child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify({action,id}));});}
+function invoke(action,id){return new Promise((resolve,reject)=>{
+ const child=spawn(path.join(process.env.SystemRoot||'C:/Windows','System32/WindowsPowerShell/v1.0/powershell.exe'),['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',path.join(__dirname,'languages.ps1')],{windowsHide:true});let out='',settled=false;
+ const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);if(error){try{child.kill();}catch{}reject(error);}else resolve(value);};
+ const timer=setTimeout(()=>finish(Error('Windows layout lookup timed out.')),8000),failed=()=>finish(Error('Windows layout lookup is unavailable.'));
+ child.stdout.setEncoding('utf8');child.stdout.on('data',b=>{if(settled)return;if(out.length+b.length>200000)return finish(Error('Layout response too large.'));out+=b;});
+ child.stdout.on('error',failed);child.stderr.on('error',failed);child.stdin.on('error',failed);child.stderr.resume();child.on('error',failed);
+ // close follows drained stdout; exit can precede the last layout bytes.
+ child.on('close',code=>{if(settled)return;try{if(code)throw Error();finish(null,JSON.parse(out));}catch{finish(Error('Windows could not read that layout.'));}});
+ try{child.stdin.end(JSON.stringify({action,id}));}catch{failed();}
+});}
 const supported=Object.freeze([
  {id:'qwerty',name:'Default · My XPANEL layout'},
  {id:'00000409',name:'English · US QWERTY'},

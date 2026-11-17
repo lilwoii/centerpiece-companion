@@ -29,3 +29,34 @@ for(const switchAt of ['before-restoration','between-restorations','before-persi
  }};
  const service=new KeyTuning(dir,{open:()=>client});try{await service.read();await assert.rejects(service.save({keys:[18,33],actuation:1.2}),error=>/Injected verification failure/.test(error.message)&&/Read settings again/.test(error.message)&&!/Previous settings restored/.test(error.message));assert.deepEqual(tables[1],otherBefore);assert.equal(writes.some(write=>write.profile===1),false,'no write or persist may target the newly active profile');assert.equal(service.snapshot,null);assert.equal(service.busy,false);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+
+test('ambiguous settings timeout cannot feed a late reply into a later query',async()=>{
+ const f=telemetryRig(),first=f.client.query(22),failed=assert.rejects(first,/timed out/);[...f.timers][0]();await failed;
+ const later=f.client.query(22),rejected=assert.rejects(later,/timed out/);f.handle.emit('data',Buffer.from([4,3,241,22,2]));await rejected;assert.equal(f.writes(),1);assert.equal(f.handle.listenerCount('data'),0);f.client.close();
+});
+test('ambiguous settings write failure retires the client without resending commands',async()=>{
+ const f=telemetryRig(),write=f.handle.write;f.handle.write=()=>{throw Error('write failed after delivery');};await assert.rejects(f.client.query(22),/write failed after delivery/);f.handle.write=write;
+ const later=f.client.query(22),rejected=assert.rejects(later,/write failed after delivery/);f.handle.emit('data',Buffer.from([4,3,241,22,2]));await rejected;assert.equal(f.writes(),0);f.client.close();
+});
+
+
+test('rollback persists only a fully verified baseline and never commits concurrent external values',async()=>{
+ for(const mode of ['external','profile-switch','baseline']){
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tuning-restore-')),profiles=[0,1].map(profile=>[Array(68).fill(profile?15:20),Array(68).fill(0),Array(68).fill(2)]),events=[];let profile=0,forward=false,rollback=false,injected=false;
+  const client={identity:'test',close(){},async query(command,p=[]){
+   if(command===22)return Buffer.from([profile]);if(command===24)return Buffer.from([profile,84]);const table=[9,16,17].indexOf(command);
+   if(table>=0){
+    if(command===9&&p[1]===40&&forward&&!injected){injected=true;if(mode==='external')profiles[0][0][0]=31;else throw Error('Injected verification failure');}
+    const result=Buffer.from([p[0],...profiles[profile][table].slice(p[0],p[0]+p[1])]);
+    if(rollback&&command===9&&p[1]===40){events.push('baseline-read');if(mode==='profile-switch')profile=1;}return result;
+   }
+   if(command===10){events.push('write:'+profile+':'+p[1]);profiles[profile][0][p[0]]=p[1];if(forward)rollback=true;forward=true;}if(command===18)events.push('persist:'+profile);return Buffer.alloc(0);
+  }};
+  const service=new KeyTuning(dir,{open:()=>client});try{await service.read();await assert.rejects(service.save({keys:[18],actuation:1.2}),mode==='baseline'?/Previous settings restored/:/Read settings again/);
+   if(mode==='baseline'){assert.equal(events.filter(e=>e==='persist:0').length,1);assert.ok(events.indexOf('baseline-read')<events.indexOf('persist:0'));}
+   else assert.equal(events.some(e=>e.startsWith('persist:')),false,'unverified baseline must not be committed');
+   if(mode==='external')assert.equal(profiles[0][0][0],31);assert.ok(!events.some(e=>e.startsWith('write:1:')));assert.equal(service.snapshot,null);assert.equal(service.busy,false);
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+ }
+});

@@ -17,3 +17,44 @@ test('watchlist edits retain existing readings while new entries load',()=>{cons
 test('market logos use the corresponding brand color',()=>{const {logo}=require('../src/market-logo.cjs');for(const [symbol,color]of [['TSLA','#E82127'],['BTC-USD','#F7931A'],['NVDA','#76B900']])assert.ok(Buffer.from(logo(symbol).split(',')[1],'base64').toString().includes(color));});
 
 test('monitoring plugin readings share widget data and reject stale values',()=>{const {reading}=require('../src/widgets.cjs'),now=Date.now(),live={performance:{updatedAt:now,fps:120},ram:{updatedAt:now,percent:42},vram:{updatedAt:now,percent:67},network:{updatedAt:now,reachable:true,latency:18}};assert.equal(reading('performance',{live,now}).value,'120');assert.equal(reading('ram',{live,now}).value,'42%');assert.equal(reading('vram',{live,now}).value,'67%');assert.equal(reading('network',{live,now}).value,'18ms');assert.equal(reading('performance',{live,now:now+5000}).value,'—');});
+
+
+function sensorFixture(){
+ const {EventEmitter}=require('node:events'),{PassThrough}=require('node:stream'),{WidgetSources}=require('../src/widget-sources.cjs');
+ const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();child.stdin=new PassThrough();let kills=0;child.kill=()=>{kills++;};
+ const sources=new WidgetSources('verification/nonexistent-sensor-test',{spawnSensor:()=>child});return{child,sources,kills:()=>kills};
+}
+test('download sensor pipe failures settle once and release process tracking immediately',async()=>{
+ for(const stream of ['stdout','stderr','stdin']){const f=sensorFixture(),pending=f.sources.sensor('downloads'),rejected=assert.rejects(pending,/connection stopped/);
+  assert.doesNotThrow(()=>f.child[stream].emit('error',Error('broken pipe')));await rejected;assert.equal(f.sources.children.size,0);assert.equal(f.sources.sensorCancels.size,0);assert.equal(f.kills(),1);
+  f.child.stdout.emit('data',Buffer.alloc(100000));f.child.emit('close',0);assert.equal(f.kills(),1);f.sources.close();
+ }
+});
+test('closing widget sources cancels outstanding sensors without waiting for their timeout',async()=>{
+ const f=sensorFixture(),pending=f.sources.sensor('downloads'),rejected=assert.rejects(pending,/closed/);f.sources.close();await rejected;assert.equal(f.kills(),1);assert.equal(f.sources.children.size,0);await assert.rejects(f.sources.sensor('downloads'),/closed/);
+});
+test('download sensors bound output and retain normal successful results',async()=>{
+ const oversized=sensorFixture(),pending=oversized.sources.sensor('downloads'),rejected=assert.rejects(pending,/too large/);oversized.child.stdout.emit('data',Buffer.alloc(65537));await rejected;assert.equal(oversized.kills(),1);oversized.sources.close();
+ const f=sensorFixture(),result=f.sources.sensor('downloads');f.child.stdout.write(JSON.stringify({items:[{name:'download',done:10,total:20}]}));f.child.emit('close',0);assert.equal((await result).items[0].done,10);assert.equal(f.sources.children.size,0);assert.equal(f.kills(),0);f.sources.close();
+});
+
+
+test('game capture output errors stop only the failed helper and clear stale FPS samples',()=>{
+ const {EventEmitter}=require('node:events'),{PassThrough}=require('node:stream'),{GamePerformance}=require('../src/game-performance.cjs');
+ const workers=[],capture=new GamePerformance({spawnProcess:()=>{const p=new EventEmitter();p.stdout=new PassThrough();p.stderr=new PassThrough();p.kill=()=>{p.killed=true;};workers.push(p);return p;}});
+ capture.start('game.exe');capture.frames=[{at:Date.now(),ms:10,chain:'a'}];assert.doesNotThrow(()=>workers[0].stdout.emit('error',Error('pipe failure')));assert.equal(capture.proc,null);assert.equal(capture.frames.length,0);workers[1].emit('exit',0);assert.equal(workers[0].killed,true);
+ capture.start('game.exe');const current=capture.proc;workers[0].stderr.emit('error',Error('late error'));assert.equal(capture.proc,current);assert.doesNotThrow(()=>current.stderr.emit('error',Error('second pipe failure')));assert.equal(capture.proc,null);workers.at(-1).emit('exit',0);
+});
+test('game capture cleanup spawn failure still terminates the original helper',()=>{
+ const {EventEmitter}=require('node:events'),{PassThrough}=require('node:stream'),{GamePerformance}=require('../src/game-performance.cjs');
+ const p=new EventEmitter();p.stdout=new PassThrough();p.stderr=new PassThrough();let killed=0,calls=0;p.kill=()=>killed++;
+ const capture=new GamePerformance({spawnProcess:()=>{if(calls++)throw Error('helper unavailable');return p;}});capture.start('game.exe');assert.doesNotThrow(()=>capture.stop());assert.equal(killed,1);assert.equal(capture.proc,null);assert.equal(capture.reader,null);
+});
+
+
+test('game capture pipe failure uses the same bounded ETW session cleanup as a normal stop',()=>{
+ const {EventEmitter}=require('node:events'),{PassThrough}=require('node:stream'),{GamePerformance}=require('../src/game-performance.cjs');const calls=[];
+ const capture=new GamePerformance({spawnProcess:(exe,args)=>{const p=new EventEmitter();p.stdout=new PassThrough();p.stderr=new PassThrough();p.kill=()=>{p.killed=true;};calls.push({p,args});return p;}});
+ capture.start('game.exe');const session=capture.sessionName;calls[0].p.stdout.emit('error',Error('pipe closed'));
+ assert.equal(capture.proc,null);assert.deepEqual(calls[1].args,['--session_name',session,'--terminate_existing_session']);calls[1].p.emit('exit',0);assert.equal(calls[0].p.killed,true);
+});

@@ -5,6 +5,7 @@ const CONTENT_INTERVAL=250;
 const {createHash}=require('node:crypto');
 class DisplayCache{
  event(kind,details){try{this.onDiagnostic?.(kind,details);}catch{}}
+ observeSlot(slot,phase){this.lastObservedSlot=slot;this.lastObservedAt=Date.now();this.lastObservedPhase=phase;}
  constructor(directory,render,{now=Date.now,setTimeout:later=setTimeout,clearTimeout:cancel=clearTimeout}={}){this.directory=directory;this.render=render;this.som=null;this.closing=false;this.manifest=null;this.pool=[...DEFAULT_POOL];this.lastSlot=null;this.updating=false;this.watching=false;this.config=null;this.caps=false;this.layer=false;this.desired='idle';this.cache=new Map();this.frames=new Map();this.frameContent=new Map();this.frameHashes=new Map();this.skippedIdenticalFrames=0;this.usage=new Map();this.usedAt=0;this.data={};this.lastFrame='';this.error='';this.selectionAt=0;this.liveUploadedAt=0;this.now=now;this.later=later;this.cancel=cancel;this.liveTimer=null;this.liveDeadline=0;this.livePending=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.statusTimeouts=0;this.liveUploads=0;this.liveBytes=0;}
  setSleepPaused(value){this.sleepPaused=!!value;if(value)this.clearLiveTimer();else this.displayReady();}
  get capacity(){return this.pool.length-1;}
@@ -31,6 +32,15 @@ class DisplayCache{
   for(let attempt=0;attempt<2;attempt++){
    try{const active=await this.som.currentSlot();
     if(!Number.isInteger(active)||active<0||active>10)throw Error('Invalid active overlay; upload canceled.');
+    this.observeSlot(active,'before-upload');
+    if(attempt>0){
+     // cmd50 has no request ID: the retry may consume the timed-out read's
+     // delayed reply. Confirm recovery before trusting it as a safe write target.
+     const confirmed=await this.som.currentSlot();
+     if(!Number.isInteger(confirmed)||confirmed<0||confirmed>10)throw Error('Invalid active overlay confirmation; upload canceled.');
+     this.observeSlot(confirmed,'before-upload');
+     if(confirmed!==active){this.event('display-status-unstable',{expected:this.lastSlot,observed:active,confirmed,phase:'before-upload'});throw Object.assign(Error('The active overlay changed during status recovery. Upload canceled.'),{code:'DISPLAY_STATUS_UNSTABLE'});}
+    }
     this.statusReadFailures=0;return active;
    }catch(error){
     error.displayPhase='before-upload';
@@ -52,7 +62,6 @@ class DisplayCache{
   // Check after rasterization, immediately before sending upload metadata.
   if(typeof this.som.currentSlot==='function'){
    const active=await this.readUploadSlot();
-   this.lastObservedSlot=active;
     if(this.lastSlot!==null&&active!==this.lastSlot)this.event('overlay-changed-before-upload',{expected:this.lastSlot,observed:active});
    if(active===slot){
     this.lastSlot=active;this.selectionAt=Date.now();
@@ -134,7 +143,7 @@ class DisplayCache{
   }catch(e){this.error=e.message;throw e;}finally{this.updating=false;this.displayReady();}
  }
  connect(){
-  if(this.updating||this.watching)throw Error('Display is busy. Wait for its current operation before reconnecting.');
+  if(this.updating||this.watching||this.closeOperation)throw Error('Display is busy. Wait for its current operation before reconnecting.');
   const file=path.join(this.directory,'hardware.json');if(!fs.existsSync(file))return false;
   const manifest=JSON.parse(fs.readFileSync(file,'utf8'));if(!manifest.verified||manifest.restored)return false;
   const pool=ownedPool(manifest),som=new Som();
@@ -189,24 +198,44 @@ class DisplayCache{
   try{
    const current=await som.currentSlot();
    if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid display status.');
-   this.lastObservedSlot=current;
-   if(this.som!==som||this.cache.get(this.key())!==expected)return;
+   this.observeSlot(current,'reconcile');
+   if(this.closing||this.som!==som||this.cache.get(this.key())!==expected)return;
    if(current!==expected){
     // Slot replies have no request ID, and selecting the already-active slot
     // toggles it off. Confirm an anomalous reply before issuing that command.
     // Healthy status reads and normal widget refresh rates remain unchanged.
     const confirmed=await som.currentSlot();
     if(!Number.isInteger(confirmed)||confirmed<0||confirmed>10)throw Error('Invalid display status.');
-    this.lastObservedSlot=confirmed;
-    if(this.som!==som||this.cache.get(this.key())!==expected)return;
+    this.observeSlot(confirmed,'reconcile');
+    if(this.closing||this.som!==som||this.cache.get(this.key())!==expected)return;
     if(confirmed!==current){this.event('display-status-unstable',{expected,observed:current,confirmed});this.statusReadFailures=0;return;}
     this.event('unexpected-overlay-selection',{expected,observed:confirmed});som.selectSlot(expected);this.selectionAt=Date.now();
    }
    this.statusReadFailures=0;
   }catch(error){if(error.code==='DISPLAY_REQUEST_TIMEOUT'){this.statusTimeouts++;this.event('display-status-timeout',{consecutive:this.statusReadFailures+1});if(++this.statusReadFailures<=2)return;}this.error=error.message;this.livePending=false;this.clearLiveTimer();throw error;}finally{this.watching=false;this.displayReady();}
  }
- detach(){this.closing=false;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
- async close(){this.closing=true;this.clearLiveTimer();this.livePending=false;if(!this.som)return;const som=this.som;await som.activate(this.manifest.originalSlot||0);this.som=null;som.close();}
+ detach(){this.closing=false;this.lastObservedSlot=null;this.lastObservedAt=null;this.lastObservedPhase=null;this.lastReconcileAt=null;this.statusReadFailures=0;this.clearLiveTimer();this.livePending=false;const som=this.som;this.som=null;som?.close();this.cache.clear();this.frames.clear();this.frameContent.clear();this.frameHashes.clear();this.usage.clear();this.lastSlot=null;this.lastFrame='';this.error='';this.liveUploadedAt=0;}
+ async close(){
+  if(this.closeOperation)return this.closeOperation;
+  this.closing=true;this.clearLiveTimer();this.livePending=false;if(!this.som)return;
+  const som=this.som,originalSlot=this.manifest.originalSlot||0;
+  const operation=(async()=>{
+   // Status responses carry no request ID. Finish an in-flight read/upload
+   // before restore sends another status command or selects the original slot.
+   const deadline=Date.now()+25000;
+   while(this.updating||this.watching){
+    if(this.som!==som)return;
+    if(Date.now()>deadline)throw Error('Keyboard display did not finish its current transfer. Retry Quit or reconnect the keyboard.');
+    await new Promise(resolve=>setTimeout(resolve,15));
+   }
+   if(this.som!==som)return;
+   await som.activate(originalSlot);
+   if(this.som!==som)return;
+   this.som=null;som.close();
+  })();
+  this.closeOperation=operation;
+  try{return await operation;}finally{if(this.closeOperation===operation)this.closeOperation=null;}
+ }
 }
 module.exports={DisplayCache,ownedPool};
 

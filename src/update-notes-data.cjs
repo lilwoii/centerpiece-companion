@@ -1,5 +1,6 @@
 // Ship a matching entry with every release. Text is bundled with the app, never downloaded as HTML.
 module.exports = Object.freeze({
+  "0.3.0-preview.58": Object.freeze(["Fixed various bugs and improved reliability."]),
   "0.3.0-preview.57": Object.freeze(["Fixed various bugs and improved keyboard setup and connection reliability."]),
   "0.3.0-preview.56": Object.freeze(["Added MusicBee playback plugins and widgets with artwork and live track progress.","MusicBee supports previous/next arrows, Right Shift play/pause, custom icons, and automatic connection setup when added to the keyboard. Restart MusicBee after first-time setup.","Improved MusicBee artwork refresh and added a direct icon picker with image-size guidance."]),
   "0.3.0-preview.55": Object.freeze(["Fixed bugs and improved reliability."]),

@@ -11,15 +11,46 @@ function normalize(value={}){
 function label(value){return 'L1 + '+physical[normalize(value).position];}
 function read(directory){try{return JSON.parse(fs.readFileSync(path.join(directory,'plugin-shortcuts.json'),'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw Error('The shortcut backup could not be read.');}}
 function write(directory,value){const file=path.join(directory,'plugin-shortcuts.json'),temp=file+'.'+randomUUID()+'.tmp';fs.writeFileSync(temp,JSON.stringify(value,null,2),{flag:'wx'});fs.renameSync(temp,file);}
-async function configure(directory,value,{Studio=require('./studio.cjs').Studio}={}){
- const settings=normalize(value),manifest=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8')),prior=read(directory);
+function interruptedBaseline(prior,layer){
+ const invalid=()=>Error('The saved shortcut backup is invalid or conflicts with current assignments. It was preserved; export a crash report for help.');
+ const validBinding=b=>b&&typeof b==='object'&&!Array.isArray(b)&&Number.isInteger(b.behaviorId)&&b.behaviorId>=0&&b.behaviorId<=65535&&['param1','param2'].every(k=>b[k]===undefined||Number.isInteger(b[k])&&b[k]>=0&&b[k]<=0xffffffff);
+ if(!Array.isArray(prior.entries)||!Array.isArray(prior.planned?.entries))throw invalid();
+ const known=new Map();
+ for(const list of [prior.entries,prior.planned.entries]){
+  const positions=new Set();
+  if(list.length>68)throw invalid();
+  for(const entry of list){
+   const pos=entry?.position;
+   if(!Number.isInteger(pos)||pos<0||pos>=68||[26,55,63].includes(pos)||positions.has(pos)||!validBinding(entry.original)||!validBinding(entry.installed))throw invalid();
+   positions.add(pos);
+   const allowed=[entry.original,plugin,...(pos===0?[recovery]:[]),...(pos===62?[{behaviorId:50397,param1:0x05070044}]:[])];
+   if(!allowed.some(b=>sameBinding(b,entry.installed)))throw invalid();
+   const saved=known.get(pos);
+   if(saved&&!sameBinding(saved.original,entry.original))throw invalid();
+   if(saved)saved.states.push(entry.installed);
+   else known.set(pos,{original:entry.original,states:[entry.original,entry.installed]});
+  }
+ }
+ const entries=[];
+ for(const [position,item]of known){
+  if(!validBinding(layer.bindings[position])||!item.states.some(b=>sameBinding(b,layer.bindings[position])))throw invalid();
+  entries.push({position,original:structuredClone(item.original),installed:structuredClone(layer.bindings[position])});
+ }
+ return {...prior,entries};
+}
+async function configure(directory,value,{Studio=require('./studio.cjs').Studio,recoverInterrupted=false}={}){
+ const settings=normalize(value),manifest=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8'));
+ let prior=read(directory);const interrupted=prior?.inProgress===true;
  if(!manifest.verified||manifest.restored)throw Error('Wait for keyboard setup to complete first.');
- if(prior?.inProgress)throw Error('An earlier shortcut change did not finish. Its backup was kept; review the keyboard settings before retrying.');
+ if(interrupted&&recoverInterrupted!==true)throw Object.assign(Error('An earlier optional shortcut change did not finish. Its backup was kept. Review your shortcut choices and click Save shortcut to retry; pending keyboard settings must be reviewed first.'),{code:'PLUGIN_SHORTCUT_INCOMPLETE'});
  const s=new Studio();try{
   if(!manifest.keyboardSerial||s.serial!==manifest.keyboardSerial||prior&&prior.serial!==s.serial)throw Error('The shortcut backup belongs to a different keyboard.');
   const get=async()=>(await s.request({keymap:{getKeymap:true}})).keymap.getKeymap;
   const map=await get(),layer=map?.layers?.find(l=>l.id===1);
   if(layer?.bindings?.length!==68)throw Error('A supported 68-key L1 layer is required.');
+  const originalPrior=prior;
+  if(interrupted)prior=interruptedBaseline(prior,layer);
+  else if(prior)interruptedBaseline({...prior,planned:{entries:prior.entries}},layer);
   const expected=structuredClone(map),nextLayer=expected.layers.find(l=>l.id===1);
   // Restore only assignments still owned by this feature; never overwrite later custom edits.
   for(const entry of prior?.entries||[]){
@@ -34,10 +65,10 @@ async function configure(directory,value,{Studio=require('./studio.cjs').Studio}
    if(!available.some(binding=>sameBinding(binding,entry.original))){const action=entry.original.behaviorId===42547?'XPANEL Overlay '+entry.original.param1:'an XPANEL assignment';throw Object.assign(Error('L1 + '+physical[entry.position]+' already uses '+action+'. It was preserved. Choose an unused key.'),{code:'PLUGIN_SHORTCUT_CONFLICT',position:entry.position});}
   }
   for(const entry of entries)nextLayer.bindings[entry.position]=entry.installed;
-  if(sameKeymap(map,expected)){write(directory,{serial:s.serial,settings,entries,inProgress:false});return settings;}
+  if(!interrupted&&sameKeymap(map,expected)){write(directory,{serial:s.serial,settings,entries,inProgress:false});return settings;}
   if(await require('./studio-response.cjs').pendingChanges(s))throw Object.assign(Error('Keyboard settings are pending. Save or review those settings before changing shortcuts.'),{code:'PLUGIN_SHORTCUT_PENDING',currentSettings:prior?.settings||normalize({engineRecovery:false,hideLegendsShortcut:false})});
   if(!sameKeymap(map,await get()))throw Error('Keyboard settings changed. Please retry.');
-  fs.writeFileSync(path.join(directory,'shortcut-checkpoint-'+randomUUID()+'.json'),JSON.stringify({serial:s.serial,map,prior}),{flag:'wx'});
+  fs.writeFileSync(path.join(directory,'shortcut-checkpoint-'+randomUUID()+'.json'),JSON.stringify({serial:s.serial,map,prior:originalPrior}),{flag:'wx'});
   write(directory,{serial:s.serial,settings:prior?.settings||normalize(),entries:prior?.entries||[],planned:{settings,entries},inProgress:true});
   for(let position=0;position<68;position++)if(!sameBinding(layer.bindings[position],nextLayer.bindings[position]))assertBindingResult((await s.request({keymap:{setLayerBinding:{layerId:1,keyPosition:position,binding:nextLayer.bindings[position]}}})).keymap.setLayerBinding,'Plugin shortcut');
   if(!sameKeymap(expected,await get()))throw Error('Keyboard settings changed during the operation. Backup retained; nothing was saved.');
@@ -46,7 +77,27 @@ async function configure(directory,value,{Studio=require('./studio.cjs').Studio}
   write(directory,{serial:s.serial,settings,entries,inProgress:false});return settings;
  }finally{s.close();}
 }
+async function inspectIncompleteStartup(directory,{Studio=require('./studio.cjs').Studio}={}){
+ const manifest=JSON.parse(fs.readFileSync(path.join(directory,'hardware.json'),'utf8')),prior=read(directory);
+ if(!manifest.verified||manifest.restored||!prior?.inProgress)throw Error('The saved shortcut recovery state changed. Reconnect the keyboard.');
+ const s=new Studio();try{
+  if(!manifest.keyboardSerial||s.serial!==manifest.keyboardSerial||prior.serial!==s.serial)throw Error('The shortcut backup belongs to a different keyboard.');
+  const get=async()=>(await s.request({keymap:{getKeymap:true}}))?.keymap?.getKeymap;
+  const map=await get(),layer=map?.layers?.find(l=>l.id===1);
+  if(layer?.bindings?.length!==68||!sameBinding(layer.bindings[26],plugin))throw Error('The required Companion shortcut is unavailable. Review keyboard setup first.');
+  // Failed writes may exist only in RAM, or disappear after a power cycle.
+  // Report effective bindings, never infer that either saved plan persisted.
+  let position=26;
+  for(const candidate of [prior.planned?.settings,prior.settings]){
+   if(candidate?.custom===true&&Number.isInteger(candidate.position)&&candidate.position>=0&&candidate.position<68&&![55,63].includes(candidate.position)&&sameBinding(layer.bindings[candidate.position],plugin)){position=candidate.position;break;}
+  }
+  const settings=normalize({custom:position!==26,position,engineRecovery:sameBinding(layer.bindings[0],recovery),hideLegendsShortcut:sameBinding(layer.bindings[62],{behaviorId:50397,param1:0x05070044})});
+  if(!sameKeymap(map,await get()))throw Error('Keyboard settings changed while checking optional shortcuts. Reconnect and try again.');
+  return{settings,warning:'An earlier optional shortcut change did not finish. Companion is using the shortcuts currently on the keyboard without saving changes. The backup was retained. Review your shortcut choices and click Save shortcut to finish; pending keyboard settings must be reviewed first.'};
+ }finally{s.close();}
+}
 async function configureStartup(directory,value,deps={}){
+ deps={...deps,recoverInterrupted:false};
  try{
   try{return{settings:await configure(directory,value,deps),warning:''};}
   catch(error){if(error.code==='PLUGIN_SHORTCUT_CONFLICT'&&error.position===62){const result=await configureStartup(directory,{...normalize(value),hideLegendsShortcut:false},deps);return {...result,warning:[result.warning,'L1 + Right Alt already has an XPANEL assignment. Hide legends shortcut was not installed.'].filter(Boolean).join(' ')};}
@@ -56,6 +107,7 @@ async function configureStartup(directory,value,deps={}){
  }catch(error){
   // Only this pre-write condition can defer optional shortcuts safely. The
   // existing owned bindings have already been checked against the keyboard.
+  if(error.code==='PLUGIN_SHORTCUT_INCOMPLETE')return inspectIncompleteStartup(directory,deps);
   if(error.code!=='PLUGIN_SHORTCUT_PENDING')throw error;
   return {settings:error.currentSettings,warning:'Optional shortcut changes were deferred because keyboard settings are pending. Existing shortcuts were kept; save shortcuts after reviewing those settings.'};
  }

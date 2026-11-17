@@ -46,7 +46,7 @@ test('the USB worker acknowledges completed batches and stops immediately on a s
 });
 test('exit restoration confirms delayed slot changes and never repeats a toggle command',async()=>{
  for(const target of [0,1]){
-  const replies=[6,6,target,target],selections=[];
+  const replies=[6,6,6,target,target],selections=[];
   await Som.prototype.activate.call({currentSlot:async()=>replies.shift(),selectSlot:slot=>selections.push(slot)},target);
   assert.deepEqual(selections,[target===0?6:target]);assert.equal(replies.length,0);
  }
@@ -167,4 +167,24 @@ test('an idle native reader failure rejects later display operations without new
  const box={module:{exports:{}},Buffer,setTimeout,clearTimeout,require:name=>name==='./hid.cjs'?{devices:()=>[{vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:'fake'}],HID:FakeHID}:require(name)};
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/som.cjs'),'utf8'),box);const s=new box.module.exports.Som(),error=Error('native reader failed while idle');handle.emit('error',error);
  await assert.rejects(s.currentSlot(),e=>e===error);await assert.rejects(s.transfer(4,Buffer.alloc(20)),e=>e===error);assert.throws(()=>s.selectSlot(2),e=>e===error);assert.equal(writes,0);assert.equal(s.listeners.size,0);s.close();
+});
+
+
+test('restoration rejects inconsistent initial replies without toggling or claiming success',async()=>{
+ for(const replies of [[1,3],[3,1]]){let reads=0,selections=0;await assert.rejects(Som.prototype.activate.call({currentSlot:async()=>replies[reads++],selectSlot:()=>selections++},1),{code:'DISPLAY_RESTORE_FAILED'});assert.equal(reads,2);assert.equal(selections,0);}
+});
+
+test('already restored overlays require two matching observations without a toggle',async()=>{
+ let reads=0;await Som.prototype.activate.call({currentSlot:async()=>{reads++;return 1;},selectSlot:()=>assert.fail('already restored')},1);assert.equal(reads,2);
+});
+
+
+test('display discovery rejects ambiguous keyboards but tolerates duplicate enumeration of one interface',()=>{
+ const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path'),{createRequire}=require('node:module'),{EventEmitter}=require('node:events'),file=require.resolve('../src/som.cjs'),localRequire=createRequire(file);
+ for(const paths of [['display-a','display-b'],['display-a','display-a']]){
+  const opened=[],devices=paths.map(p=>({vendorId:0x361d,productId:0x202,usagePage:0xff00,usage:1,path:p,serialNumber:p}));class Native extends EventEmitter{constructor(p){super();opened.push(p);}}
+  const box={Buffer,module:{exports:{}},require:n=>n==='./hid.cjs'?{devices:()=>devices,HID:Native}:localRequire(n)};vm.runInNewContext(fs.readFileSync(file,'utf8'),box);
+  if(paths[0]!==paths[1]){assert.throws(()=>new box.module.exports.Som(),{code:'KEYBOARD_MULTIPLE_DISPLAYS'});assert.deepEqual(opened,[]);}
+  else{assert.equal(new box.module.exports.Som().serial,'display-a');assert.deepEqual(opened,['display-a']);}
+ }
 });

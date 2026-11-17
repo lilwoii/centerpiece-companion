@@ -88,7 +88,7 @@ contextBridge.exposeInMainWorld('companionNative', {
   cancelTwitch:()=>ipcRenderer.invoke('cancel-twitch'),
   disconnectService: name => ipcRenderer.invoke('disconnect-service',name),
   prepareSetupRecovery:()=>ipcRenderer.invoke('prepare-setup-recovery'),
-  confirmSetupRecovery:token=>ipcRenderer.invoke('confirm-setup-recovery',token),
+  confirmSetupRecovery:(token,acceptOverlayReplacement=false)=>ipcRenderer.invoke('confirm-setup-recovery',token,acceptOverlayReplacement),
   cancelSetupRecovery:()=>ipcRenderer.invoke('cancel-setup-recovery'),
   checkSetup:()=>ipcRenderer.invoke('check-setup'),
   copySetupReport:()=>ipcRenderer.invoke('copy-setup-report'),

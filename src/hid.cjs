@@ -8,9 +8,20 @@ function start(){if(child?.connected)return child;if(child)childEnd?.('disconnec
  proc.on('message',m=>{if(child!==proc)return;if(m.event==='diagnostic'){diagnostic(m.kind,m.details);return;}if(m.id){const item=pending.get(m.id);if(item){clearTimeout(item.timer);pending.delete(m.id);m.error?item.reject(Error(m.error)):item.resolve(m.result);}}else{const h=handles.get(m.key);if(h&&!h.closed){if(m.event==='data')h.emit('data',Buffer.from(m.data));else if(m.event==='error')h.emit('error',Error(m.message));}}});
  const end=(reason,details)=>{if(child!==proc)return;child=null;childEnd=null;cached=null;diagnostic('usb-helper-failed',{reason,...details,clients:handles.size,pendingRequests:pending.size});for(const p of pending.values()){clearTimeout(p.timer);p.reject(Error('USB helper stopped. Reconnect the keyboard in the app.'));}pending.clear();const open=[...handles.values()];handles.clear();for(const h of open){h.closed=true;h.emit('error',Error('USB helper stopped. Restart the keyboard connection in the app.'));}};childEnd=end;proc.on('disconnect',()=>end('disconnect',{}));proc.on('error',error=>end('error',{message:String(error?.message||'USB helper error').slice(0,160)}));proc.on('exit',(exitCode,signal)=>end('exit',{exitCode:Number.isInteger(exitCode)?exitCode:null,signal:typeof signal==='string'?signal.slice(0,32):null}));return proc;
 }
-function send(message){const p=start();
+function send(message){
+ // An existing native handle belongs to its original helper. Do not route a
+ // queued write into a newly spawned process where that handle was never opened.
+ if(message.key&&message.op!=='open'&&!child?.connected){if(child)childEnd?.('disconnect',{});throw Error('USB connection closed. Restart the keyboard connection.');}
+ const p=start();
  const rejectRequest=error=>{const item=pending.get(message.id);if(item){clearTimeout(item.timer);pending.delete(message.id);item.reject(error);}};
  try{p.send(message,error=>{if(!error||child!==p)return;const failure=Error('USB helper is unavailable.');rejectRequest(failure);if(message.key){const h=handles.get(message.key);if(h&&!h.closed)h.emit('error',failure);}});}catch(error){rejectRequest(error);throw error;}
+}
+// Losing a close/invalidate command can strand a failed native client forever.
+// Retire the shared helper instead of leaving an unreachable owner in its pool.
+function control(message){
+ const proc=child;if(!proc)return;if(!proc.connected){childEnd?.('disconnect',{});return;}
+ const failed=()=>{if(child!==proc)return;try{childEnd?.('control-send',{operation:message.op});}finally{try{proc.disconnect();}catch{try{proc.kill();}catch{}}}};
+ try{proc.send(message,error=>{if(error)failed();});}catch{failed();}
 }
 class VirtualHID extends EventEmitter{
  constructor(devicePath){super();start();this.key=++sequence;this.closed=false;handles.set(this.key,this);try{send({op:'open',key:this.key,path:devicePath});}catch(error){this.closed=true;handles.delete(this.key);throw error;}}
@@ -20,8 +31,8 @@ class VirtualHID extends EventEmitter{
   if(!Array.isArray(packets)||!packets.length||packets.length>64||packets.some(p=>p.length!==1024))return Promise.reject(Error('Invalid USB batch.'));
   return new Promise((resolve,reject)=>{const id=++sequence,deadline=Date.now()+10000,timer=setTimeout(()=>{pending.delete(id);reject(Error('USB batch timed out.'));},10000);pending.set(id,{resolve,reject,timer});try{send({op:'write-batch',key:this.key,id,deadline,packets:packets.map(p=>Array.from(p))});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
  }
- close(){if(this.closed)return;this.closed=true;handles.delete(this.key);if(child?.connected)child.send({op:'close',key:this.key},()=>{});}
- invalidate(){if(!this.closed&&child?.connected)child.send({op:'invalidate',key:this.key},()=>{});}
+ close(){if(this.closed)return;this.closed=true;handles.delete(this.key);control({op:'close',key:this.key});}
+ invalidate(){if(!this.closed)control({op:'invalidate',key:this.key});}
 }
 function devices(){if(cached)return cached;cached=JSON.parse(execFileSync(process.execPath,[worker,'--list'],{env:environment(),windowsHide:true,timeout:8000,maxBuffer:200000,encoding:'utf8'}));return cached;}
 function devicesAsync(){return new Promise((resolve,reject)=>{start();const id=++sequence;const timer=setTimeout(()=>{pending.delete(id);reject(Error('USB discovery timed out.'));},8000);pending.set(id,{resolve:value=>{cached=value;resolve(value);},reject,timer});send({op:'devices',id});});}

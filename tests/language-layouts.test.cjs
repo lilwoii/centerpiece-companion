@@ -17,3 +17,21 @@ test('all eight layouts have complete four-state labels and correct input keys',
  const {languageLabel}=require('../src/language-labels.js');assert.equal(languageLabel('Esc / `',kana),'Esc / ろ');
  const {Workspace,defaults}=require('../src/workspace.cjs');assert.equal(Workspace.prototype.validate({...defaults(),languageId:'japanese-kana',physicalLanguage:true}).languageId,'japanese-kana');
 });
+function languageWorkerFixture(){
+ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{createRequire}=require('node:module'),{EventEmitter}=require('node:events'),{PassThrough}=require('node:stream');
+ const file=path.resolve(__dirname,'../src/languages.cjs'),localRequire=createRequire(file),child=new EventEmitter(),timers=new Set();let kills=0;
+ child.stdout=new PassThrough();child.stderr=new PassThrough();child.stdin=new PassThrough();child.kill=()=>kills++;
+ const context={process,__dirname:path.dirname(file),module:{exports:{}},require:n=>n==='node:child_process'?{spawn:()=>child}:localRequire(n),setTimeout:fn=>{timers.add(fn);return fn;},clearTimeout:fn=>timers.delete(fn)};
+ vm.runInNewContext(fs.readFileSync(file,'utf8'),context);return{child,timers,kills:()=>kills,languages:context.module.exports};
+}
+test('layout helper pipe errors reject safely and release the timeout',async()=>{
+ for(const name of ['stdout','stderr','stdin']){const f=languageWorkerFixture(),promise=f.languages.map('00000409'),rejection=assert.rejects(promise,/lookup is unavailable/);
+  assert.doesNotThrow(()=>f.child[name].emit('error',Error('pipe failure')));await rejection;assert.equal(f.timers.size,0);assert.equal(f.kills(),1);
+  f.child.stdout.emit('data','x'.repeat(200001));f.child.emit('close',0);assert.equal(f.kills(),1);
+ }
+});
+test('layout lookup drains final stdout after process exit and bounds late output',async()=>{
+ const f=languageWorkerFixture(),promise=f.languages.map('00000409');f.child.emit('exit',0);
+ f.child.stdout.write(JSON.stringify({labels:Array(68).fill('x')}));f.child.emit('close',0);assert.equal((await promise).labels.length,68);assert.equal(f.timers.size,0);assert.equal(f.kills(),0);
+ const large=languageWorkerFixture(),rejected=assert.rejects(large.languages.map('00000409'),/too large/);large.child.stdout.write('x'.repeat(200001));await rejected;assert.equal(large.timers.size,0);assert.equal(large.kills(),1);
+});

@@ -3,7 +3,7 @@ const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),vm=r
 const{WidgetCycle,nextWidget,types}=require('../src/widget-cycle.cjs');
 test('widget cycling wraps and rapid taps save every selection but coalesce display work',async()=>{assert.equal(nextWidget('off'),'spotify');const workspace={config:{widget:{type:'spotify',text:'saved text',x:1710}},save(c){this.config=c;}};let applied=0,changed=0;const cycle=new WidgetCycle(workspace,async()=>{applied++;},()=>changed++);for(let i=0;i<3;i++)cycle.press();assert.equal(workspace.config.widget.type,'cpu');assert.equal(workspace.config.widget.text,'saved text');assert.equal(changed,3);await new Promise(r=>setTimeout(r,240));assert.equal(applied,1);cycle.close();assert.equal(new Set(types).size,21);assert.equal(types.includes('follow'),false);assert.equal(nextWidget('text'),'off');assert.equal(nextWidget('follow'),'spotify');});
 
-function fixture({pending=false,editResult=0,saveResult={err:0},normalize=false,serial='test-device'}={}){
+function fixture({pending=false,editResult=0,saveResult={err:0},normalize=false,serial='test-device',io=fs}={}){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'widget-key-test-'));
  const original={layers:[{id:0,bindings:Array.from({length:68},()=>({behaviorId:56811}))},{id:1,bindings:Array.from({length:68},()=>({behaviorId:56811}))}]};
  const state={map:structuredClone(original),writes:0,requests:[],closed:0};
@@ -19,7 +19,7 @@ function fixture({pending=false,editResult=0,saveResult={err:0},normalize=false,
    throw Error('Unexpected keyboard request');
   }
  }
- const box={module:{exports:{}},structuredClone,require:n=>n==='./studio.cjs'?{Studio}:n.startsWith('./')?require(path.join(__dirname,'../src',n)):require(n)};
+ const box={module:{exports:{}},structuredClone,require:n=>n==='node:fs'?io:n==='./studio.cjs'?{Studio}:n.startsWith('./')?require(path.join(__dirname,'../src',n)):require(n)};
  vm.runInNewContext(fs.readFileSync(require.resolve('../src/widget-shortcut.cjs'),'utf8'),box);
  fs.writeFileSync(path.join(dir,'hardware.json'),JSON.stringify({verified:true,keyboardSerial:'test-device'}));
  return{...box.module.exports,state,dir,original,close(){for(const f of ['hardware.json','widget-shortcut.json']){const p=path.join(dir,f);if(fs.existsSync(p))fs.unlinkSync(p);}fs.rmdirSync(dir);}};
@@ -76,3 +76,53 @@ test('widget shortcut checks device identity and supported layer before acceptin
 });
 
 test('empty favorites cycle all widgets and favorites restrict cycling',()=>{assert.equal(nextWidget('spotify',[]),'youtubemusic');assert.equal(nextWidget('off',[]),'spotify');assert.equal(nextWidget('clock',['clock','market']),'market');assert.equal(nextWidget('market',['clock','market']),'clock');assert.equal(nextWidget('spotify',['market']),'market');});
+
+test('widget taps during a slow apply retain only one newest follow-up instead of filling the display queue',async()=>{
+ const workspace={config:{widget:{type:'spotify',text:''}},save(value){this.config=value;}};let calls=0,release;const wait=new Promise(resolve=>{release=resolve;}),seen=[];
+ const cycle=new WidgetCycle(workspace,async()=>{seen.push(workspace.config.widget.type);if(++calls===1)await wait;},()=>{});
+ try{cycle.press();await new Promise(resolve=>setTimeout(resolve,80));for(let n=0;n<4;n++){cycle.press();await new Promise(resolve=>setTimeout(resolve,80));}assert.equal(calls,1);const latest=workspace.config.widget.type;release();await new Promise(resolve=>setTimeout(resolve,80));assert.equal(calls,2);assert.equal(seen.at(-1),latest);}finally{release();cycle.close();}
+});
+
+
+test('closing widget cycling cancels its pending follow-up and accepts no later key events',async()=>{
+ const workspace={config:{widget:{type:'spotify',text:''}},save(value){this.config=value;}};let calls=0,release;const cycle=new WidgetCycle(workspace,()=>{calls++;return new Promise(resolve=>{release=resolve;});},()=>{});
+ cycle.press();await new Promise(resolve=>setTimeout(resolve,80));cycle.press();await new Promise(resolve=>setTimeout(resolve,80));cycle.close();const selected=workspace.config.widget.type;cycle.press();release();await new Promise(resolve=>setTimeout(resolve,80));assert.equal(calls,1);assert.equal(workspace.config.widget.type,selected);assert.equal(cycle.timer,null);
+});
+
+
+test('profile changes cancel old widget work without disabling cycling in the new profile',async()=>{
+ const workspace={config:{widget:{type:'spotify',text:''}},save(value){this.config=value;}};let calls=0;
+ const cycle=new WidgetCycle(workspace,async()=>{calls++;},()=>{});cycle.press();cycle.cancel();await new Promise(resolve=>setTimeout(resolve,80));assert.equal(calls,0);
+ workspace.config={widget:{type:'clock',text:''},widgetFavorites:['clock','market']};cycle.press();await new Promise(resolve=>setTimeout(resolve,80));assert.equal(calls,1);assert.equal(workspace.config.widget.type,'market');cycle.close();
+});
+
+
+test('widget shortcut preserves malformed original backup without attempting restoration',async()=>{
+ for(const original of [undefined,null,{}, {behaviorId:'56811'}, {behaviorId:50397,param1:-1}]){const f=fixture();try{
+  await f.widgetShortcut(f.dir);const file=path.join(f.dir,'widget-shortcut.json'),record=JSON.parse(fs.readFileSync(file,'utf8'));fs.writeFileSync(file,JSON.stringify({...record,original}));const before=fs.readFileSync(file,'utf8'),writes=f.state.writes;
+  await assert.rejects(f.widgetShortcut(f.dir,true));assert.equal(f.state.writes,writes);assert.equal(fs.readFileSync(file,'utf8'),before);
+ }finally{f.close();}}
+});
+
+
+test('failed widget shortcut backup replacement preserves original binding and leaves no temporary files',async()=>{
+ for(const failure of ['partial-write','rename']){
+  let armed=false;
+  const io={...fs,writeFileSync:(file,data,options)=>{
+   if(armed&&path.basename(file).startsWith('widget-shortcut.json')&&failure==='partial-write'){
+    fs.writeFileSync(file,'{partial',options);throw Object.assign(Error('disk full'),{code:'ENOSPC'});
+   }
+   return fs.writeFileSync(file,data,options);
+  },renameSync:(from,to)=>{if(armed&&failure==='rename')throw Object.assign(Error('file locked'),{code:'EACCES'});return fs.renameSync(from,to);}};
+  const f=fixture({io});try{
+   await f.widgetShortcut(f.dir);
+   const file=path.join(f.dir,'widget-shortcut.json'),before=fs.readFileSync(file,'utf8');
+   f.state.map.layers[1].bindings[55]={behaviorId:50397,param1:0x05070073};armed=true;
+   await assert.rejects(f.widgetShortcut(f.dir),{code:failure==='partial-write'?'ENOSPC':'EACCES'});
+   assert.equal(fs.readFileSync(file,'utf8'),before);
+   assert.deepEqual(fs.readdirSync(f.dir).sort(),['hardware.json','widget-shortcut.json']);
+   armed=false;await f.widgetShortcut(f.dir,true);
+   assert.deepEqual(structuredClone(f.state.map),f.original);
+  }finally{armed=false;f.close();}
+ }
+});

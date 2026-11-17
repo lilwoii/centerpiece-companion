@@ -4,7 +4,10 @@ const { performance } = require('node:perf_hooks');
 const sharp = require('sharp');
 class Som {
   constructor() {
-    const device = HID.devices().find(d => d.vendorId === 0x361d && d.productId === 0x202 && d.usagePage === 0xff00 && d.usage === 1);
+    const matches=HID.devices().filter(d => d.vendorId === 0x361d && d.productId === 0x202 && d.usagePage === 0xff00 && d.usage === 1);
+    const devices=[...new Map(matches.map(d=>[d.path,d])).values()];
+    if(devices.length>1)throw Object.assign(Error('More than one Centerpiece display is connected. Connect only the keyboard you want to control, then retry.'),{code:'KEYBOARD_MULTIPLE_DISPLAYS'});
+    const device=devices[0];
     if (!device) throw new Error('Centerpiece display is not connected.');
     this.serial = device.serialNumber;this.identity=String(device.serialNumber||device.path||'');
     this.handle = new HID.HID(device.path); this.listeners = new Set();
@@ -52,6 +55,11 @@ class Som {
     if(!Number.isInteger(slot)||slot<0||slot>10)throw Error('Invalid overlay restoration slot');
     const current=await this.currentSlot();
     if(!Number.isInteger(current)||current<0||current>10)throw Error('Invalid active overlay; restoration canceled.');
+    // A delayed cmd50 reply can resemble success or authorize a toggle of the
+    // already-active slot. Restoration requires a consistent initial reading.
+    const confirmed=await this.currentSlot();
+    if(!Number.isInteger(confirmed)||confirmed<0||confirmed>10)throw Error('Invalid active overlay confirmation; restoration canceled.');
+    if(confirmed!==current)throw Object.assign(Error('The active overlay changed during restoration. Retry Quit to restore it.'),{code:'DISPLAY_RESTORE_FAILED'});
     if(current===slot)return;
     this.selectSlot(slot===0?current:slot);
     // A queued write is not proof of restoration. Require two matching reads,
